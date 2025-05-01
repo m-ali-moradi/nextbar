@@ -9,10 +9,10 @@ A distributed microservice-based platform for managing beverage supply and bottl
 | Name                | Index Number | Email                                          |
 |---------------------|--------------|------------------------------------------------|
 | Daranya Maniseharan | 7222079      | daranya.maniseharan003@stud.fh-dortmund.de     |
-| Bob Example         | IT2021002    | bob@example.com                                |
-| Charlie Example     | IT2021003    | charlie@example.com                            |
-| Diana Example       | IT2021004    | diana@example.com                              |
-| Ethan Example       | IT2021005    | ethan@example.com                              |
+| Allen Mwandunga     | 0000000      | allen.mwandunga001@stud.fh-dortmund.de         |
+| Bhavana Shivaraju   | 0000000      | bhavana.shivaraju001@stud.fh-dortmund.de       |
+| Mohammad Moradi     | 0000000      | mohammad.moradi005@stud.fh-dortmund.de         |
+| Onyedikachi Onah    | 0000000      | onyedikachi.onah001@stud.fh-dortmund.de        |
 
 ---
 
