@@ -1,0 +1,121 @@
+Functional Requirements
+REQ-01: Manage a Central Warehouse
+Description: The system shall store and allow retrieval of the number of beverages stored (by type and predefined prices) and the number of stored empties in the central warehouse.
+Priority: High
+Actors: System
+
+REQ-02: Manage Bars
+Description: The system shall store and manage bar details including name/description, location, and the stock of different beverage types and predefined prices. 
+Priority: High
+Actors: System
+
+REQ-03: Manage Bottle Drop Point
+Description: The system shall store and manage details of bottle drop points, including location, capacity, and current stock of empties.
+Priority: High
+Actors: System
+
+REQ-04: View Warehouse Data and Status
+Description: Warehouse staff should be able to view up-to-date information about the warehouse, including the number of beverage types stored and the number of stored empties.
+Priority: High
+Actors: Warehouse Staff
+
+REQ-05: View Bar Data and Status
+Description: Bartenders should be able to access real-time information about their bar, including the stock levels of different beverage types.
+Priority: High
+Actors: Bartenders
+
+REQ-06: Bars Request Automatic Stock Replenishment
+Description: Bars should be able to automatically trigger stock replenishment requests from the warehouse when the quantity of any beverage type falls below a defined threshold.
+Priority: High
+Actors: System
+
+REQ-07: Purchase Drinks at a Bar
+Description: Visitors should be able to purchase available drinks at a bar, with the system updating the bar's beverage stock accordingly.
+Priority: High
+Actors: Visitors
+
+REQ-08: Return Empty Bottles to a Bottle Drop Point
+Description: Visitors should be able to return empty bottles at a designated bottle drop point, with the system recording the quantity of returned empties.
+Priority: High
+Actors: Visitors
+
+REQ-09: Report a Full Bottle Drop Point
+Description: Visitors should be able to report that a bottle drop point is full, enabling the system to flag it for maintenance or collection.
+Priority: High
+Actors: Visitors
+
+REQ-10: View All Bottle Drop Points Data and Status
+Description: Stockists should be able to view information about all bottle drop points, including their locations, capacities, and current stock of empties.
+Priority: High
+Actors: Stockists
+
+REQ-11: Prevent Bottle Returns to Full Drop Points
+Description: The system should prevent visitors from returning empty bottles to a bottle drop point that has reached its full capacity.
+Priority: High
+Actors: System
+REQ-12: Empty Bottle Drop Points to Central Warehouse
+Description: It should be possible to empty a bottle drop point by transferring the stored empties to the central warehouse, updating the inventories of both locations accordingly.
+Priority: High
+Actors: Stockists
+
+REQ-13: Management Events
+Description: Event planners should be able to create and configure events by specifying event details such as name, date, location, duration, and status. They should also be able to define the list of beverage types available for that event. Planners should be able to edit or delete the event as needed.
+Priority: High
+Actors: Planners
+
+REQ-14: Set Up Bars with Location and Capacities, and Initial Stock
+Description: Event planners should be able to configure bars for the event, specifying the number of bars, their locations, and per-drink storage capacities, and initial beverage stock for each drink type.
+Priority: High
+Actors: Planners
+
+REQ-15: Set Up Bottle Drop Points with Location and Capacity
+Description: Event planners should be able to configure bottle drop points, including the number needed, their locations, and the capacity (maximum number of empties they can hold).
+Priority: High
+Actors: Planners
+
+REQ-16: Manage Users
+Description: Admins should be able to register new users (e.g., bartenders, warehouse staff, stockists) and assign appropriate roles during the account creation process. Admins should be able to view, deactivate or delete user accounts when access is no longer required.
+Priority: High
+Actors: Admins (Planners)
+
+REQ-17: User Login and Authentication
+Description: All users must log in to access the system. The system shall verify user credentials and grant access based on authentication status.
+Priority: High
+Actors: All Users
+
+REQ-18: Role-Based Authorization
+Description: The system shall enforce role-based access control, ensuring users can only access functionalities permitted by their assigned roles (e.g., only planners can configure events).
+Priority: High
+Actors: System
+
+REQ-19: Manage User Profile
+Description: Users should be able to view and update their own profile information, such as name, email, and password.
+Priority: Medium
+Actors: All Users
+
+REQ-20: Manage System Notifications
+Description: The system shall automatically send notifications to the appropriate users when specific conditions occur, such as a bottle drop point being reported as full by a visitor, a bar requiring a refill, or other system-defined thresholds being met.
+Priority: High
+Actors: System
+
+
+Description of the Domain Concepts (Domain Model)
+
+Entities:
+
+
+Bar: name, location, drinkStock
+Drink: id, name, quantity
+BottleDropPoint: id, location, capacity, currentLevel
+Warehouse: id, drinkStock, emptyBottleStock
+Order: id, visitorId, barId, drinkId, status
+User: id, name, role
+
+Relationships:
+
+Bars stock multiple Drink types.
+Visitors place Orders at Bars.
+Drop Points belong to the event layout and collect empty bottles.
+Warehouse manages both drink and empty bottle stock and coordinates with Bars and Drop Points.
+
+A UML diagram will visualize these entities and their interrelations.
