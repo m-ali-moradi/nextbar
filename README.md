@@ -18,12 +18,12 @@ A distributed microservice-based platform for managing beverage supply and bottl
 
 ## Documentation
 
-Full system documentation is available in the [`/docs`](./docs) folder:
+Full system documentation is available in the [`/Bottle Drop - Documentation`](./Bottle%20Drop%20-%20Documentation) folder:
 
-- [Summary](./docs/01-summary.md)
-- [Functionality](./docs/02-functionality.md)
-- [Architecture Design](./docs/03-architecture-design.md)
-- [Implementation Details](./docs/04-implementation.md)
+- [01. Summary](./Bottle%20Drop%20-%20Documentation/01.%20Summary.md)
+- [02. Functionality](./Bottle%20Drop%20-%20Documentation/02.%20Functionality.md)
+- [03. Architecture Design](./Bottle%20Drop%20-%20Documentation/03.%20Architecture%20Design.md)
+- [04. Implementation Details](./Bottle%20Drop%20-%20Documentation/04.%20Implementation.md)
 
 ---
 
