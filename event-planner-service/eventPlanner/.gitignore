@@ -31,3 +31,6 @@ build/
 
 ### VS Code ###
 .vscode/
+
+/mvnw text eol=lf
+*.cmd text eol=crlf
