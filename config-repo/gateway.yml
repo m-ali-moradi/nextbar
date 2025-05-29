@@ -2,7 +2,7 @@ spring:
   application:
     name: gateway
 server:
-  port: 8080 # Gateway runs on 8080 to match frontend's API base URL
+  port: 8080
 eureka:
   client:
     serviceUrl:
