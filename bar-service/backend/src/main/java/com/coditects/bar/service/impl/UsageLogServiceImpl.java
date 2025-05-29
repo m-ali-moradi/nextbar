@@ -1,10 +1,12 @@
 package com.coditects.bar.service.impl;
 
 import com.coditects.bar.exception.ValidationException;
+import com.coditects.bar.model.BarStockItem;
 import com.coditects.bar.model.Product;
 import com.coditects.bar.model.dto.UsageLogDto;
 import com.coditects.bar.model.UsageLog;
 import com.coditects.bar.repository.BarRepository;
+import com.coditects.bar.repository.BarStockItemRepository;
 import com.coditects.bar.repository.ProductRepository;
 import com.coditects.bar.repository.UsageLogRepository;
 import com.coditects.bar.service.UsageLogService;
@@ -32,6 +34,7 @@ public class UsageLogServiceImpl implements UsageLogService {
     private final BarRepository barRepository;
     private final ProductRepository productRepository;
     private final BarStockServiceImpl barStockService;
+    private final BarStockItemRepository stockRepo;
     
 
     // Logs a drink serving for a specific bar and product
@@ -56,9 +59,12 @@ public class UsageLogServiceImpl implements UsageLogService {
         }
 
         // check if quantity is less than the available stock
-        if (!barStockService.getStockByProductAndBar(barId, productId).stream().anyMatch(item -> item.quantity() < quantity)) {
-            throw new ValidationException("Insufficient stock for product: " + productId + " in bar: " + barId);
-        }
+//        BarStockItem item = stockRepo.findByBarIdAndProductId(barId, productId)
+//                .orElseThrow(() -> new ValidationException("Stock item not found for bar ID: " + barId + " and product ID: " + productId));
+//        // Validate quantity against available stock
+//        if (item.getQuantity() < quantity) {
+//            throw new ValidationException("Insufficient stock for product ID: " + productId + " in bar ID: " + barId);
+//        }
 
         // Create and save the usage log entry
         UsageLog usageLog = new UsageLog();
@@ -79,9 +85,9 @@ public class UsageLogServiceImpl implements UsageLogService {
             throw new ValidationException("Bar not found: " + barId);
         }
         // Check if there are any logs for the bar
-        if (logRepo.findByBarId(barId).isEmpty()) {
-            throw new ValidationException("No logs found for bar: " + barId);
-        }
+//        if (logRepo.findByBarId(barId).isEmpty()) {
+//            throw new ValidationException("No logs found for bar: " + barId);
+//        }
         // Fetch and convert usage logs for the bar, sorted by timestamp descending
         return logRepo.findByBarId(barId).stream()
                 .map(this::toDto)

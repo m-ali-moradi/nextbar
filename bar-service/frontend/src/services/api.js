@@ -1,6 +1,6 @@
 import axios from "axios";
 
-// Base URL for API endpoints (backend server)
+// Base URL for API endpoints (gateway server)
 const API_BASE_URL = "http://localhost:8080/api";
 
 // Axios instance with base URL

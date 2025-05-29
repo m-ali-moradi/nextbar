@@ -25,7 +25,7 @@ import lombok.RequiredArgsConstructor;
 @RestController
 // Maps requests to "/api/bars" and allows cross-origin requests from "http://localhost:5173". it it my frontend application :)
 // Other origins can be added as needed for CORS support e.g Event Planner service
-@RequestMapping("/api/bars")
+@RequestMapping("/bars")
 @CrossOrigin(origins = "http://localhost:5173")
 @RequiredArgsConstructor
 

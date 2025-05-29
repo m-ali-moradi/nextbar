@@ -14,14 +14,14 @@ import io.github.resilience4j.circuitbreaker.annotation.CircuitBreaker;
 
 @EnableDiscoveryClient
 @SpringBootApplication
-@RequestMapping("/api/bars")
+@RequestMapping("/api/")
 public class BarApplication {
 
 	public static void main(String[] args) {
-		SpringApplication.run(BarApplication.class, args);
-	}
+        SpringApplication.run(BarApplication.class, args);
+    }
 
-	// Bean for RestTemplate with LoadBalancer
+//	 Bean for RestTemplate with LoadBalancer
     @Bean
     @LoadBalanced
     public RestTemplate restTemplate() {
@@ -32,7 +32,7 @@ public class BarApplication {
     @GetMapping("/{barId}/stock")
     @CircuitBreaker(name = "stockService", fallbackMethod = "stockFallback")
     public String getStock(@PathVariable String barId) {
-        // 
+        //
         RestTemplate restTemplate = restTemplate();
         return restTemplate.getForObject("http://stock-service/api/stock/" + barId, String.class);
     }

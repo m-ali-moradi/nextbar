@@ -24,7 +24,7 @@ import lombok.RequiredArgsConstructor;
  */
 @RestController
 // Maps requests to "/api/bars/{barId}/usage" and allows cross-origin requests from "http://localhost:5173". 
-@RequestMapping("/api/bars/{barId}/usage")
+@RequestMapping("/bars/{barId}/usage")
 @CrossOrigin(origins = "http://localhost:5173")
 // RequiredArgsConstructor generates a constructor with required arguments for dependency injection
 @RequiredArgsConstructor

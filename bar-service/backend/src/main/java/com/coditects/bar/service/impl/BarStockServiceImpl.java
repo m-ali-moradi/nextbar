@@ -56,7 +56,6 @@ public class BarStockServiceImpl implements BarStockService {
     // Adds stock for a specific product in a bar, creating a new stock item if it doesn't exist
     @Override
     public void addStock(UUID barId, UUID productId, int quantity) {
-
         /* 
             Data Validation
             1. bar should be available to add stock for it.
@@ -123,7 +122,8 @@ public class BarStockServiceImpl implements BarStockService {
         // Retrieve the stock item for the bar and product
         BarStockItem item = stockRepo.findByBarIdAndProductId(barId, productId)
                 .orElseThrow(() -> new ValidationException("Stock item not found for bar ID: " + barId + " and product ID: " + productId));
-
+        System.out.println("item.getQuantity() = " + item.getQuantity());
+        System.out.println("Quantity = " + quantity);
         // Validate quantity against available stock
         if (item.getQuantity() < quantity) {
             throw new ValidationException("Insufficient stock for product ID: " + productId + " in bar ID: " + barId);

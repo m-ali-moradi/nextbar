@@ -82,9 +82,9 @@ public class SupplyRequestServiceImpl implements SupplyRequestService {
     public List<SupplyRequestDto> getRequestsByBar(UUID barId) {
 
         // check if there is requests for the given bar.
-        if (requestRepo.findByBarId(barId).isEmpty()) {
-            throw new ValidationException("No supply requests found for bar ID: " + barId);
-        }
+//        if (requestRepo.findByBarId(barId).isEmpty()) {
+//            throw new ValidationException("No supply requests found for bar ID: " + barId);
+//        }
 
         // Fetch and convert supply requests for the given bar if they exist
         return requestRepo.findByBarId(barId).stream()

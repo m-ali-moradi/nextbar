@@ -29,7 +29,7 @@ import lombok.RequiredArgsConstructor;
 @RestController
 
 // Maps requests to "/api/bars/{barId}/supply" and allows cross-origin requests from "http://localhost:5173"
-@RequestMapping("/api/bars/{barId}/supply")
+@RequestMapping("/bars/{barId}/supply")
 @CrossOrigin(origins = "http://localhost:5173")
 // RequiredArgsConstructor generates a constructor with required arguments for dependency injection
 @RequiredArgsConstructor
@@ -45,7 +45,7 @@ public class SupplyRequestControllerREST {
             @RequestBody List<SupplyItemDto> items) {
 
     // Validate inputs
-        if (barId == null || barId.toString().isEmpty()|| items == null || items.isEmpty()) {
+        if (barId == null || items == null) {
             return ResponseEntity.badRequest().build(); // Return 400 Bad Request if barId is null or items are empty
         }
         // Create and return the supply request

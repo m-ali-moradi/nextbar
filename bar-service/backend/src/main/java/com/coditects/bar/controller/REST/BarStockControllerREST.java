@@ -23,7 +23,7 @@ import lombok.RequiredArgsConstructor;
  */
 @RestController
 // Maps requests to "/api/bars/{barId}/stock" and allows cross-origin requests from "http://localhost:5173"
-@RequestMapping("/api/bars/{barId}/stock")
+@RequestMapping("/bars/{barId}/stock")
 @CrossOrigin(origins = "http://localhost:5173")
 @RequiredArgsConstructor
 public class BarStockControllerREST {
@@ -74,9 +74,9 @@ public class BarStockControllerREST {
         }
 
         // Check if stock is available before reducing
-        if (!stockService.isStockAvailable(barId, productId, quantity)) {
-            return ResponseEntity.status(409).build(); // Return 409 Conflict if stock is not available
-        }
+        // if (!stockService.isStockAvailable(barId, productId, quantity)) {
+        //     return ResponseEntity.status(409).build(); // Return 409 Conflict if stock is not available
+        // }
         // Calls the service to reduce stock for the specified product in the bar
         stockService.reduceStock(barId, productId, quantity);
 
