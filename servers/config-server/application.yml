@@ -1,0 +1,11 @@
+server:
+  port: 8888
+
+spring:
+  cloud:
+    config:
+      server:
+        git:
+          uri: https://github.com/Team-Coditects/dmsa-sose25-coditects.git
+          search-paths: config-repo
+          default-label: main
