@@ -1,0 +1,12 @@
+spring:
+  application:
+    name: dropPointsSys
+  cloud:
+    config:
+      uri: http://localhost:8888
+server:
+  port: 8083
+eureka:
+  client:
+    serviceUrl:
+      defaultZone: http://localhost:8761/eureka/
