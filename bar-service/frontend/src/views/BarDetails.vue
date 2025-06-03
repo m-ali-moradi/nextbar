@@ -3,11 +3,19 @@
   <div class="container mx-auto p-4">
     <!-- Page header with bar name, defaults to "Bar Details" if bar is null -->
     <h1 class="text-2xl font-bold mb-4">{{ bar?.name || "Bar Details" }}</h1>
-    <!-- Navigation link to return to the Bars list -->
-    <router-link to="/" class="text-blue-500 hover:underline mb-4 inline-block">
-      Back to Bars
-    </router-link>
-
+    
+    <!--align back to bars with add drink button in a div-->
+    <div class="flex justify-between mb-4">
+      <!-- Navigation link to return to the Bars list -->
+      <router-link to="/" class="text-blue-500 hover:underline">
+        Close the bar
+      </router-link>
+      <!-- Add Drink button -->
+      <button @click="openAddStockModal"
+              class="bg-blue-500 text-white px-4 py-2 rounded hover:bg-blue-600 mb-4">
+        Add Drink
+      </button>
+    </div>
     <!-- Stock Section: Displays current stock levels -->
     <div class="bg-white p-4 rounded shadow mb-6">
       <h2 class="text-lg font-semibold mb-2">Stock</h2>
@@ -25,7 +33,6 @@
           <tbody>
             <!-- Iterate over stock items -->
             <tr v-for="item in stock" :key="item.id">
-              <!-- Product name with color-coded background based on product -->
               <td class="border p-2 text-center align-middle">
                 <span
                   :class="[
@@ -46,7 +53,6 @@
                   {{ item.name }}
                 </span>
               </td>
-              <!-- Quantity with conditional styling based on stock level -->
               <td class="border p-2 text-center align-middle">
                 <span
                   v-if="item.quantity === 0"
@@ -66,13 +72,10 @@
                   {{ item.quantity }}
                 </span>
               </td>
-              <!-- Last updated timestamp -->
               <td class="border p-2 text-center align-middle">
                 {{ formatDate(item.updatedAt) }}
               </td>
-              <!-- Action buttons: Sell, Request, or show request status -->
               <td class="border p-2 text-center align-middle">
-                <!-- Sell button, enabled only if quantity > 0 -->
                 <button
                   v-if="item.quantity > 0"
                   @click="openSellModal(item)"
@@ -86,7 +89,6 @@
                 >
                   Sell
                 </button>
-                <!-- Show 'Request in Process' if quantity is 0 and a request is pending -->
                 <button
                   v-if="
                     item.quantity === 0 && hasPendingRequest(item.productId)
@@ -94,9 +96,8 @@
                   disabled
                   class="bg-yellow-300 text-white px-2 py-1 rounded cursor-not-allowed"
                 >
-                  Request in Process
+                  Pending Request
                 </button>
-                <!-- Show 'Request' button if quantity < 5 and no pending request -->
                 <button
                   v-else-if="
                     item.quantity < 5 && !hasPendingRequest(item.productId)
@@ -106,7 +107,6 @@
                 >
                   Request
                 </button>
-                <!-- Auto Supply Request Modal: Displays as a toast when quantity <= 5 and no pending request -->
                 <AutoSupplyRequestModal
                   v-if="
                     item.quantity <= 5 && !hasPendingRequest(item.productId)
@@ -121,16 +121,12 @@
           </tbody>
         </table>
       </div>
-      <!-- Message displayed when no stock is available -->
       <p v-else class="text-gray-500">No stock available.</p>
     </div>
 
-    <!-- Side-by-Side Serve Log and Total Served Sections -->
     <div class="flex flex-col md:flex-row gap-6 mb-6">
-      <!-- Serve Log Section: Displays history of served items -->
       <div class="bg-white p-4 rounded shadow flex-1">
         <h2 class="text-lg font-semibold mb-2">Serve Log</h2>
-        <!-- Serve log table, shown only if usage logs exist -->
         <div v-if="usageLogs.length" class="overflow-x-auto">
           <table class="w-full border-collapse">
             <thead>
@@ -141,23 +137,19 @@
               </tr>
             </thead>
             <tbody>
-              <!-- Iterate over usage logs -->
               <tr v-for="log in usageLogs" :key="log.id">
-                <td class="border p-2">{{ log.productName }}</td>
-                <td class="border p-2">{{ log.quantity }}</td>
-                <td class="border p-2">{{ formatDate(log.timestamp) }}</td>
+                <td class="border p-2 text-center align-middle">{{ log.productName }}</td>
+                <td class="border p-2 text-center align-middle">{{ log.quantity }}</td>
+                <td class="border p-2 text-center align-middle">{{ formatDate(log.timestamp) }}</td>
               </tr>
             </tbody>
           </table>
         </div>
-        <!-- Message displayed when no usage logs are available -->
         <p v-else class="text-gray-500">No serve log available.</p>
       </div>
 
-      <!-- Total Served Section: Displays total served quantities per product -->
       <div class="bg-white p-4 rounded shadow flex-1">
         <h2 class="text-lg font-semibold mb-2">Total Served</h2>
-        <!-- Total served table, shown only if usage logs exist -->
         <div v-if="usageLogs.length" class="overflow-x-auto">
           <table class="w-full border-collapse">
             <thead>
@@ -167,7 +159,6 @@
               </tr>
             </thead>
             <tbody>
-              <!-- Iterate over total served data -->
               <tr v-for="item in totalServed" :key="item.name">
                 <td class="p-3">{{ item.name }}</td>
                 <td class="p-3">{{ item.total }}</td>
@@ -175,15 +166,12 @@
             </tbody>
           </table>
         </div>
-        <!-- Message displayed when no items have been served -->
         <p v-else class="text-gray-500">No items served yet.</p>
       </div>
     </div>
 
-    <!-- Supply Requests Section: Displays pending supply requests -->
     <div class="bg-white p-4 rounded shadow">
       <h2 class="text-lg font-semibold mb-2">Supply Requests</h2>
-      <!-- Supply requests table, shown only if requests exist -->
       <div v-if="supplyRequests.length" class="overflow-x-auto">
         <table class="w-full border-collapse">
           <thead>
@@ -196,38 +184,61 @@
             </tr>
           </thead>
           <tbody>
-            <!-- Iterate over supply requests -->
             <tr v-for="request in supplyRequests" :key="request.id">
-              <td class="border p-2">
+              <td class="border p-2 text-center align-middle">
                 {{ request.items[0]?.productName || "Unknown" }}
               </td>
-              <td class="border p-2">{{ request.items[0]?.quantity || 0 }}</td>
-              <td class="border p-2">{{ request.status }}</td>
-              <td class="border p-2">{{ formatDate(request.createdAt) }}</td>
-              <!-- Action column with Cancel button, enabled only for REQUESTED status -->
-              <td class="border p-2">
+              <td class="border p-2 text-center align-middle">{{ request.items[0]?.quantity || 0 }}</td>
+              <td class="border p-2 text-center align-middle">{{ request.status }}</td>
+              <td class="border p-2 text-center align-middle">{{ formatDate(request.createdAt) }}</td>
+              <td class="border p-2 text-center align-middle">
+                <!-- Cancel button for REQUESTED status -->
                 <button
+                  v-if="request.status === 'REQUESTED'"
                   :disabled="request.status !== 'REQUESTED'"
                   @click="cancelRequest(request.id)"
-                  :class="{
-                    'bg-red-500 text-white px-2 py-1 rounded hover:bg-red-600':
-                      request.status === 'REQUESTED',
-                    'bg-gray-400 text-gray-200 px-2 py-1 rounded cursor-not-allowed':
-                      request.status !== 'REQUESTED',
-                  }"
+                  class="bg-red-500 text-white px-2 py-1 rounded hover:bg-red-600"
                 >
                   Cancel
                 </button>
+                <!-- Add to Stock button for DELIVERED status -->
+                 <button
+                  v-else-if="request.status === 'IN_PROGRESS'"
+
+                  class="bg-yellow-500 text-white px-2 py-1 rounded hover:bg-yellow-600"
+                >
+                  In Progress
+                </button>
+                <button
+                  v-else-if="request.status === 'DELIVERED'"
+                  @click="addToStock(request)"
+                  class="bg-green-500 text-white px-2 py-1 rounded hover:bg-green-600"
+                >
+                  Add to Stock
+                </button>
+                <!-- Completed label for COMPLETED status -->
+                <!-- <span
+                  v-else-if="request.status === 'COMPLETED'"
+                  class="bg-gray-500 text-white px-2 py-1 rounded"
+                >
+                  Completed
+                </span> -->
+                <!-- Disabled state for other statuses -->
+                <!-- <button
+                  v-else
+                  disabled
+                  class="bg-gray-400 text-gray-200 px-2 py-1 rounded cursor-not-allowed"
+                >
+                  -
+                </button> -->
               </td>
             </tr>
           </tbody>
         </table>
       </div>
-      <!-- Message displayed when no supply requests are available -->
       <p v-else class="text-gray-500">No supply requests available.</p>
     </div>
 
-    <!-- Modals for Sell and Supply Request actions -->
     <SellStockModal
       :is-open="showSellModal"
       :item="selectedItem"
@@ -242,6 +253,11 @@
       @close="showRequestModal = false"
       @supply-requested="fetchBarDetails"
     />
+    <AddStockModal
+      :is-open="showAddStockModal"
+      @close="showAddStockModal = false"
+      @stock-added="fetchBarDetails"
+    />
   </div>
 </template>
 
@@ -251,6 +267,7 @@ import api from "../services/api";
 import SellStockModal from "../components/SellStockModal.vue";
 import SupplyRequestModal from "../components/SupplyRequestModal.vue";
 import AutoSupplyRequestModal from "../components/AutoSupplyRequestModal.vue";
+import AddStockModal from "../components/AddStockModal.vue";
 
 export default {
   name: "BarDetails",
@@ -258,32 +275,29 @@ export default {
     SellStockModal,
     SupplyRequestModal,
     AutoSupplyRequestModal,
+    AddStockModal,
   },
-  // Reactive data properties
   data() {
     return {
-      bar: null, // Bar details
-      stock: [], // List of stock items
-      usageLogs: [], // Serve log entries
-      supplyRequests: [], // Supply request entries
-      totalServed: [], // Total served quantities per product
-      showSellModal: false, // Controls visibility of SellStockModal
-      showRequestModal: false, // Controls visibility of SupplyRequestModal
-      selectedItem: null, // Currently selected stock item
+      bar: null,
+      stock: [],
+      usageLogs: [],
+      supplyRequests: [],
+      totalServed: [],
+      showSellModal: false,
+      showRequestModal: false,
+      selectedItem: null,
+      showAddStockModal: false,
     };
   },
-  // Computed properties
   computed: {
-    // Sort stock items by last updated date (descending)
     sortedStock() {
       return [...this.stock].sort(
         (a, b) => new Date(b.updatedAt) - new Date(a.updatedAt)
       );
     },
   },
-  // Methods
   methods: {
-    // Fetch bar details, stock, usage logs, supply requests, and total served
     async fetchBarDetails() {
       try {
         const barId = this.$route.params.barId;
@@ -291,7 +305,6 @@ export default {
         this.stock = await api.getStock(barId);
         this.usageLogs = await api.getUsageLogs(barId);
         this.supplyRequests = await api.getSupplyRequests(barId);
-        // Transform totalServed array into a list of { name, total } objects
         const totalServedArray = await api.getTotalServed(barId);
         this.totalServed = totalServedArray.map((entry) => {
           const [name, total] = Object.entries(entry)[0];
@@ -301,63 +314,83 @@ export default {
         console.error("Error fetching bar details:", error);
       }
     },
-    // Open the Sell Stock modal for the selected item
     openSellModal(item) {
       this.selectedItem = item;
       this.showSellModal = true;
     },
-    // Open the Supply Request modal for the selected item
     openRequestModal(item) {
       this.selectedItem = item;
       this.showRequestModal = true;
     },
-    // Handle supply request confirmation from AutoSupplyRequestModal
+    openAddStockModal() {
+      this.showAddStockModal = true;
+    },
     async handleSupplyRequest({ productId, quantity }) {
       await api.createSupplyRequest(this.$route.params.barId, [
         { productId, quantity },
       ]);
       await this.fetchBarDetails();
     },
-    // Cancel a supply request with confirmation
     async cancelRequest(requestId) {
-      // Show confirmation dialog to the user
       const confirmed = window.confirm(
         "Are you sure you want to cancel this supply request?"
       );
       if (!confirmed) return;
 
       try {
-        // Send DELETE request to cancel the supply request
         await api.cancelSupplyRequest(this.$route.params.barId, requestId);
-        // Refresh data after cancellation
         await this.fetchBarDetails();
-        // Show success alert
         alert("Supply request canceled successfully!");
       } catch (error) {
         console.error("Error canceling request:", error);
-        // Show error alert
         alert("Failed to cancel supply request. Please try again.");
       }
     },
-    // Format a date to display relative time (e.g., "Just now" or "5 min ago")
+    async addToStock(request) {
+      try {
+        const barId = this.$route.params.barId;
+        const productId = request.items[0].productId;
+        const quantity = request.items[0].quantity;
+
+        // Send addStock request
+        await api.addStock(barId, productId, quantity);
+
+        // Update request status to COMPLETED
+        await api.updateSupplyRequest(barId, request.id, "COMPLETED");
+
+        // Refresh data
+        await this.fetchBarDetails();
+        alert("Stock added successfully!");
+      } catch (error) {
+        console.error("Error adding stock:", error);
+        alert("Failed to add stock. Please try again.");
+      }
+    },
     formatDate(date) {
       const now = new Date();
       const updated = new Date(date);
       const diffInMinutes = Math.floor((now - updated) / (1000 * 60));
       return diffInMinutes <= 1 ? "Just now" : `${diffInMinutes} min ago`;
     },
-    // Check if a product has a pending supply request
     hasPendingRequest(productId) {
       return this.supplyRequests.some((req) =>
         req.items.some(
           (item) =>
             item.productId === productId &&
-            (req.status === "REQUESTED" || req.status === "IN_PROGRESS")
+            (req.status === "REQUESTED" || req.status === "IN_PROGRESS" || req.status === "DELIVERED")
+        )
+      );
+    },
+    requestCompleted(productId) {
+      return this.supplyRequests.some((req) =>
+        req.items.some(
+          (item) =>
+            item.productId === productId &&
+            (req.status === "COMPLETED")
         )
       );
     },
   },
-  // Lifecycle hook: Fetch data when the component is created
   created() {
     this.fetchBarDetails();
   },

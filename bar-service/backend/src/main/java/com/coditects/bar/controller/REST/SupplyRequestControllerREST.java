@@ -6,6 +6,7 @@ import java.util.UUID;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.CrossOrigin;
+import org.springframework.web.bind.annotation.DeleteMapping;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.PostMapping;
@@ -24,13 +25,13 @@ import lombok.RequiredArgsConstructor;
 
 /**
  * REST controller for managing supply requests for a bar.
- * Provides endpoints to create, view, and update supply requests.
+ * Provides endpoints to create, view, delete and update supply requests.
  */
 @RestController
 
 // Maps requests to "/api/bars/{barId}/supply" and allows cross-origin requests from "http://localhost:5173"
 @RequestMapping("/bars/{barId}/supply")
-@CrossOrigin(origins = "http://localhost:5173")
+//@CrossOrigin(origins = "http://localhost:5173")
 // RequiredArgsConstructor generates a constructor with required arguments for dependency injection
 @RequiredArgsConstructor
 public class SupplyRequestControllerREST {
@@ -90,4 +91,18 @@ public class SupplyRequestControllerREST {
         // Returns a 200 OK response after updating the status
         return ResponseEntity.ok().build();
     }
+
+    // Delete a supply request
+    @DeleteMapping("/{requestId}")
+    public ResponseEntity<Void> deleteRequest(@PathVariable UUID requestId) {
+        // Validate requestId
+        if (requestId == null) {
+            return ResponseEntity.badRequest().build(); // Return 400 Bad Request if requestId is null
+        }
+        // Delete the supply request
+        requestService.deleteRequest(requestId);
+        // Returns a 204 No Content response after successful deletion
+        return ResponseEntity.noContent().build();
+    }
+
 }

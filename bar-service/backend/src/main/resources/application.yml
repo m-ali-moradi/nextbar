@@ -1,8 +1,8 @@
-resilience4j:
-  circuitbreaker:
-    instances:
-      stockService:
-        slidingWindowSize: 10
-        failureRateThreshold: 50
-        waitDurationInOpenState: 10000
-        permittedNumberOfCallsInHalfOpenState: 5
+#resilience4j:
+#  circuitbreaker:
+#    instances:
+#      stockService:
+#        slidingWindowSize: 10
+#        failureRateThreshold: 50
+#        waitDurationInOpenState: 10000
+#        permittedNumberOfCallsInHalfOpenState: 5

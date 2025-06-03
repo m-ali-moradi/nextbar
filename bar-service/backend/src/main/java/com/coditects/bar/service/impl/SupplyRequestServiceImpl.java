@@ -55,9 +55,9 @@ public class SupplyRequestServiceImpl implements SupplyRequestService {
             }
         }
 
-        // check if there is an existing supply request for the bar for the same items
-        if (requestRepo.existsByBarIdAndItems_ProductIdIn(barId, items.stream().map(SupplyItemDto::productId).toList())) {
-            throw new ValidationException("A supply request already exists for the bar with the same items.");
+        // check if there is an existing supply request that are in REQUESTED, IN_PROGRESS, or DELIVERED status
+        if (requestRepo.existsByBarIdAndStatusIn(barId, List.of(SupplyStatus.REQUESTED, SupplyStatus.IN_PROGRESS, SupplyStatus.DELIVERED))) {
+            throw new ValidationException("A supply request already exists for the bar in REQUESTED, IN_PROGRESS, or DELIVERED status.");
         }
 
         // Create a new supply request
@@ -131,9 +131,13 @@ public class SupplyRequestServiceImpl implements SupplyRequestService {
         if (req.getStatus() == SupplyStatus.IN_PROGRESS && status != SupplyStatus.DELIVERED) {
             throw new ValidationException("IN_PROGRESS requests can only be updated to DELIVERED");
         } 
-        // DELIVERED requests cannot be updated
-        if (req.getStatus() == SupplyStatus.DELIVERED) {
-            throw new ValidationException("DELIVERED requests cannot be updated");
+        // DELIVERED request can only be updated to COMPLETED
+        if (req.getStatus() == SupplyStatus.DELIVERED && status != SupplyStatus.COMPLETED) {
+            throw new ValidationException("DELIVERED requests can only be updated to COMPLETED");
+        }
+        // COMPLETED requests cannot be updated
+        if (req.getStatus() == SupplyStatus.COMPLETED) {
+            throw new ValidationException("COMPLETED requests cannot be updated");
         }
         // Update the status of the supply request
         req.setStatus(status);

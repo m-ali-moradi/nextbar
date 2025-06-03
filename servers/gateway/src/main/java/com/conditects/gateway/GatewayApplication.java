@@ -21,9 +21,8 @@ public class GatewayApplication {
     public WebMvcConfigurer corsConfigurer() {
         return new WebMvcConfigurer() {
             public void addCorsMappings(CorsRegistry registry) {
-                registry.addMapping("/api/**").allowedOrigins("http://localhost:5173")
-                        .allowedMethods("GET", "POST", "PUT", "DELETE", "OPTIONS")
-                        .allowedHeaders("*");
+                registry.addMapping("/api/**").allowedOrigins("http://localhost:5173");
+
             }
         };
     }
@@ -40,6 +39,7 @@ public class GatewayApplication {
                 .route("droppoint-service", r -> r.path("/api/droppoints/**")
                         .filters(f -> f.stripPrefix(1)) // Remove /api from path
                         .uri("lb://droppoint-service")) // lb:// uses Eureka for load balancing)
+                // routes for other services here
                 .build();
     }
 }

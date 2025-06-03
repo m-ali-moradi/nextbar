@@ -11,3 +11,15 @@ eureka:
     fetchRegistry: false # Disable fetching registry as this is the server
     serviceUrl:
       defaultZone: https://${eureka.instance.hostname}:${server.port}/eureka/
+  port: 8761
+
+spring:
+  application:
+    name: eureka-server
+  cloud:
+    config:
+      uri: http://localhost:8888
+
+eureka:
+  client:
+    register-with-eureka: false

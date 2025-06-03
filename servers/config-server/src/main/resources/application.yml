@@ -11,3 +11,5 @@ spring:
           default-label: main
           username: m-ali-moradi
           password: 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
+  application:
+    name: config-server

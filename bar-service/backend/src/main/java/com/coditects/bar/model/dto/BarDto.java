@@ -3,11 +3,14 @@ package com.coditects.bar.model.dto;
 import java.util.UUID;
 
 import com.coditects.bar.exception.ValidationException;
+import lombok.Getter;
+import lombok.Setter;
 
 /**
  * Data Transfer Object (DTO) for Bar entity.
  * Represents the details of a bar including its ID, name, location, and maximum capacity.
  */
+
 public record BarDto(UUID id, String name, String location, int maxCapacity) {
     
     /**
