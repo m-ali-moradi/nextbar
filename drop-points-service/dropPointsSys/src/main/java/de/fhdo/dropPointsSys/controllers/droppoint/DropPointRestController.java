@@ -11,7 +11,7 @@ import java.util.stream.Collectors;
 
 @CrossOrigin
 @RestController
-@RequestMapping("/api/droppoints")
+@RequestMapping("/droppoints")
 public class DropPointRestController {
 
     private final DropPointService dropPointService;
