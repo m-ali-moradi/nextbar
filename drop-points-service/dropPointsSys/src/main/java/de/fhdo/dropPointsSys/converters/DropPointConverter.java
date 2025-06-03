@@ -17,6 +17,13 @@ public class DropPointConverter {
 
     public static DropPoint toEntity(DropPointDto dto) {
 
+        DropPoint dropPoint = new DropPoint();
+        dropPoint.setId(dto.getId());
+        dropPoint.setLocation(dto.getLocation());
+        dropPoint.setCapacity(dto.getCapacity());
+        dropPoint.setStatus(dto.getStatus());
+        return dropPoint;
+
     }
 
 
