@@ -12,10 +12,10 @@ spring:
           predicates:
             - Path=/api/bar/**
 
-        # - id: eventplanner-service
-        #   uri: lb://eventplanner-service
-        #   predicates:
-        #     - Path=/api/planner/**
+        - id: droppoint-service
+          uri: lb://droppoint-service
+          predicates:
+            - Path=/api/droppoints/**
 
 eureka:
   client:

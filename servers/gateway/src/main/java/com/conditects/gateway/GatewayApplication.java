@@ -37,6 +37,9 @@ public class GatewayApplication {
                         .filters(f -> f.stripPrefix(1)) // Remove /api from path
                         .uri("lb://bar-service")) // lb:// uses Eureka for load balancing
                 // Add routes for other services here (e.g., stock-service)
+                .route("droppoint-service", r -> r.path("/api/droppoints/**")
+                        .filters(f -> f.stripPrefix(1)) // Remove /api from path
+                        .uri("lb://droppoint-service")) // lb:// uses Eureka for load balancing)
                 .build();
     }
 }
