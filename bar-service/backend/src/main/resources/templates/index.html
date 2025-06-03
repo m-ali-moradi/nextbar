@@ -1,0 +1,90 @@
+<!DOCTYPE html>
+<html lang="en" xmlns:th="http://www.thymeleaf.org">
+<head>
+    <meta charset="UTF-8">
+    <title>Coditects Bar</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+</head>
+<body class="bg-gray-100 min-h-screen flex flex-col">
+<header class="bg-yellow-100 text-brown-800 py-4 shadow-md">
+    <h1 class="text-3xl font-bold text-center">Coditects Bar</h1>
+</header>
+
+<main class="container mx-auto p-6 flex-grow">
+    <section>
+        <div class="flex justify-between items-center mb-6">
+            <h2 class="text-2xl font-semibold text-brown-800">Bars:</h2>
+            <button onclick="showAddBarModal()"
+                    class="bg-blue-500 text-white px-4 py-2 rounded-lg hover:bg-blue-600 transition">Add Bar
+            </button>
+        </div>
+        <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6">
+            <a th:each="bar : ${bars}" th:href="@{/bars/{id}(id=${bar.id})}" class="block">
+                <div class="bg-white p-4 rounded-lg shadow hover:shadow-lg transition">
+                    <img src="https://via.placeholder.com/300x200" alt="Bar Image"
+                         class="w-full h-40 object-cover rounded-t-lg mb-4">
+                    <h3 class="text-xl font-semibold text-brown-800" th:text="${bar.name}">Bar Name</h3>
+                    <p class="text-gray-600" th:text="'Location: ' + ${bar.location}">Location: N/A</p>
+                </div>
+            </a>
+            <div th:unless="${bars}" class="col-span-full text-center text-gray-500">
+                No bars available. Add a new bar to get started!
+            </div>
+        </div>
+    </section>
+</main>
+
+<footer class="bg-gray-800 text-white text-center py-4">
+    <p>© 2025 Coditects Bar. All rights reserved.</p>
+</footer>
+
+<!-- Add Bar Modal -->
+<div id="addBarModal" class="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center hidden">
+    <div class="bg-white p-6 rounded-lg shadow-lg w-full max-w-md">
+        <h3 class="text-xl font-semibold mb-4">Add New Bar</h3>
+        <form th:action="@{/bars/add}" method="post" class="space-y-4" onsubmit="return validateForm()">
+            <div>
+                <label for="barName" class="block font-semibold">Bar Name:</label>
+                <input type="text" id="barName" name="name" placeholder="Enter bar name"
+                       class="border rounded-lg p-2 w-full focus:outline-none focus:ring-2 focus:ring-blue-500"/>
+            </div>
+            <div>
+                <label for="barLocation" class="block font-semibold">Location:</label>
+                <input type="text" id="barLocation" name="location" placeholder="Enter location (e.g., EF38B)"
+                       class="border rounded-lg p-2 w-full focus:outline-none focus:ring-2 focus:ring-blue-500"/>
+            </div>
+            <div class="flex justify-end gap-4 mt-6">
+                <button type="button" onclick="closeAddBarModal()"
+                        class="bg-gray-500 text-white px-4 py-2 rounded-lg hover:bg-gray-600 transition">Cancel
+                </button>
+                <button type="submit" class="bg-blue-500 text-white px-4 py-2 rounded-lg hover:bg-blue-600 transition">
+                    Save
+                </button>
+            </div>
+        </form>
+    </div>
+</div>
+
+<script>
+    function showAddBarModal() {
+        document.getElementById("addBarModal").classList.remove("hidden");
+    }
+
+    function closeAddBarModal() {
+        document.getElementById("addBarModal").classList.add("hidden");
+        document.getElementById("barName").value = "";
+        document.getElementById("barLocation").value = "";
+    }
+
+    function validateForm() {
+        const name = document.getElementById("barName").value.trim();
+        const location = document.getElementById("barLocation").value.trim();
+        if (!name || !location) {
+            alert("Please enter both bar name and location.");
+            return false;
+        }
+        return true;
+    }
+</script>
+</body>
+</html>

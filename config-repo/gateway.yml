@@ -1,0 +1,23 @@
+server:
+  port: 8080
+
+spring:
+  application:
+    name: gateway
+  cloud:
+    gateway:
+      routes:
+        - id: bar-service
+          uri: lb://bar-service
+          predicates:
+            - Path=/api/bar/**
+
+        # - id: eventplanner-service
+        #   uri: lb://eventplanner-service
+        #   predicates:
+        #     - Path=/api/planner/**
+
+eureka:
+  client:
+    service-url:
+      defaultZone: http://localhost:8761/eureka
