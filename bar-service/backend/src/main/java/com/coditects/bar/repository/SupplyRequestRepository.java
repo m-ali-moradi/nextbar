@@ -7,6 +7,7 @@ import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.stereotype.Repository;
 
 import com.coditects.bar.model.SupplyRequest;
+import com.coditects.bar.model.SupplyStatus;
 
 /**
  * Repository interface for managing SupplyRequest entities.
@@ -22,5 +23,5 @@ public interface SupplyRequestRepository extends JpaRepository<SupplyRequest, UU
      */
     List<SupplyRequest> findByBarId(UUID barId);
     // Checks if a supply request exists for a specific bar ID and a list of product IDs.
-    boolean existsByBarIdAndItems_ProductIdIn(UUID barId, List<UUID> productIds);
+    boolean existsByBarIdAndStatusIn(UUID barId, List<SupplyStatus> statuses);
 }

@@ -28,7 +28,7 @@ public class BarServiceImpl implements BarService {
 
     // registerBar method to create a new bar
     @Override
-    public BarDto registerBar(String name, String location, int maxCapacity) {
+    public BarDto registerBar(UUID id, String name, String location, int maxCapacity) {
 
         // Create a new Bar object and save it to the repository
         Bar bar = new Bar(UUID.randomUUID(), name, location, maxCapacity, new ArrayList<>());
