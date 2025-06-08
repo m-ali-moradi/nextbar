@@ -31,7 +31,7 @@ public class BarServiceImpl implements BarService {
     public BarDto registerBar(UUID id, String name, String location, int maxCapacity) {
 
         // Create a new Bar object and save it to the repository
-        Bar bar = new Bar(UUID.randomUUID(), name, location, maxCapacity, new ArrayList<>());
+        Bar bar = new Bar(id, name, location, maxCapacity, new ArrayList<>());
         // Save the bar to the repository and convert it to a DTO
         return toDto(barRepository.save(bar));
 

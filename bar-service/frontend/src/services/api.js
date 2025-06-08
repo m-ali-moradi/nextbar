@@ -77,7 +77,7 @@ export default {
   // Get total drinks served for a specific bar, by bar ID
   async getTotalServed(barId) {
     const response = await fetch(
-      `http://localhost:8081/bars/${barId}/usage/total-served`,
+      `http://localhost:8080/api/bars/${barId}/usage/total-served`,
       {
         cache: "no-store", // Force no caching to avoid 304
       }

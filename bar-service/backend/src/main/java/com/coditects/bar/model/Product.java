@@ -26,10 +26,11 @@ public class Product {
     private String unitType;
 
     // Default unit type is "bottle" if not specified
-    public Product(String name) {
-        this.id = UUID.randomUUID();
+    public Product(UUID id, String name) {
+        this.id = id;
         this.name = name;
         this.unitType = "bottle"; // Default unit type
     }
+
 
 }

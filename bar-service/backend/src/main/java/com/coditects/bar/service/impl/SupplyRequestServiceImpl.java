@@ -2,6 +2,7 @@ package com.coditects.bar.service.impl;
 
 import java.time.LocalDateTime;
 import java.util.List;
+import java.util.Optional;
 import java.util.UUID;
 
 import org.springframework.stereotype.Service;
@@ -104,7 +105,7 @@ public class SupplyRequestServiceImpl implements SupplyRequestService {
     }
 
     @Override
-    public void updateRequestStatus(UUID requestId, SupplyStatus status) {
+    public void updateRequestStatus(UUID requestId, Integer quantity, SupplyStatus status) {
         /*
          * Data validation for requestId and status
          * 1. request should be available
@@ -140,6 +141,10 @@ public class SupplyRequestServiceImpl implements SupplyRequestService {
             throw new ValidationException("COMPLETED requests cannot be updated");
         }
         // Update the status of the supply request
+        // if the quantity is not null or zero, set SupplyItem.quantity = quantity
+        if (quantity != null && quantity > 0) {
+            req.getItems().forEach(item -> item.setQuantity(quantity));
+        }
         req.setStatus(status);
         requestRepo.save(req);
     }

@@ -1,6 +1,7 @@
 package com.coditects.bar.controller.REST;
 
 import java.util.List;
+import java.util.Optional;
 import java.util.UUID;
 
 import org.springframework.http.HttpStatus;
@@ -80,14 +81,14 @@ public class SupplyRequestControllerREST {
 
     // Update supply request status (used by Warehouse)
     @PutMapping("/{requestId}/status")
-    public ResponseEntity<Void> updateStatus(@PathVariable UUID requestId,
+    public ResponseEntity<Void> updateStatus(@PathVariable UUID requestId, @RequestParam(required = false) Integer quantity,
                                              @RequestParam SupplyStatus status) {
     // Validate requestId and status
         if (requestId == null || status == null) {
             return ResponseEntity.badRequest().build(); // Return 400 Bad Request if requestId or status is null
         }
         // Update the request status
-        requestService.updateRequestStatus(requestId, status);
+        requestService.updateRequestStatus(requestId, quantity, status);
         // Returns a 200 OK response after updating the status
         return ResponseEntity.ok().build();
     }

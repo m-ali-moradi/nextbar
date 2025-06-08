@@ -1,9 +1,0 @@
-#spring:
-#  application:
-#    name: gateway
-#server:
-#  port: 8080 # Gateway runs on 8080 to match frontend's API base URL
-#eureka:
-#  client:
-#    serviceUrl:
-#      defaultZone: http://localhost:8761/eureka/
