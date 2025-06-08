@@ -1,8 +1,5 @@
-
-
 server:
   port: 8080
-
 spring:
   application:
     name: gateway
@@ -23,13 +20,14 @@ spring:
             allowedHeaders: "*"
             allowCredentials: true
       routes:
+      # Bar route
         - id: bar-service
           uri: lb://bar-service
           predicates:
             - Path=/api/bars/**
           filters:
             - StripPrefix=1
-
+      # Droppoints route
         - id: droppoint-service
           uri: lb://droppoint-service
           predicates:
@@ -37,29 +35,8 @@ spring:
           filters:
             - StripPrefix=1
 
-
-
-
-# server:
-#   port: 8080
-
-# spring:
-#   application:
-#     name: gateway
-#   cloud:
-#     gateway:
-#       routes:
-#         - id: bar-service
-#           uri: lb://bar-service
-#           predicates:
-#             - Path=/api/bar/**
-
-#         - id: droppoint-service
-#           uri: lb://droppoint-service
-#           predicates:
-#             - Path=/api/droppoints/**
-
 eureka:
   client:
     service-url:
       defaultZone: http://localhost:8761/eureka
+
