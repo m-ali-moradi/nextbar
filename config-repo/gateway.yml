@@ -20,13 +20,14 @@ spring:
             allowedHeaders: "*"
             allowCredentials: true
       routes:
+      # Bar route
         - id: bar-service
           uri: lb://bar-service
           predicates:
             - Path=/api/bars/**
           filters:
             - StripPrefix=1
-
+      # Droppoints route
         - id: droppoint-service
           uri: lb://droppoint-service
           predicates:
