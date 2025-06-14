@@ -1,0 +1,9 @@
+/Users/macbook/Desktop/dmsa-sose25-coditects/warehouse-service/backend/src/main/java/com/dmsa/warehouse/model/EmptyBottleStock.java
+/Users/macbook/Desktop/dmsa-sose25-coditects/warehouse-service/backend/src/main/java/com/dmsa/warehouse/dto/ReplenishRequest.java
+/Users/macbook/Desktop/dmsa-sose25-coditects/warehouse-service/backend/src/main/java/com/dmsa/warehouse/repository/EmptyBottleStockRepository.java
+/Users/macbook/Desktop/dmsa-sose25-coditects/warehouse-service/backend/src/main/java/com/dmsa/warehouse/WarehouseServiceApplication.java
+/Users/macbook/Desktop/dmsa-sose25-coditects/warehouse-service/backend/src/main/java/com/dmsa/warehouse/repository/BeverageStockRepository.java
+/Users/macbook/Desktop/dmsa-sose25-coditects/warehouse-service/backend/src/main/java/com/dmsa/warehouse/controller/WarehouseController.java
+/Users/macbook/Desktop/dmsa-sose25-coditects/warehouse-service/backend/src/main/java/com/dmsa/warehouse/dto/EmptyReceiveRequest.java
+/Users/macbook/Desktop/dmsa-sose25-coditects/warehouse-service/backend/src/main/java/com/dmsa/warehouse/model/BeverageStock.java
+/Users/macbook/Desktop/dmsa-sose25-coditects/warehouse-service/backend/src/main/java/com/dmsa/warehouse/services/WarehouseService.java
