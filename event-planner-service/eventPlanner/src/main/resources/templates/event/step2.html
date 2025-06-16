@@ -1,187 +1,184 @@
 <!DOCTYPE html>
 <html xmlns:th="http://www.thymeleaf.org">
 <head>
-  <meta charset="UTF-8" />
-  <title th:text="${eventForm.eventId} != null ? 'Edit Event – Step 2: Bars' : 'Create Event – Step 2: Bars'"></title>
-  <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap@4.6.0/dist/css/bootstrap.min.css" />
-  <script th:src="@{/js/jquery-3.7.1.min.js}"></script>
+  <meta charset="UTF-8"/>
+  <title th:text="${eventForm.eventId} != null ? 'Edit Event – Step 2' : 'Create Event – Step 2'">
+    Configure Bars
+  </title>
+  <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap@4.6.0/dist/css/bootstrap.min.css"/>
+  <script src="https://code.jquery.com/jquery-3.6.0.min.js"
+          integrity="sha256-/xUj+3OJ+YThvYvI6rXaaYMmUTeGRc+MakNPkjp4Y2I=" crossorigin="anonymous"></script>
 </head>
 <body class="bg-light">
 <div class="container py-4">
-  <h1 th:text="${eventForm.eventId} != null ? 'Edit Event – Step 2: Configure Bars' : 'Create Event – Step 2: Configure Bars'"></h1>
+  <h1 th:text="${eventForm.eventId} != null ? 'Edit Event – Step 2' : 'Create Event – Step 2'">
+    Configure Bars
+  </h1>
 
   <form th:action="@{/events/create/step2}" th:object="${eventForm}" method="post">
-    <!-- Hidden eventId (so that on final save we know if this is an update vs. new) -->
+    <!-- Carry over Step 1 data -->
     <input type="hidden" th:field="*{eventId}" />
+    <input type="hidden" th:field="*{name}" />
+    <input type="hidden" th:field="*{date}" />
+    <input type="hidden" th:field="*{location}" />
+    <input type="hidden" th:field="*{status}" />
 
+    <!-- Hidden re-post of beverageIds -->
+    <div th:each="bev, stat : ${selectedBeverages}">
+      <input type="hidden" th:field="*{beverageIds[__${stat.index}__]}" />
+    </div>
+
+    <!-- Bars container -->
     <div id="barsContainer">
-      <!-- Render existing BarPlanForm entries (populated either by constructor or by Step 1) -->
-      <div th:each="bar, barStat : *{bars}" class="border rounded p-3 mb-3">
+      <!-- Render existing bars -->
+      <div th:each="bar, stat : *{bars}" class="border rounded p-3 mb-3">
         <h5>
-          Bar <span th:text="${barStat.index + 1}">1</span>
-          <button type="button" class="btn btn-sm btn-danger float-right removeBarBtn">&times; Remove</button>
+          Bar <span th:text="${stat.index + 1}">1</span>
+          <button type="button" class="btn btn-sm btn-danger float-right removeBarBtn">× Remove</button>
         </h5>
-
-        <!-- barId hidden (if editing an existing bar) -->
-        <input type="hidden" th:field="*{bars[__${barStat.index}__].barId}" />
-
+        <input type="hidden" th:field="*{bars[__${stat.index}__].barId}" />
         <div class="form-row">
           <div class="form-group col-md-4">
-            <label th:for="${'bars[' + barStat.index + '].barName'}">Bar Name</label>
-            <input type="text"
-                   th:field="*{bars[__${barStat.index}__].barName}"
-                   class="form-control"
-                   placeholder="e.g. Main Bar" />
-            <div class="text-danger"
-                 th:if="${#fields.hasErrors('bars[' + barStat.index + '].barName')}"
-                 th:errors="*{bars[__${barStat.index}__].barName}"></div>
+            <label>Bar Name</label>
+            <input type="text" th:field="*{bars[__${stat.index}__].barName}" class="form-control" placeholder="e.g. Main Bar"/>
           </div>
-
           <div class="form-group col-md-4">
-            <label th:for="${'bars[' + barStat.index + '].location'}">Location</label>
-            <input type="text"
-                   th:field="*{bars[__${barStat.index}__].location}"
-                   class="form-control"
-                   placeholder="e.g. North Corner" />
-            <div class="text-danger"
-                 th:if="${#fields.hasErrors('bars[' + barStat.index + '].location')}"
-                 th:errors="*{bars[__${barStat.index}__].location}"></div>
+            <label>Location</label>
+            <input type="text" th:field="*{bars[__${stat.index}__].location}" class="form-control" placeholder="e.g. North Corner"/>
           </div>
-
           <div class="form-group col-md-4">
-            <label th:for="${'bars[' + barStat.index + '].totalCapacity'}">Total Capacity</label>
-            <input type="number"
-                   th:field="*{bars[__${barStat.index}__].totalCapacity}"
-                   class="form-control"
-                   placeholder="e.g. 500" min="1" />
-            <div class="text-danger"
-                 th:if="${#fields.hasErrors('bars[' + barStat.index + '].totalCapacity')}"
-                 th:errors="*{bars[__${barStat.index}__].totalCapacity}"></div>
+            <label>Total Capacity</label>
+            <input type="number" th:field="*{bars[__${stat.index}__].totalCapacity}" class="form-control" min="0" placeholder="e.g. 500"/>
           </div>
         </div>
-
-        <!-- Assign beverage quantities for each beverage type -->
         <div class="form-group">
-          <label>Assign beverage quantities (Sum must be ≤ Total Capacity)</label>
+          <label>Assign beverage quantities (Sum ≤ Total Capacity)</label>
           <div class="form-row">
-            <div th:each="bev, bevStat : ${allBeverages}" class="col-md-3 mb-2">
-              <div class="input-group">
-                <div class="input-group-prepend">
-                  <div class="input-group-text">
-                    <input type="checkbox"
-                           id="bevChk__${barStat.index}__${bevStat.index}"
-                           name="bars[__${barStat.index}__].beverageStock['${bev.name}']"
-                           th:checked="${bar.beverageStock.containsKey(bev.name)}"
-                           value="0" />
-                  </div>
-                </div>
-                <input type="number"
-                       class="form-control"
-                       min="0"
-                       placeholder="Qty for [[${bev.name}]]"
-                       th:enabled="${bar.beverageStock.containsKey(bev.name)}"
-                       th:value="${bar.beverageStock.getOrDefault(bev.name, 0)}"
-                       th:field="*{bars[__${barStat.index}__].beverageStock['${bev.name}']}" />
-                <div class="input-group-append">
-                  <span class="input-group-text" th:text="${bev.name}">Coke</span>
-                </div>
+            <div th:each="bev, stat2 : *{selectedBeverages}" class="input-group col-md-3 mb-2">
+              <input type="number" class="form-control" min="0"
+                     th:attr="name=|bars[${stat.index}].beverageStock[${bev.name}]|"
+                     th:value="${bar.beverageStock[bev.name]}"
+                     th:placeholder="|Qty for ${bev.name}|" />
+              <div class="input-group-append">
+                <span class="input-group-text" th:text="${bev.name}">Beverage</span>
               </div>
             </div>
           </div>
         </div>
-      </div> <!-- end each bar -->
-
-      <!-- If the user tried to submit Step2 with zero bars, show error -->
-      <div th:if="${#fields.hasErrors('bars')}" class="text-danger mb-2"
-           th:errors="*{bars}">You must configure at least one bar</div>
-    </div> <!-- end #barsContainer -->
-
-    <!-- Button to clone a “hidden template” bar panel -->
-    <button type="button" class="btn btn-secondary mb-3" id="addBarBtn">+ Add Bar</button>
-
-    <!-- Navigation: “Back to Step 1” and “Next → Step 3” -->
-    <div class="d-flex justify-content-between">
-      <a th:href="@{/events/create/step1}" class="btn btn-outline-primary">← Back to Step 1</a>
-      <button type="submit" class="btn btn-primary">Next → Step 3</button>
+      </div>
     </div>
-  </form>
 </div>
 
-<!-- Hidden “bar‐template” for JS to clone. Note the __INDEX__ and __BAR_NUMBER__ placeholders. -->
-<script type="text/template" id="bar-template">
+<!-- No bars warning -->
+<div th:if="${#lists.isEmpty(eventForm.bars)}" class="alert alert-danger">
+  You must configure at least one bar
+</div>
+
+<!-- Add Bar button -->
+<button type="button" id="addBarBtn" class="btn btn-secondary mb-3">+ Add Bar</button>
+
+<!-- Navigation -->
+<div class="d-flex justify-content-between">
+  <a th:href="@{/events/create/step1}" class="btn btn-outline-primary">← Back to Step 1</a>
+  <button type="submit" class="btn btn-primary">Next → Step 3</button>
+</div>
+</form>
+
+<!-- Hidden template row for cloning -->
+<!-- Hidden template row for cloning -->
+<div id="barTemplate" data-template="true" style="display:none;" th:inline="text">
   <div class="border rounded p-3 mb-3">
-    <h5>
-      Bar __BAR_NUMBER__
-      <button type="button" class="btn btn-sm btn-danger float-right removeBarBtn">&times; Remove</button>
+    <h5>Bar <span>0</span>
+      <button type="button" class="btn btn-sm btn-danger float-right removeBarBtn">× Remove</button>
     </h5>
-    <input type="hidden" name="bars[__INDEX__].barId" value="" />
+    <input type="hidden" name="bars[0].barId" />
     <div class="form-row">
       <div class="form-group col-md-4">
         <label>Bar Name</label>
-        <input type="text" name="bars[__INDEX__].barName" class="form-control" placeholder="e.g. Main Bar" />
+        <input type="text" name="bars[0].barName" class="form-control" placeholder="e.g. Main Bar" />
       </div>
       <div class="form-group col-md-4">
         <label>Location</label>
-        <input type="text" name="bars[__INDEX__].location" class="form-control" placeholder="e.g. North Corner" />
+        <input type="text" name="bars[0].location" class="form-control" placeholder="e.g. North Corner" />
       </div>
       <div class="form-group col-md-4">
         <label>Total Capacity</label>
-        <input type="number" name="bars[__INDEX__].totalCapacity" class="form-control" placeholder="e.g. 500" min="1" />
+        <input type="number" name="bars[0].totalCapacity" class="form-control" min="0" placeholder="e.g. 500" />
       </div>
     </div>
-
-    <!-- beverageStock rows (Thymeleaf loop will run server-side) -->
     <div class="form-group">
-      <label>Assign beverage quantities (Sum must be ≤ Total Capacity)</label>
+      <label>Assign beverage quantities (Sum ≤ Total Capacity)</label>
       <div class="form-row">
-        <div th:each="bev, bevStat : ${allBeverages}" class="col-md-3 mb-2">
-          <div class="input-group">
-            <div class="input-group-prepend">
-              <div class="input-group-text">
-                <input type="checkbox"
-                       id="bevChk____INDEX____${bevStat.index}"
-                       name="bars[__INDEX__].beverageStock['${bev.name}']"
-                       value="0" />
-              </div>
-            </div>
-            <input type="number"
-                   class="form-control"
-                   min="0"
-                   placeholder="Qty for [[${bev.name}]]"
-                   name="bars[__INDEX__].beverageStock['${bev.name}']" />
-            <div class="input-group-append">
-              <span class="input-group-text" th:text="${bev.name}">Coke</span>
-            </div>
+        <div th:each="bev : ${selectedBeverages}" class="input-group col-md-3 mb-2">
+          <input type="number"
+                 name="bars[0].beverageStock[[${bev.name}]]"
+                 class="form-control" min="0"
+                 placeholder="Qty for [[${bev.name}]]" />
+          <div class="input-group-append">
+            <span class="input-group-text">[[${bev.name}]]</span>
           </div>
         </div>
       </div>
     </div>
   </div>
-</script>
+</div>
+<div class="form-group col-md-4">
+  <label>Location</label>
+  <input type="text" name="bars[0].location" class="form-control" placeholder="e.g. North Corner" />
+</div>
+<div class="form-group col-md=4">
+  <label>Total Capacity</label>
+  <input type="number" name="bars[0].totalCapacity" class="form-control" min="0" placeholder="e.g. 500" />
+</div>
+</div>
+<div class="form-group">
+  <label>Assign beverage quantities (Sum ≤ Total Capacity)</label>
+  <div class="form-row">
+    <div th:each="bev : ${selectedBeverages}" class="input-group col-md-3 mb-2">
+      <input type="number" name="bars[0].beverageStock[${bev.name}]" class="form-control" min="0" placeholder="Qty for [[${bev.name}]]" />
+      <div class="input-group-append">
+        <span class="input-group-text">[[${bev.name}]]</span>
+      </div>
+    </div>
+  </div>
+</div>
+</div>
+</div>
+</div>
 
-<!-- jQuery for “+ Add Bar” and “× Remove” -->
 <script th:inline="javascript">
-  /*<![CDATA[*/
-  $(document).ready(function() {
-    // barCount starts at however many bars were rendered from the server:
-    let barCount = /*[[${#lists.size(eventForm.bars)}]]*/ 0;
+  document.addEventListener('DOMContentLoaded', function() {
+    const addBtn = document.getElementById('addBarBtn');
+    const container = document.getElementById('barsContainer');
+    const template = document.getElementById('barTemplate');
+    let barCount = container.querySelectorAll('.border').length;
 
-    // Add a new Bar panel
-    $('#addBarBtn').on('click', function() {
-      let barHtml = $('#bar-template').html();
-      // Replace __INDEX__ with the zero-based index, and __BAR_NUMBER__ with (index+1)
-      barHtml = barHtml.replace(/__INDEX__/g, barCount);
-      barHtml = barHtml.replace(/__BAR_NUMBER__/g, barCount + 1);
-      $('#barsContainer').append(barHtml);
+    addBtn.addEventListener('click', () => {
+      const clone = template.cloneNode(true);
+      clone.removeAttribute('id');
+      clone.removeAttribute('data-template');
+      clone.style.display = '';
+      // update index for heading, inputs
+      const idx = barCount;
+      clone.querySelector('h5 span').textContent = idx + 1;
+      clone.querySelectorAll('input').forEach(inp => {
+        if (inp.name) {
+          inp.name = inp.name.replace(/\[0\]/g, '[' + idx + ']');
+        }
+        if (inp.placeholder) {
+          inp.placeholder = inp.placeholder.replace(/Qty for \[\[\$\{bev\.name\}\]\]/, match => match);
+        }
+      });
+      container.appendChild(clone);
       barCount++;
     });
 
-    // Delegate removeBarBtn
-    $('#barsContainer').on('click', '.removeBarBtn', function() {
-      $(this).closest('.border').remove();
+    container.addEventListener('click', function(e) {
+      const btn = e.target.closest('.removeBarBtn');
+      if (!btn) return;
+      btn.closest('.border').remove();
     });
   });
-  /*]]>*/
 </script>
 </body>
 </html>

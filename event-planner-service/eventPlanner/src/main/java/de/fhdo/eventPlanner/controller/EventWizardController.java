@@ -1,151 +1,168 @@
 package de.fhdo.eventPlanner.controller;
 
-import de.fhdo.eventPlanner.model.*;
-import de.fhdo.eventPlanner.mock.WarehouseCatalog;
-import de.fhdo.eventPlanner.service.EventPlanningService;
-
-import de.fhdo.eventPlanner.dto.EventForm;
 import de.fhdo.eventPlanner.dto.BarPlanForm;
 import de.fhdo.eventPlanner.dto.DropPointForm;
-
+import de.fhdo.eventPlanner.dto.EventForm;
+import de.fhdo.eventPlanner.mock.WarehouseCatalog;
+import de.fhdo.eventPlanner.service.EventPlanningService;
+import de.fhdo.eventPlanner.model.Event;
+import de.fhdo.eventPlanner.model.DefineBeverage;
+import de.fhdo.eventPlanner.model.BarPlan;
+import de.fhdo.eventPlanner.model.DropPointPlan;
+import jakarta.validation.Valid;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Controller;
 import org.springframework.ui.Model;
-import org.springframework.validation.*;
-import org.springframework.validation.annotation.Validated;
+import org.springframework.web.bind.annotation.PathVariable;
+import org.springframework.validation.BindingResult;
 import org.springframework.web.bind.annotation.*;
+import org.springframework.web.bind.support.SessionStatus;
 import org.springframework.web.servlet.mvc.support.RedirectAttributes;
 
-import jakarta.validation.Valid;
-import java.util.*;
+import java.util.ArrayList;
+import java.util.HashMap;
+import java.util.List;
+import java.util.Optional;
 
 @Controller
-@RequestMapping("/events")
-public class EventController {
+@SessionAttributes("eventForm")
+public class EventWizardController {
 
     private final EventPlanningService eventService;
     private final WarehouseCatalog warehouseCatalog;
 
     @Autowired
-    public EventController(EventPlanningService eventService,
-                           WarehouseCatalog warehouseCatalog) {
+    public EventWizardController(EventPlanningService eventService,
+                                 WarehouseCatalog warehouseCatalog) {
         this.eventService = eventService;
         this.warehouseCatalog = warehouseCatalog;
     }
 
     /**
-     * Landing page: list all events.
+     * If no EventForm exists in session, provide a fresh one.
      */
-    @GetMapping
-    public String listEvents(Model model) {
-        List<Event> all = eventService.findAllEvents();
-        model.addAttribute("events", all);
-        return "event_list";
-    }
-
-    /**
-     * “Create New Event” form: page with a blank EventForm.
-     */
-    @GetMapping("/new")
-    public String showCreateForm(Model model) {
+    @ModelAttribute("eventForm")
+    public EventForm eventForm() {
         EventForm form = new EventForm();
-        form.setStatus(Status.PLANNED);
-
-        // 1) Initialize bars list (so Thymeleaf can iterate over form.getBars())
-        List<BarPlanForm> bars = new ArrayList<>();
-        // Create a “blank” BarPlanForm whose beverageStock is a non-null map:
-        BarPlanForm blankBar = new BarPlanForm();
-        blankBar.setBeverageStock(new HashMap<>());
-        bars.add(blankBar);
-        form.setBars(bars);
-
-        // 2) Initialize drop points list
-        List<DropPointForm> drops = new ArrayList<>();
-        DropPointForm blankDrop = new DropPointForm();
-        drops.add(blankDrop);
-        form.setDropPoints(drops);
-
-        // 3) Expose to Thymeleaf
-        model.addAttribute("allBeverages", warehouseCatalog.getAllBeverages());
-        model.addAttribute("eventForm", form);
-        return "event_form";
-    }
-    /**
-     * “Edit Existing Event” form: load event by ID, populate EventForm.
-     */
-    @GetMapping("/edit/{id}")
-    public String showEditForm(@PathVariable("id") Long id, Model model,
-                               RedirectAttributes redirectAttrs) {
-        Optional<Event> opt = eventService.findEventById(id);
-        if (!opt.isPresent()) {
-            redirectAttrs.addFlashAttribute("error", "Event ID " + id + " not found");
-            return "redirect:/events";
-        }
-        Event existing = opt.get();
-
-        // Build an EventForm from existing Event:
-        EventForm form = new EventForm();
-        form.setEventId(existing.getEventId());
-        form.setName(existing.getName());
-        form.setDate(existing.getDate());
-        form.setLocation(existing.getLocation());
-        form.setDuration(existing.getDuration());
-        form.setStatus(existing.getStatus());
-        form.setBeverages(existing.getBeverages());
-
-        // For bars & drop points, copy them into Form objects
-        for (BarPlan bar : existing.getBars()) {
-            BarPlanForm bf = new BarPlanForm();
-            bf.setBarId(bar.getBarId());
-            bf.setBarName(bar.getBarName());
-            bf.setLocation(bar.getLocation());
-            bf.setTotalCapacity(bar.getTotalCapacity());
-            bf.setBeverageStock(new HashMap<>(bar.getBeverageStock()));
-            form.getBars().add(bf);
-        }
-        for (DropPointPlan dp : existing.getDropPoints()) {
-            DropPointForm dpf = new DropPointForm();
-            dpf.setDropPointId(dp.getDropPointId());
-            dpf.setLocation(dp.getLocation());
-            dpf.setCapacity(dp.getCapacity());
-            form.getDropPoints().add(dpf);
-        }
-
-        model.addAttribute("allBeverages", warehouseCatalog.getAllBeverages());
-        model.addAttribute("eventForm", form);
-        return "event_form";
+        form.setStatus(de.fhdo.eventPlanner.model.Status.PLANNED);
+        return form;
     }
 
-    /**
-     * Handle form submission (both Create & Update).
-     */
-    @PostMapping("/save")
-    public String saveEvent(@Valid @ModelAttribute("eventForm") EventForm form,
-                            BindingResult bindingResult,
-                            Model model,
-                            RedirectAttributes redirectAttrs) {
-        // 1) Basic validation errors?
-        if (bindingResult.hasErrors()) {
+    // ────────────────────────────────────
+    // STEP 1: EVENT DETAILS
+    // ────────────────────────────────────
+    @GetMapping("/events/create/step1")
+    public String showStep1(@ModelAttribute("eventForm") EventForm eventForm,
+                            Model model) {
+        model.addAttribute("allBeverages", warehouseCatalog.getAllBeverages());
+        return "event/step1";    // templates/event/step1.html
+    }
+
+    @PostMapping("/events/create/step1")
+    public String processStep1(
+            @Valid @ModelAttribute("eventForm") EventForm eventForm,
+            BindingResult bindingResult,
+            Model model
+    ) {
+        if (bindingResult.hasFieldErrors("name") ||
+                bindingResult.hasFieldErrors("date") ||
+                bindingResult.hasFieldErrors("location") ||
+                bindingResult.hasFieldErrors("duration") ||
+                bindingResult.hasFieldErrors("status") ||
+                bindingResult.hasFieldErrors("beverages")) {
+
             model.addAttribute("allBeverages", warehouseCatalog.getAllBeverages());
-            return "event_form";
+            return "event/step1";
+        }
+        return "redirect:/events/create/step2";
+    }
+
+    // ────────────────────────────────────
+    // STEP 2: BARS CONFIGURATION
+    // ────────────────────────────────────
+    @GetMapping("/events/create/step2")
+    public String showStep2(@ModelAttribute("eventForm") EventForm eventForm,
+                            Model model) {
+        // 1) If no bars exist yet, start with a single blank BarPlanForm
+        if (eventForm.getBars() == null || eventForm.getBars().isEmpty()) {
+            List<BarPlanForm> bars = new ArrayList<>();
+            BarPlanForm blankBar = new BarPlanForm();
+            blankBar.setBeverageStock(new HashMap<>());
+            bars.add(blankBar);
+            eventForm.setBars(bars);
         }
 
-        // 2) Build an Event entity from the form
+        // 2) Compute only those beverages that were selected in Step 1
+        List<DefineBeverage> fullCatalog = warehouseCatalog.getAllBeverages();
+        List<DefineBeverage> selectedBeverages = fullCatalog.stream()
+                .filter(b -> eventForm.getBeverageIds().contains(b.getId()))
+                .toList();
+
+        // 3) Expose the filtered list to Thymeleaf as "selectedBeverages"
+        model.addAttribute("selectedBeverages", selectedBeverages);
+
+        return "event/step2";    // templates/event/step2.html
+    }
+
+    @PostMapping("/events/create/step2")
+    public String processStep2(
+            @Valid @ModelAttribute("eventForm") EventForm eventForm,
+            BindingResult bindingResult,
+            Model model
+    ) {
+        if (bindingResult.hasFieldErrors("bars")) {
+            model.addAttribute("allBeverages", warehouseCatalog.getAllBeverages());
+            return "event/step2";
+        }
+        return "redirect:/events/create/step3";
+    }
+
+    // ────────────────────────────────────
+    // STEP 3: DROP POINTS & FINAL SAVE
+    // ────────────────────────────────────
+    @GetMapping("/events/create/step3")
+    public String showStep3(@ModelAttribute("eventForm") EventForm eventForm,
+                            Model model) {
+        if (eventForm.getDropPoints() == null || eventForm.getDropPoints().isEmpty()) {
+            List<DropPointForm> drops = new ArrayList<>();
+            drops.add(new DropPointForm());
+            eventForm.setDropPoints(drops);
+        }
+        return "event/step3";   // templates/event/step3.html
+    }
+
+    @PostMapping("/events/create/step3")
+    public String processStep3(
+            @Valid @ModelAttribute("eventForm") EventForm eventForm,
+            BindingResult bindingResult,
+            Model model,
+            RedirectAttributes redirectAttrs,
+            SessionStatus sessionStatus
+    ) {
+        // If dropPoints validation fails, re‐show step3:
+        if (bindingResult.hasFieldErrors("dropPoints")) {
+            return "event/step3";
+        }
+
+        // Build Event from EventForm
         Event event = new Event();
-        if (form.getEventId() != null) {
-            event.setEventId(form.getEventId());
+        if (eventForm.getEventId() != null) {
+            event.setEventId(eventForm.getEventId());
         }
-        event.setName(form.getName());
-        event.setDate(form.getDate());
-        event.setLocation(form.getLocation());
-        event.setDuration(form.getDuration());
-        event.setStatus(form.getStatus());
+        event.setName(eventForm.getName());
+        event.setDate(eventForm.getDate());
+        event.setLocation(eventForm.getLocation());
+        event.setDuration(eventForm.getDuration());
+        event.setStatus(eventForm.getStatus());
 
-        // 3) Set the beverages selected from Warehouse catalog:
-        event.setBeverages(form.getBeverages());
+        // ─── Convert beverageIds → List<DefineBeverage> and set on event
+        List<DefineBeverage> selectedBeverages = warehouseCatalog.getAllBeverages().stream()
+                .filter(b -> eventForm.getBeverageIds().contains(b.getId()))
+                .toList();
+        event.setBeverages(selectedBeverages);
 
-        // 4) For each BarPlanForm in the form, create a BarPlan entity
-        for (BarPlanForm bf : form.getBars()) {
+        // Build BarPlan entities
+        for (BarPlanForm bf : eventForm.getBars()) {
             BarPlan bar = new BarPlan();
             if (bf.getBarId() != null) {
                 bar.setBarId(bf.getBarId());
@@ -157,8 +174,8 @@ public class EventController {
             event.addBar(bar);
         }
 
-        // 5) For each DropPointForm, create a DropPointPlan
-        for (DropPointForm dpf : form.getDropPoints()) {
+        // Build DropPointPlan entities
+        for (DropPointForm dpf : eventForm.getDropPoints()) {
             DropPointPlan dp = new DropPointPlan();
             if (dpf.getDropPointId() != null) {
                 dp.setDropPointId(dpf.getDropPointId());
@@ -168,25 +185,98 @@ public class EventController {
             event.addDropPoint(dp);
         }
 
-        // 6) Save via service (which also does the “sum(drink qty) ≤ totalCapacity” validation).
+        // Attempt to save; if service throws an exception (e.g. capacity overflow),
+        // reject and re‐show step3:
         try {
             eventService.saveEvent(event);
         } catch (Exception ex) {
-            // If the validation in saveEvent() fails (e.g. capacity exceeded), show error
             bindingResult.reject("barCapacityError", ex.getMessage());
-            model.addAttribute("allBeverages", warehouseCatalog.getAllBeverages());
-            return "event_form";
+            return "event/step3";
         }
 
+        sessionStatus.setComplete();
         redirectAttrs.addFlashAttribute("success", "Event saved successfully");
         return "redirect:/events";
     }
 
-    /**
-     * Delete an event
-     */
-    @GetMapping("/delete/{id}")
-    public String deleteEvent(@PathVariable("id") Long id, RedirectAttributes redirectAttrs) {
+    // ────────────────────────────────────
+    // EDIT EXISTING EVENT
+    // ────────────────────────────────────
+    @GetMapping("/events/create/edit/{id}")
+    public String beginEdit(@PathVariable("id") Long id,
+                            @ModelAttribute("eventForm") EventForm eventForm,
+                            Model model,
+                            RedirectAttributes redirectAttrs) {
+        Optional<Event> opt = eventService.findEventById(id);
+        if (!opt.isPresent()) {
+            redirectAttrs.addFlashAttribute("error", "Event ID " + id + " not found");
+            return "redirect:/events";
+        }
+        Event existing = opt.get();
+
+        eventForm.setEventId(existing.getEventId());
+        eventForm.setName(existing.getName());
+        eventForm.setDate(existing.getDate());
+        eventForm.setLocation(existing.getLocation());
+        eventForm.setDuration(existing.getDuration());
+        eventForm.setStatus(existing.getStatus());
+        // ─── Convert existing.getBeverages() → List<Long> beverageIds ───
+        List<Long> bevIds = existing.getBeverages().stream()
+                .map(DefineBeverage::getId)
+                .toList();
+        eventForm.setBeverageIds(bevIds);
+
+        eventForm.getBars().clear();
+        for (var bar : existing.getBars()) {
+            BarPlanForm bf = new BarPlanForm();
+            bf.setBarId(bar.getBarId());
+            bf.setBarName(bar.getBarName());
+            bf.setLocation(bar.getLocation());
+            bf.setTotalCapacity(bar.getTotalCapacity());
+            bf.setBeverageStock(new HashMap<>(bar.getBeverageStock()));
+            eventForm.getBars().add(bf);
+        }
+
+        eventForm.getDropPoints().clear();
+        for (var dp : existing.getDropPoints()) {
+            DropPointForm dpf = new DropPointForm();
+            dpf.setDropPointId(dp.getDropPointId());
+            dpf.setLocation(dp.getLocation());
+            dpf.setCapacity(dp.getCapacity());
+            eventForm.getDropPoints().add(dpf);
+        }
+
+        model.addAttribute("allBeverages", warehouseCatalog.getAllBeverages());
+        return "redirect:/events/create/step1";
+    }
+
+    // ────────────────────────────────────
+    // LIST ALL EVENTS  GET /events
+    // ────────────────────────────────────
+    @GetMapping("/events")
+    public String listEvents(Model model) {
+        List<Event> all = eventService.findAllEvents();
+        model.addAttribute("events", all);
+        return "event_list";
+    }
+
+    // ────────────────────────────────────
+    // SHOW EVENT DETAILS  GET /events/details/{id}
+    // ────────────────────────────────────
+    @GetMapping("/events/details/{id}")
+    public String showDetails(@PathVariable("id") Long id, Model model) {
+        Event event = eventService.findEventById(id)
+                .orElseThrow(() -> new IllegalArgumentException("Event not found: " + id));
+        model.addAttribute("event", event);
+        return "event_details";
+    }
+
+    // ────────────────────────────────────
+    // DELETE AN EVENT  GET /events/delete/{id}
+    // ────────────────────────────────────
+    @GetMapping("/events/delete/{id}")
+    public String deleteEvent(@PathVariable("id") Long id,
+                              RedirectAttributes redirectAttrs) {
         eventService.deleteEvent(id);
         redirectAttrs.addFlashAttribute("success", "Event deleted");
         return "redirect:/events";
