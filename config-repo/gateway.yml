@@ -1,23 +1,42 @@
 server:
   port: 8080
-
 spring:
   application:
     name: gateway
   cloud:
     gateway:
+      default-filters:
+        - DedupeResponseHeader=Access-Control-Allow-Origin Access-Control-Allow-Credentials
+      globalcors:
+        corsConfigurations:
+          '[/**]':
+            allowedOrigins: "http://localhost:5173"
+            allowedMethods:
+              - GET
+              - POST
+              - PUT
+              - DELETE
+              - OPTIONS
+            allowedHeaders: "*"
+            allowCredentials: true
       routes:
+      # Bar route
         - id: bar-service
           uri: lb://bar-service
           predicates:
-            - Path=/api/bar/**
-
+            - Path=/api/bars/**
+          filters:
+            - StripPrefix=1
+      # Droppoints route
         - id: droppoint-service
           uri: lb://droppoint-service
           predicates:
             - Path=/api/droppoints/**
+          filters:
+            - StripPrefix=1
 
 eureka:
   client:
     service-url:
       defaultZone: http://localhost:8761/eureka
+

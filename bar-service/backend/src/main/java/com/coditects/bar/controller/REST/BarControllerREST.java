@@ -26,7 +26,7 @@ import lombok.RequiredArgsConstructor;
 // Maps requests to "/api/bars" and allows cross-origin requests from "http://localhost:5173". it it my frontend application :)
 // Other origins can be added as needed for CORS support e.g Event Planner service
 @RequestMapping("/bars")
-@CrossOrigin(origins = "http://localhost:5173")
+//@CrossOrigin(origins = "http://localhost:5173")
 @RequiredArgsConstructor
 
 public class BarControllerREST {
@@ -43,7 +43,7 @@ public class BarControllerREST {
             return ResponseEntity.badRequest().build(); // Return 400 Bad Request if parameters are invalid
         }
         // Returns a 201 Created response with the registered bar details
-        return ResponseEntity.status(HttpStatus.CREATED).body(barService.registerBar(name, location, maxCapacity));
+        return ResponseEntity.status(HttpStatus.CREATED).body(barService.registerBar(UUID.randomUUID(), name, location, maxCapacity));
     }
 
     // Get a specific bar by its ID

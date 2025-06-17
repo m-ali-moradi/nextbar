@@ -1,6 +1,7 @@
 package com.coditects.bar.service;
 
 import java.util.List;
+import java.util.Optional;
 import java.util.UUID;
 
 import com.coditects.bar.model.SupplyStatus;
@@ -18,7 +19,7 @@ public interface SupplyRequestService {
 
     SupplyRequestDto getRequest(UUID requestId);
 
-    void updateRequestStatus(UUID requestId, SupplyStatus status);
+    void updateRequestStatus(UUID requestId, Integer quantity, SupplyStatus status);
 
     void deleteRequest(UUID requestId);
 }

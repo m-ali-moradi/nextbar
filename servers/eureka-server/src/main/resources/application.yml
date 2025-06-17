@@ -1,8 +1,5 @@
 server:
-  enable-self-preservation: false
-  eviction-interval-timer-in-ms: 60000
   port: 8761
-
 eureka:
   instance:
     hostname: localhost
@@ -11,3 +8,10 @@ eureka:
     fetchRegistry: false # Disable fetching registry as this is the server
     serviceUrl:
       defaultZone: https://${eureka.instance.hostname}:${server.port}/eureka/
+spring:
+  application:
+    name: eureka-server
+  cloud:
+    config:
+      uri: http://localhost:8888
+

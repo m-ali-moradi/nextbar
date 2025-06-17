@@ -6,5 +6,5 @@ package com.coditects.bar.model;
  * such as REQUESTED, IN_PROGRESS, DELIVERED, and REJECTED.
  */
 public enum SupplyStatus {
-    REQUESTED, IN_PROGRESS, DELIVERED, REJECTED
+    REQUESTED, IN_PROGRESS, DELIVERED, REJECTED, COMPLETED, 
 }

@@ -10,7 +10,7 @@ import com.coditects.bar.model.dto.BarDto;
 public interface BarService {
 
     // Registers a new bar with the given name, location, and maximum capacity.
-    BarDto registerBar(String name, String location , int maxCapacity);
+    BarDto registerBar(UUID id, String name, String location , int maxCapacity);
 
     // Retrieves a bar by its ID.
     BarDto getBar(UUID barId);

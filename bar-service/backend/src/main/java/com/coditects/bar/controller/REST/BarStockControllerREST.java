@@ -24,7 +24,7 @@ import lombok.RequiredArgsConstructor;
 @RestController
 // Maps requests to "/api/bars/{barId}/stock" and allows cross-origin requests from "http://localhost:5173"
 @RequestMapping("/bars/{barId}/stock")
-@CrossOrigin(origins = "http://localhost:5173")
+//@CrossOrigin(origins = "http://localhost:5173")
 @RequiredArgsConstructor
 public class BarStockControllerREST {
 

@@ -10,6 +10,13 @@ const api = axios.create({
 
 // API methods for bar service at coditects
 export default {
+
+  // Get all products
+  async getProducts() {
+    const response = await api.get("/bars/products");
+    console.log("Fetched products:", response.data);
+    return response.data;
+  },
   // Get all bars
   async getBars() {
     const response = await api.get("/bars");
@@ -18,9 +25,12 @@ export default {
   },
 
   // Add a new bar
-  async addBar(name, location) {
+  async addBar(name, location, maxCapacity) {
+    if (!name || !location || !maxCapacity) {
+      throw new Error("Name, location, and max capacity are required to add a bar.");
+    }
     const response = await api.post("/bars", null, {
-      params: { name, location },
+      params: { name, location, maxCapacity },
     });
     return response.data;
   },
@@ -35,6 +45,13 @@ export default {
   async getStock(barId) {
     const response = await api.get(`/bars/${barId}/stock`);
     return response.data;
+  },
+
+  // Add stock to bar (restocking)
+  async addStock(barId, productId, quantity) {
+    await api.post(`/bars/${barId}/stock/add`, null, {
+      params: { productId, quantity },
+    });
   },
 
   // Reduce bar's stock (serving drinks)
@@ -79,6 +96,13 @@ export default {
     return response.data;
   },
 
+  // Update supply request status by bar ID and request ID
+  async updateSupplyRequest(barId, requestId, status) {
+  const response = await api.put(`/bars/${barId}/supply/${requestId}/status`, null, {
+    params: { status },
+    });
+    return response.data;
+  },
   // Get supply requests for a specific bar
   async getSupplyRequests(barId) {
     const response = await api.get(`/bars/${barId}/supply`);
