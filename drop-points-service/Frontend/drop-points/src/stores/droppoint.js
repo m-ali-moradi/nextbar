@@ -2,6 +2,14 @@
 import { defineStore } from 'pinia'
 import axios from 'axios'
 
+// Base URL for API endpoints (gateway server)
+const API_BASE_URL = "http://localhost:8080/api";
+
+// Axios instance with base URL
+const api = axios.create({
+  baseURL: API_BASE_URL,
+});
+
 export const useDroppointStore = defineStore('droppoint', {
   state: () => ({
     droppoints: [],
@@ -13,7 +21,7 @@ export const useDroppointStore = defineStore('droppoint', {
       this.isLoading = true
       this.error = null
       try {
-        const response = await axios.get('http://localhost:8083/droppoints')
+        const response = await api.get('/droppoints')
         this.droppoints = response.data
       } catch (err) {
         this.error = 'Failed to fetch drop points.'
@@ -26,7 +34,7 @@ export const useDroppointStore = defineStore('droppoint', {
       this.isLoading = true
       this.error = null
       try {
-        const response = await axios.post('http://localhost:8083/droppoints', newInventory)
+        const response = await api.post('/droppoints', newInventory)
 
         this.droppoints.push(response.data)
       } catch (err) {
@@ -36,16 +44,16 @@ export const useDroppointStore = defineStore('droppoint', {
         this.isLoading = false
       }
     },
-    async updateDropPoint(inventoryId, updatedInventory) {
+    async updateDropPoint(dropPointId, updatedInventory) {
       this.isLoading = true
       this.error = null
       try {
-        const response = await axios.put(
-          `http://localhost:8083/droppoints/${inventoryId}`,
+        const response = await api.put(
+          `/droppoints/${dropPointId}`,
           updatedInventory,
         )
 
-        const index = this.droppoints.findIndex((i) => i.id === inventoryId)
+        const index = this.droppoints.findIndex((i) => i.id === dropPointId)
         if (index !== -1) {
           this.droppoints[index] = response.data
         }
@@ -60,7 +68,7 @@ export const useDroppointStore = defineStore('droppoint', {
       this.isLoading = true
       this.error = null
       try {
-        await axios.delete(`http://localhost:8083/droppoints/${dropPointId}`)
+        await api.delete(`/droppoints/${dropPointId}`)
         // Remove the order from the droppoints array
         this.droppoints = this.droppoints.filter((u) => u.id !== dropPointId)
       } catch (err) {
