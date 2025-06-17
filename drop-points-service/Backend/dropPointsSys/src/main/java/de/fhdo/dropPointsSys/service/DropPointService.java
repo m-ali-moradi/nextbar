@@ -39,12 +39,16 @@ public class DropPointService {
         });
     }
 
-    public void delete_drop_point(Long id) {
-        this.dropPointRepository.deleteById(id);
+    public boolean delete_drop_point(Long id) {
+        if (this.dropPointRepository.existsById(id)) {
+            this.dropPointRepository.deleteById(id);
+            return true;
+        }
+        return false;
     }
 
-    public List<DropPoint> get_level_and_status(DropPointStatus status) {
-        return this.dropPointRepository.findAllByStatus(status);
+    public Optional<DropPoint> get_level_and_status(Long id) {
+        return this.dropPointRepository.findById(id);
     }
 
     public Optional<DropPoint> remove_empties(Long id) {
@@ -71,13 +75,15 @@ public class DropPointService {
         });
     }
 
-    public void notify_warehouse() {
+    public List<DropPoint> notify_warehouse() {
         List<DropPoint> fullDropPoints = dropPointRepository.findAllByStatus(DropPointStatus.FULL);
 
         for (DropPoint dropPoint : fullDropPoints) {
             System.out.println("🚨 Notification to Warehouse: Drop Point FULL - " +
                     dropPoint.getLocation() + " (ID: " + dropPoint.getId() + ")");
         }
+
+        return fullDropPoints;
     }
 
 }
