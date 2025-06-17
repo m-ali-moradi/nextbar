@@ -22,11 +22,11 @@
             <label for="location">Location:</label>
             <input type="text" id="location" v-model="newDropPoint.location" required />
             <label for="capacity">Capacity:</label>
-            <input type="text" id="capacity" v-model="newDropPoint.capacity" required />
-            <label for="current_empties">Current Empties:</label>
-            <input type="text" id="current_empties" v-model="newDropPoint.current_empties" required />
-            <label for="status">Status:</label>
-            <input type="text" id="status" v-model="newDropPoint.status" required />
+            <input type="number" id="capacity" v-model="newDropPoint.capacity" required />
+            <label v-if="newDropPoint.status === 'FULL'" for="current_empties">Current Empties:</label>
+            <input v-if="newDropPoint.status === 'FULL'" type="number" id="current_empties" v-model="newDropPoint.current_empties" required />
+            <label v-if="newDropPoint.status === 'FULL'" for="status">Status:</label>
+            <input v-if="newDropPoint.status === 'FULL'" type="text" id="status" v-model="newDropPoint.status" required />
 
             <button type="submit" class="submit-btn">
               {{ isEditing ? 'Update Drop point' : 'Save Drop point' }}
@@ -57,6 +57,8 @@
             <td>
               <button @click="openModal(item)">Edit</button>
               <button @click="deleteDropPoint(item.id)" class="delete-btn">Delete</button>
+              <button v-if="item.status !== 'FULL'" @click="openModal(item)" class="add-btn">Add Empties</button>
+              <button v-if="item.status === 'FULL'" @click="notifyWarehouse(item.id)" class="notify-btn">Notify Warehouse</button>
             </td>
           </tr>
         </tbody>
@@ -100,7 +102,6 @@ export default {
         this.isEditing = false
         this.editIndex = null
         this.newDropPoint = {
-
           location: '',
           capacity: 100,
           current_empties: 0,
@@ -131,8 +132,14 @@ export default {
       this.closeModal()
     },
     deleteDropPoint(id) {
-      if (confirm('Are you sure you want to delete this inventory?')) {
+      if (confirm('Are you sure you want to delete this drop point?')) {
         this.dropPointStore.deleteDropPoint(id)
+      }
+    },
+
+    notifyWarehouse(id) {
+      if (confirm('Are you sure you want to notify warehouse to remove empties?')) {
+        this.dropPointStore.removeEmpties(id)
       }
     },
   },
