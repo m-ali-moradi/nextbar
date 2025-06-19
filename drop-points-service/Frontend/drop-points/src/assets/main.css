@@ -54,6 +54,16 @@ a,
   margin-left: 5px;
 }
 
+.remove-btn {
+  background-color: #28a745;
+  color: #fff;
+  border: none;
+  padding: 5px 10px;
+  border-radius: 3px;
+  cursor: pointer;
+  margin-left: 5px;
+}
+
 .add-btn {
   background-color: #33b6ff;
   color: #fff;
