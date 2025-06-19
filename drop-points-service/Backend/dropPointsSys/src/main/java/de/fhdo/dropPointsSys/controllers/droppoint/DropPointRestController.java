@@ -82,7 +82,7 @@ public class DropPointRestController {
     }
 
     // remove empties from drop point
-    @GetMapping("/remove_empties/{id}")
+    @PutMapping("/remove_empties/{id}")
     public ResponseEntity<DropPointDto> remove_empties_from_droppoint(@PathVariable Long id) {
         var dropPoint = dropPointService.remove_empties(id);
         return  dropPoint.map(value -> ResponseEntity.ok(DropPointConverter.toDto(value))).orElse(ResponseEntity.notFound().build());
@@ -97,14 +97,10 @@ public class DropPointRestController {
     }
 
     // notify warehouse
-    @GetMapping("/notify_warehouse")
-    public ResponseEntity<List<DropPointDto>> send_notification() {
-
-        List<DropPointDto> full_droppoints = dropPointService.notify_warehouse()
-                .stream().map(DropPointConverter::toDto)
-                .collect(Collectors.toList());
-
-        return ResponseEntity.ok(full_droppoints);
+    @PutMapping("/notify_warehouse/{id}")
+    public ResponseEntity<DropPointDto> send_notification(@PathVariable Long id) {
+        var dropPoint = dropPointService.notify_warehouse(id);
+        return  dropPoint.map(value -> ResponseEntity.ok(DropPointConverter.toDto(value))).orElse(ResponseEntity.notFound().build());
 
     }
 

@@ -53,7 +53,7 @@ public class DropPointService {
 
     public Optional<DropPoint> remove_empties(Long id) {
         return this.dropPointRepository.findById(id).map(existing -> {
-            existing.setCurrent_empties_stock(null);
+            existing.setCurrent_empties_stock(0);
             existing.setStatus(DropPointStatus.EMPTY);
             return this.dropPointRepository.save(existing);
         });
@@ -69,21 +69,17 @@ public class DropPointService {
             }
             else {
                 existing.setStatus(DropPointStatus.FULL);
-                throw new IllegalStateException("Drop Point is FULL");
             }
             return this.dropPointRepository.save(existing);
         });
     }
 
-    public List<DropPoint> notify_warehouse() {
-        List<DropPoint> fullDropPoints = dropPointRepository.findAllByStatus(DropPointStatus.FULL);
+    public Optional<DropPoint> notify_warehouse(long id) {
+        return this.dropPointRepository.findById(id).map(ex -> {
+            ex.setStatus(DropPointStatus.FULL_AND_NOTIFIED_TO_WAREHOUSE);
+            return this.dropPointRepository.save(ex);
+        });
 
-        for (DropPoint dropPoint : fullDropPoints) {
-            System.out.println("🚨 Notification to Warehouse: Drop Point FULL - " +
-                    dropPoint.getLocation() + " (ID: " + dropPoint.getId() + ")");
-        }
-
-        return fullDropPoints;
     }
 
 }
