@@ -23,10 +23,10 @@
             <input type="text" id="location" v-model="newDropPoint.location" required />
             <label for="capacity">Capacity:</label>
             <input type="number" id="capacity" v-model="newDropPoint.capacity" required />
-            <label v-if="newDropPoint.status === 'FULL'" for="current_empties">Current Empties:</label>
-            <input v-if="newDropPoint.status === 'FULL'" type="number" id="current_empties" v-model="newDropPoint.current_empties" required />
-            <label v-if="newDropPoint.status === 'FULL'" for="status">Status:</label>
-            <input v-if="newDropPoint.status === 'FULL'" type="text" id="status" v-model="newDropPoint.status" required />
+            <label v-if="newDropPoint.status === 'FULL' || 'EMPTY'" for="current_empties">Current Empties:</label>
+            <input v-if="newDropPoint.status === 'FULL' || 'EMPTY'" type="number" id="current_empties" v-model="newDropPoint.current_empties" required />
+            <label v-if="newDropPoint.status === 'FULL' || 'EMPTY'" for="status">Status:</label>
+            <input v-if="newDropPoint.status === 'FULL' || 'EMPTY'" type="text" id="status" v-model="newDropPoint.status" required />
 
             <button type="submit" class="submit-btn">
               {{ isEditing ? 'Update Drop point' : 'Save Drop point' }}
@@ -57,8 +57,9 @@
             <td>
               <button @click="openModal(item)">Edit</button>
               <button @click="deleteDropPoint(item.id)" class="delete-btn">Delete</button>
-              <button v-if="item.status !== 'FULL'" @click="openModal(item)" class="add-btn">Add Empties</button>
+              <button v-if="item.status === 'EMPTY'" @click="addEmpty(item.id)" class="add-btn">Add Empties</button>
               <button v-if="item.status === 'FULL'" @click="notifyWarehouse(item.id)" class="notify-btn">Notify Warehouse</button>
+              <button v-if="item.status === 'FULL_AND_NOTIFIED_TO_WAREHOUSE'" @click="removeEmpties(item.id)" class="remove-btn">Transfer to Warehouse</button>
             </td>
           </tr>
         </tbody>
@@ -77,9 +78,9 @@ export default {
       newDropPoint: {
         id: '',
         location: '',
-        capacity: '',
-        current_empties: '',
-        status: '',
+        capacity: 100,
+        current_empties: 0,
+        status: 'EMPTY',
       },
       showModal: false,
       isEditing: false,
@@ -114,15 +115,15 @@ export default {
       this.newDropPoint = {
         id: '',
         location: '',
-        capacity: '',
-        current_empties: '',
-        status: '',
+        capacity: 100,
+        current_empties: 0,
+        status: 'EMPTY',
       }
       this.isEditing = false
       this.editIndex = null
     },
     addDropPoint() {
-      this.dropPointStore.addDropPoint({ ...this.newDropPoint})
+      this.dropPointStore.createDropPoint({ ...this.newDropPoint})
       this.closeModal()
     },
     updateDropPoint() {
@@ -136,9 +137,17 @@ export default {
         this.dropPointStore.deleteDropPoint(id)
       }
     },
-
+    addEmpty(id) {
+        this.dropPointStore.addEmpties(id)
+    },
     notifyWarehouse(id) {
       if (confirm('Are you sure you want to notify warehouse to remove empties?')) {
+        this.dropPointStore.notifyWarehouse(id)
+      }
+    },
+
+    removeEmpties(id) {
+      if (confirm('Are you sure you want to transfer empties to warehouse?')) {
         this.dropPointStore.removeEmpties(id)
       }
     },
