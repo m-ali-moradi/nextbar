@@ -3,7 +3,7 @@
     <header class="header">
       <div class="logo">Drop Points Service</div>
       <nav class="nav">
-        <a href="/src/components/Droppoint" class="active">Droppoint</a>
+        <a href="/" class="active">Droppoint</a>
 
         <a href="#" class="logout">Logout</a>
       </nav>
@@ -18,7 +18,7 @@
         <div class="modal">
           <span class="close" @click="closeModal">&times;</span>
           <h2>{{ isEditing ? 'Edit Drop Point' : 'New Drop Point' }}</h2>
-          <form @submit.prevent="isEditing ? updateDropPoint() : addDropPoint()">
+          <form @submit.prevent="isEditing ? updateDropPoint() : createDropPoint()">
             <label for="location">Location:</label>
             <input type="text" id="location" v-model="newDropPoint.location" required />
             <label for="capacity">Capacity:</label>
@@ -55,7 +55,7 @@
             <td>{{ item.current_empties }}</td>
             <td>{{ item.status }}</td>
             <td>
-              <button @click="openModal(item)">Edit</button>
+              <button @click="openModal(item)" class="edit-btn">Edit</button>
               <button @click="deleteDropPoint(item.id)" class="delete-btn">Delete</button>
               <button v-if="item.status === 'EMPTY'" @click="addEmpty(item.id)" class="add-btn">Add Empties</button>
               <button v-if="item.status === 'FULL'" @click="notifyWarehouse(item.id)" class="notify-btn">Notify Warehouse</button>
@@ -69,6 +69,8 @@
 </template>
 
 <script>
+import { toast } from 'vue3-toastify';
+import "vue3-toastify/dist/index.css";
 import { useDroppointStore } from '@/stores/droppoint.js'
 
 export default {
@@ -122,33 +124,71 @@ export default {
       this.isEditing = false
       this.editIndex = null
     },
-    addDropPoint() {
+    createDropPoint() {
       this.dropPointStore.createDropPoint({ ...this.newDropPoint})
+      toast(`Drop point ${this.newDropPoint.location} was created`, {
+        autoClose: 3000,
+        theme: "auto",
+        hideProgressBar: false,
+        type: toast.TYPE.SUCCESS
+      });
       this.closeModal()
     },
     updateDropPoint() {
       if (this.editIndex !== null) {
         this.dropPointStore.updateDropPoint(this.editIndex + 1, { ...this.newDropPoint})
+        toast(`Drop Point of id ${this.editIndex + 1} was updated`, {
+          autoClose: 3000,
+          theme: "auto",
+          hideProgressBar: false,
+          type: toast.TYPE.SUCCESS
+        });
       }
       this.closeModal()
     },
     deleteDropPoint(id) {
       if (confirm('Are you sure you want to delete this drop point?')) {
         this.dropPointStore.deleteDropPoint(id)
+        toast(`Drop Point ${id} was added`, {
+          autoClose: 3000,
+          theme: "auto",
+          hideProgressBar: false,
+          type: toast.TYPE.WARNING
+        });
+
       }
     },
     addEmpty(id) {
-        this.dropPointStore.addEmpties(id)
+      this.dropPointStore.addEmpties(id)
+      toast(`An empty was added to drop point id ${id}`, {
+        autoClose: 3000,
+        theme: "auto",
+        hideProgressBar: false,
+        type: toast.TYPE.SUCCESS
+
+      });
     },
     notifyWarehouse(id) {
       if (confirm('Are you sure you want to notify warehouse to remove empties?')) {
         this.dropPointStore.notifyWarehouse(id)
+        toast(`Warehouse notified`, {
+          autoClose: 3000,
+          theme: "auto",
+          hideProgressBar: false,
+          type: toast.TYPE.INFO
+        });
       }
     },
 
     removeEmpties(id) {
       if (confirm('Are you sure you want to transfer empties to warehouse?')) {
         this.dropPointStore.removeEmpties(id)
+        toast(`Empties from Drop point ID ${id} were transferred to the Warehouse`, {
+          autoClose: 3000,
+          theme: "auto",
+          hideProgressBar: false,
+          type: toast.TYPE.SUCCESS
+        });
       }
     },
   },

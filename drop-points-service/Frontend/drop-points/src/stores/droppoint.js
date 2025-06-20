@@ -36,8 +36,7 @@ export const useDroppointStore = defineStore('droppoint', {
       this.error = null
       try {
 
-        delete newInventory.id
-        const response = await api.post(newInventory)
+        const response = await api.post('/create', newInventory)
         console.log(`response ${response.data}`)
         this.droppoints.push(response.data)
       } catch (err) {
