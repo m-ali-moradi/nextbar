@@ -45,7 +45,7 @@ public class DropPointRestController {
 
     }
 
-    @PostMapping
+    @PostMapping("/create")
     public ResponseEntity<DropPointDto> createDropPoint(@RequestBody DropPointDto dropPointDto) {
         var dropPoint = DropPointConverter.toEntity(dropPointDto);
         var savedDropPoint = dropPointService.create_drop_point(dropPoint);
