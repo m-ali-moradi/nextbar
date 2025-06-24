@@ -20,6 +20,14 @@ spring:
             allowedHeaders: "*"
             allowCredentials: true
       routes:
+
+      # Event-Planner route
+        - id: eventplanner-service
+          uri: lb://eventplanner-service
+          predicates:
+            - Path=/api/events/**
+          filters:
+            - StripPrefix=1
       # Bar route
         - id: bar-service
           uri: lb://bar-service
@@ -34,6 +42,7 @@ spring:
             - Path=/api/droppoints/**
           filters:
             - StripPrefix=1
+
 
 eureka:
   client:
