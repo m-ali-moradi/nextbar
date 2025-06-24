@@ -35,11 +35,20 @@ spring:
           filters:
             - StripPrefix=1
 
+
       # Warehouse route
         - id: warehouse-service
           uri: lb://warehouse-service
           predicates:
             - Path=/api/warehouse/**
+          filters:
+            - StripPrefix=1
+            
+      # Users route
+        - id: users-service
+          uri: lb://users-service
+          predicates:
+            - Path=/api/users/**
           filters:
             - StripPrefix=1
 
