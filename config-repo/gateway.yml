@@ -42,7 +42,13 @@ spring:
             - Path=/api/droppoints/**
           filters:
             - StripPrefix=1
-
+      # Users route
+        - id: users-service
+          uri: lb://users-service
+          predicates:
+            - Path=/api/users/**
+          filters:
+            - StripPrefix=1
 
 eureka:
   client:
