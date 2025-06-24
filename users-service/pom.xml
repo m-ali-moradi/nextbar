@@ -15,7 +15,7 @@
     <groupId>com.bottledrop</groupId>
     <artifactId>user-service</artifactId>
     <version>0.0.1-SNAPSHOT</version>
-    <name>UserService</name>
+    <name>users-service</name>
     <description>User microservice</description>
 
     <properties>
