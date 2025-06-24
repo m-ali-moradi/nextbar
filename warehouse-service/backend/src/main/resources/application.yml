@@ -1,4 +1,6 @@
 spring:
+  config:
+    import: configserver:http://localhost:8888
   application:
     name: warehouse-service
   datasource:
@@ -26,7 +28,7 @@ logging:
     org.hibernate.tool.hbm2ddl: debug
 
 server:
-  port: 8082
+  port: 8085
 
 eureka:
   client:
