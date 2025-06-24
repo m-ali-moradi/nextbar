@@ -7,17 +7,17 @@ const routes = [
   // List all events
   { path: '/events', component: EventList },
 
-  { path: '/event/new', component: EventForm },
+  { path: '/events/new', component: EventForm },
 
   // Edit an existing event – same form, with props to load data
   {
-    path: '/event/:id/edit',
+    path: '/events/:id/edit',
     component: EventForm,
     props: route => ({ id: route.params.id, edit: true })
   },
 
   // View event details
-  { path: '/event/:id', component: EventDetails, props: true },
+  { path: '/events/:id', component: EventDetails, props: true },
 
   // Fallback
   { path: '/:pathMatch(.*)*', redirect: '/events' }
