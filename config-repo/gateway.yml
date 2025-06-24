@@ -28,6 +28,7 @@ spring:
             - Path=/api/events/**
           filters:
             - StripPrefix=1
+
       # Bar route
         - id: bar-service
           uri: lb://bar-service
