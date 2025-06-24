@@ -34,6 +34,12 @@ public class EventPlanningService {
      */
     @Transactional
     public Event saveEvent(Event event) {
+
+        // FIX: Ensure every bar is linked back to the event
+        for (BarPlan bar : event.getBars()) {
+            bar.setEvent(event);  // <- uses your helper, which sets bar.setEvent(event)
+        }
+
         // Validate each BarPlan’s beverage assignment
         for (BarPlan bar : event.getBars()) {
             int sum = bar.getTotalAssignedDrinkQuantity();

@@ -5,6 +5,8 @@ import jakarta.validation.constraints.*;
 import java.time.LocalDate;
 import java.util.ArrayList;
 import java.util.List;
+import com.fasterxml.jackson.annotation.JsonManagedReference;
+import com.fasterxml.jackson.annotation.JsonBackReference;
 
 @Entity
 @Table(name = "events")
@@ -42,12 +44,14 @@ public class Event {
      * Cascade so that when you save Event, its BarPlans are saved too.
      */
     @OneToMany(mappedBy = "event", cascade = CascadeType.ALL, orphanRemoval = true)
+    @JsonManagedReference
     private List<BarPlan> bars = new ArrayList<>();
 
     /**
      * One‐to‐Many relationship: an Event has multiple DropPointPlans.
      */
     @OneToMany(mappedBy = "event", cascade = CascadeType.ALL, orphanRemoval = true)
+    @JsonManagedReference
     private List<DropPointPlan> dropPoints = new ArrayList<>();
 
     public Event() { }

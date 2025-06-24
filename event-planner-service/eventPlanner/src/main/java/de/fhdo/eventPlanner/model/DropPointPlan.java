@@ -2,6 +2,8 @@ package de.fhdo.eventPlanner.model;
 
 import jakarta.persistence.*;
 import jakarta.validation.constraints.*;
+import com.fasterxml.jackson.annotation.JsonManagedReference;
+import com.fasterxml.jackson.annotation.JsonBackReference;
 
 @Entity
 @Table(name = "drop_point_plans")
@@ -19,6 +21,7 @@ public class DropPointPlan {
 
     @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "event_id")
+    @JsonBackReference
     private Event event;
 
     public DropPointPlan() { }
