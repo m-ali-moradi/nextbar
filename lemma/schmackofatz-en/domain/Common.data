@@ -1,0 +1,35 @@
+// Central domain model for the management of ‘shared domain concepts’
+// in the sense of the “shared artefacts”concept
+
+context SharedDomainConcepts {
+	structure Money<valueObject> {
+		immutable double amount,
+		function Money add(Money delta),
+		function boolean isGreaterThanOrEqual(Money other),
+		function string asString,
+		function Money multiply(int x)
+	}
+}
+
+// Context for encapsulation of shared domain events
+context DomainEvents {
+	// Domain event for communicating the creation of a
+    // new restaurant
+	
+	structure RestaurantCreated<domainEvent, valueObject> {
+		immutable string name,
+		immutable RestaurantMenu menu
+	}
+
+	structure RestaurantMenu<valueObject> {
+		immutable MenuItems menuItems
+	}
+
+	structure MenuItem<valueObject> {
+		immutable string id,
+		immutable string name,
+		immutable SharedDomainConcepts.Money price
+	}
+
+	collection MenuItems { MenuItem i }
+}
