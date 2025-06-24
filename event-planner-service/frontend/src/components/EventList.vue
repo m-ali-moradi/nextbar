@@ -4,7 +4,7 @@
       <h1>All Events</h1>
       <nav>
         <router-link to="/events" class="nav-link active">All Events</router-link>
-        <router-link to="/event/new" class="nav-link">Create Event</router-link>
+        <router-link to="/events/new" class="nav-link">Create Event</router-link>
       </nav>
     </header>
 
@@ -12,7 +12,7 @@
     <div v-if="error"   class="alert error">{{ error }}</div>
 
     <div class="toolbar">
-      <router-link to="/event/new" class="btn primary">
+      <router-link to="/events/new" class="btn primary">
         + Create New Event
       </router-link>
     </div>
@@ -37,8 +37,8 @@
           <td>{{ (ev.bars       || []).length }}</td>
           <td>{{ (ev.dropPoints || []).length }}</td>
           <td class="actions">
-            <router-link :to="`/event/${ev.eventId}`"      class="btn secondary">Details</router-link>
-            <router-link :to="`/event/${ev.eventId}/edit`" class="btn info">Edit</router-link>
+            <router-link :to="`/events/${ev.eventId}`"      class="btn secondary">Details</router-link>
+            <router-link :to="`/events/${ev.eventId}/edit`" class="btn info">Edit</router-link>
             <button @click="deleteEvent(ev.eventId)" class="btn danger">Delete</button>
           </td>
         </tr>

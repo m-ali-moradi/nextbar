@@ -1,6 +1,6 @@
 spring:
   application:
-    name: eventplanner-service
+    name: eventPlanner
   cloud:
     config:
       uri: http://localhost:8888

@@ -55,7 +55,7 @@ public class EventWizardController {
     public String showStep1(@ModelAttribute("eventForm") EventForm eventForm,
                             Model model) {
         model.addAttribute("allBeverages", warehouseCatalog.getAllBeverages());
-        return "event/step1";    // templates/event/step1.html
+        return "events/step1";    // templates/events/step1.html
     }
 
     @PostMapping("/events/create/step1")
@@ -72,7 +72,7 @@ public class EventWizardController {
                 bindingResult.hasFieldErrors("beverages")) {
 
             model.addAttribute("allBeverages", warehouseCatalog.getAllBeverages());
-            return "event/step1";
+            return "events/step1";
         }
         return "redirect:/events/create/step2";
     }
@@ -101,7 +101,7 @@ public class EventWizardController {
         // 3) Expose the filtered list to Thymeleaf as "selectedBeverages"
         model.addAttribute("selectedBeverages", selectedBeverages);
 
-        return "event/step2";    // templates/event/step2.html
+        return "events/step2";    // templates/events/step2.html
     }
 
     @PostMapping("/events/create/step2")
@@ -112,7 +112,7 @@ public class EventWizardController {
     ) {
         if (bindingResult.hasFieldErrors("bars")) {
             model.addAttribute("allBeverages", warehouseCatalog.getAllBeverages());
-            return "event/step2";
+            return "events/step2";
         }
         return "redirect:/events/create/step3";
     }
@@ -128,7 +128,7 @@ public class EventWizardController {
             drops.add(new DropPointForm());
             eventForm.setDropPoints(drops);
         }
-        return "event/step3";   // templates/event/step3.html
+        return "events/step3";   // templates/events/step3.html
     }
 
     @PostMapping("/events/create/step3")
@@ -141,7 +141,7 @@ public class EventWizardController {
     ) {
         // If dropPoints validation fails, re‐show step3:
         if (bindingResult.hasFieldErrors("dropPoints")) {
-            return "event/step3";
+            return "events/step3";
         }
 
         // Build Event from EventForm
@@ -191,7 +191,7 @@ public class EventWizardController {
             eventService.saveEvent(event);
         } catch (Exception ex) {
             bindingResult.reject("barCapacityError", ex.getMessage());
-            return "event/step3";
+            return "events/step3";
         }
 
         sessionStatus.setComplete();

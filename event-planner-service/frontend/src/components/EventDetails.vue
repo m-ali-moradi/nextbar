@@ -12,7 +12,7 @@
       <div class="actions">
         <router-link
           v-if="event"
-          :to="`/event/${event.eventId}/edit`"
+          :to="`/events/${event.eventId}/edit`"
           class="btn info"
         >
           Edit Event

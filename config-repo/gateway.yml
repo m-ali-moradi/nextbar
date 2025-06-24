@@ -20,6 +20,14 @@ spring:
             allowedHeaders: "*"
             allowCredentials: true
       routes:
+
+      # Event-Planner route
+        - id: eventplanner-service
+          uri: lb://eventplanner-service
+          predicates:
+            - Path=/api/events/**
+          filters:
+            - StripPrefix=1
       # Bar route
         - id: bar-service
           uri: lb://bar-service
@@ -44,6 +52,7 @@ spring:
           filters:
             - StripPrefix=1
             
+
       # Users route
         - id: users-service
           uri: lb://users-service
