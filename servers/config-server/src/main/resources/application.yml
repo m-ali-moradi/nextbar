@@ -1,0 +1,14 @@
+server:
+  port: 8888
+spring:
+  cloud:
+    config:
+      server:
+        git:
+          uri: https://github.com/Team-Coditects/dmsa-sose25-coditects.git
+          search-paths: config-repo
+          default-label: main
+          username: m-ali-moradi
+          password: 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 # access token
+  application:
+    name: config-server
