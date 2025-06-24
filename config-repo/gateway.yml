@@ -26,8 +26,8 @@ spring:
           uri: lb://eventplanner-service
           predicates:
             - Path=/api/events/**
-          #filters:
-            #- StripPrefix=1
+          filters:
+            - StripPrefix=1
       # Bar route
         - id: bar-service
           uri: lb://bar-service
