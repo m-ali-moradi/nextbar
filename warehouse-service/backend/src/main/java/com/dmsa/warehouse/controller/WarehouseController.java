@@ -16,7 +16,7 @@ import com.dmsa.warehouse.services.WarehouseService;
 import java.util.List;
 
 @RestController
-@RequestMapping("/warehouse")
+@RequestMapping("/api/warehouse")
 public class WarehouseController {
 
     @Autowired

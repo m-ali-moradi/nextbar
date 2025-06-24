@@ -35,6 +35,14 @@ spring:
           filters:
             - StripPrefix=1
 
+      # Warehouse route
+        - id: warehouse-service
+          uri: lb://warehouse-service
+          predicates:
+            - Path=/api/warehouse/**
+          filters:
+            - StripPrefix=1
+
 eureka:
   client:
     service-url:

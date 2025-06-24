@@ -26,7 +26,7 @@
   const stock = ref([])
   
   onMounted(async () => {
-    const res = await fetch('http://localhost:8082/warehouse/stock')
+    const res = await fetch('http://localhost:8085/api/warehouse/stock')
     stock.value = await res.json()
   })
   </script>
