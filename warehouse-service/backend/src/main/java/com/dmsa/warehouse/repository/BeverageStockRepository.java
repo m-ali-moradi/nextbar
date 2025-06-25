@@ -8,6 +8,6 @@ import java.util.Optional;
 
 @Repository
 public interface BeverageStockRepository extends JpaRepository<BeverageStock, Long> {
-    Optional<BeverageStock> findByBeverageType(String beverageType);
+    Optional<BeverageStock> findByBeverageTypeIgnoreCase(String beverageType);
 }
 
