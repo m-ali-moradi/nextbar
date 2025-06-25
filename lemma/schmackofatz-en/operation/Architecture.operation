@@ -1,0 +1,47 @@
+import microservices from "../microservices/Restaurant.services" as RestaurantServices
+// FIXME (1) Import the Order Service
+import technology from "../technology/Docker.technology" as Docker
+// FIXME (2) Import the Kafka technology model
+import technology from "../technology/MariaDB.technology" as MariaDB
+import technology from "../technology/JavaSpring.technology" as JavaSpring
+import technology from "../technology/Protocols.technology" as Protocols
+
+@technology(Docker)
+@technology(Protocols)
+container RestaurantServiceContainer deployment technology Docker::_deployment.Docker
+	deploys RestaurantServices::org.example.RestaurantService {
+	RestaurantServices::org.example.RestaurantService {
+		Dockerfile('
+			RUN apk --no-cache add curl
+			CMD java ${JAVA_OPTS} -jar restaurant-service.jar
+			COPY build/libs/restaurant-service.jar .
+		')
+
+		basic endpoints {
+			Protocols::_protocols.rest: "8082:8081";
+		}
+	}
+}
+
+// FIXME (3) Modeling a container for the Order Service analogous
+//           to the RestaurantServiceContainer
+
+
+@technology(MariaDB)
+MariaDB is MariaDB::_infrastructure.MariaDB
+	// FIXME (4) add a container for the Order Service.
+	used by nodes RestaurantServiceContainer {
+	default values {
+		hostName = "localhost"
+		rootPassword = "rootpassword"
+		userName = "mysqluser"
+		userPassword = "mysqlpw"
+	}
+	endpoints {
+		MariaDB::_protocols.connectorJ: "3306:3306";
+	}
+}
+
+// FIXME (5) Add an infrastructure node for a Kafka broker
+
+// FIXME (6) Add an infrastructure node for Zookeeper

@@ -1,0 +1,27 @@
+import datatypes from "Common.data" as Common
+
+context Restaurant {
+	structure Restaurant<entity> {
+		long id<identifier>,
+		string name,
+		RestaurantMenu menu
+	}
+
+	structure RestaurantMenu<valueObject> {
+		MenuItems menuItems
+	}
+
+	structure MenuItem<valueObject> {
+		string id,
+		string name,
+		Common::SharedDomainConcepts.Money price
+	}
+
+	collection MenuItems { MenuItem i }
+}
+
+//context API {
+    // FIXME (8) For the synchronous input parameter ‘request’ of the ‘create’ operation
+    //           of the Restaurant Service, data structures and list types must be added here
+    //           //
+//}
