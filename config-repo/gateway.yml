@@ -27,7 +27,7 @@ spring:
           predicates:
             - Path=/api/events/**
           filters:
-            - StripPrefix=1
+            - StripPrefix=0
 
       # Bar route
         - id: bar-service

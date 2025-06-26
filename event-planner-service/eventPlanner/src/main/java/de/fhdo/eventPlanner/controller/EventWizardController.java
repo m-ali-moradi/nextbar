@@ -28,11 +28,11 @@ import java.util.Optional;
 @SessionAttributes("eventForm")
 public class EventWizardController {
 
-    private final EventPlanningService eventService;
-    private final WarehouseCatalog warehouseCatalog;
+   private final EventPlanningService eventService;
+   private final WarehouseCatalog warehouseCatalog;
 
-    @Autowired
-    public EventWizardController(EventPlanningService eventService,
+   @Autowired
+   public EventWizardController(EventPlanningService eventService,
                                  WarehouseCatalog warehouseCatalog) {
         this.eventService = eventService;
         this.warehouseCatalog = warehouseCatalog;
