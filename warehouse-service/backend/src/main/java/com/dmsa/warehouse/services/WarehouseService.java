@@ -19,16 +19,32 @@ public class WarehouseService {
     @Autowired
     private EmptyBottleStockRepository emptyRepo;
 
+    public WarehouseService(BeverageStockRepository beverageRepo) {
+        this.beverageRepo = beverageRepo;
+    }
+
     public List<BeverageStock> getAllBeverages() {
         return beverageRepo.findAll();
     }
- //CHECK MATHS
-    public void replenish(String beverageType, int quantity) {
-        BeverageStock stock = beverageRepo.findByBeverageType(beverageType)
-                .orElse(new BeverageStock(beverageType, 0));
-        stock.setQuantity(stock.getQuantity() + quantity);
+
+    public int getAvailableStock(String beverageType) {
+        return beverageRepo
+            .findByBeverageTypeIgnoreCase(beverageType)
+            .map(BeverageStock::getQuantity)
+            .orElse(0);
+    }
+
+    public void replenish(String beverageType, int amount) {
+        BeverageStock stock = beverageRepo
+            .findByBeverageTypeIgnoreCase(beverageType)
+            .orElseThrow(() -> new IllegalArgumentException(
+                "No stock record for beverage: " + beverageType));
+        int newQty = Math.max(0, stock.getQuantity() - amount);
+        stock.setQuantity(newQty);
         beverageRepo.save(stock);
     }
+
+ 
 /////rename amele
     public void acceptEmpties(int quantity) {
         EmptyBottleStock stock = emptyRepo.findAll().stream().findFirst().orElse(new EmptyBottleStock(0));
