@@ -1,4 +1,4 @@
-<template>
+<!-- <template>
   <div id="app">
     <nav class="navbar">
       <RouterLink to="/beveragestock">Beverage Stock</RouterLink>
@@ -32,4 +32,31 @@
   max-width: 900px;
   margin: auto;
 }
-</style>
+</style> -->
+<template>
+  <div>
+    <!-- Sidebar -->
+    <aside class="sidebar">
+      <h1>Warehouse</h1>
+      <nav>
+        <router-link to="/stock" class="nav-link" active-class="active">Beverage Stock</router-link>
+        <router-link to="/supply" class="nav-link" active-class="active">Supply Requests</router-link>
+      </nav>
+    </aside>
+
+    <!-- Main content -->
+    <div class="main">
+      <!-- <header class="header">
+        <h2>Warehouse Dashboard</h2>
+        <button class="button process">Logout</button>
+      </header> -->
+      <main class="content">
+        <router-view />
+      </main>
+    </div>
+  </div>
+</template>
+
+<script setup lang="ts">
+// no script needed here
+</script>

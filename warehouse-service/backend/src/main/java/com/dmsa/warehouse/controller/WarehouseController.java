@@ -1,22 +1,18 @@
 package com.dmsa.warehouse.controller;
 
 import com.dmsa.warehouse.dto.BarDto;
-import com.dmsa.warehouse.dto.EmptyReceiveRequest;
 import com.dmsa.warehouse.dto.ReplenishRequest;
 import com.dmsa.warehouse.dto.ReplenishResponse;
 import com.dmsa.warehouse.dto.SupplyRequestDto;
 import com.dmsa.warehouse.feign.BarServiceClient;
 import com.dmsa.warehouse.model.BeverageStock;
-import com.dmsa.warehouse.model.EmptyBottleStock;
-import com.dmsa.warehouse.repository.BeverageStockRepository;
-import com.dmsa.warehouse.repository.EmptyBottleStockRepository;
+import com.dmsa.warehouse.model.DropPointRecord;
 import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.stereotype.Controller;
-import org.springframework.ui.Model;
 import org.springframework.web.bind.annotation.*;
 import org.springframework.http.ResponseEntity;
 
 import com.dmsa.warehouse.services.BarFetchService;
+import com.dmsa.warehouse.services.DropPointIntegrationService;
 import com.dmsa.warehouse.services.SupplyFetchService;
 import com.dmsa.warehouse.services.SupplyUpdateService;
 import com.dmsa.warehouse.services.WarehouseService;
@@ -39,12 +35,16 @@ public class WarehouseController {
 
     private final SupplyFetchService supplyFetchService;
 
+    private final DropPointIntegrationService dropPointIntegrationService;
+
     public WarehouseController(SupplyUpdateService supplyUpdateService, BarFetchService barFetchService,
-            BarServiceClient barServiceClient, SupplyFetchService supplyFetchService) {
+            BarServiceClient barServiceClient, SupplyFetchService supplyFetchService,
+            DropPointIntegrationService dropPointIntegrationService) {
         this.barFetchService = barFetchService;
         this.supplyUpdateService = supplyUpdateService;
         this.barServiceClient = barServiceClient;
         this.supplyFetchService = supplyFetchService;
+        this.dropPointIntegrationService = dropPointIntegrationService;
     }
 
     @GetMapping("/stock")
@@ -52,29 +52,7 @@ public class WarehouseController {
         return warehouseService.getAllBeverages();
     }
 
-    @PostMapping("/receive-empty")
-    public ResponseEntity<String> receiveEmpty(@RequestBody EmptyReceiveRequest request) {
-        warehouseService.acceptEmpties(request.getQuantity());
-        return ResponseEntity.ok("Empties received");
-    }
-
-    @GetMapping("/empty-stock")
-    public ResponseEntity<Integer> getEmptyStock() {
-        return ResponseEntity.ok(warehouseService.getEmptyBottleStock());
-    }
-
-    // @PutMapping("/replenish/{barId}/{requestId}")
-    // public ResponseEntity<ReplenishResponse> replenish(@PathVariable UUID barId,
-    // @PathVariable UUID requestId,
-    // @RequestBody int quantity,
-    // @RequestBody ReplenishRequest request) {
-    // supplyUpdateService.sendSupplyUpdate(barId, requestId, quantity, request);
-    // ReplenishResponse response = new ReplenishResponse(barId, requestId,
-    // quantity, "Supply status updated.");
-    // return ResponseEntity.ok(response);
-    // }
-
-    @PutMapping("/replenish/{barId}/{requestId}")
+    @PutMapping("/bars/replenish/{barId}/{requestId}")
     public ResponseEntity<ReplenishResponse> replenish(
             @PathVariable UUID barId,
             @PathVariable UUID requestId,
@@ -109,5 +87,27 @@ public class WarehouseController {
             @PathVariable UUID requestId) {
         SupplyRequestDto dto = supplyFetchService.fetchSupplyRequest(barId, requestId);
         return ResponseEntity.ok(dto);
+    }
+
+    @PostMapping("/droppoints/fetch-notified")
+    public ResponseEntity<List<DropPointRecord>> fetchNotified() {
+        return ResponseEntity.ok(dropPointIntegrationService.fetchNotified());
+    }
+
+    @GetMapping("/droppoints/notified")
+    public ResponseEntity<List<DropPointRecord>> listNotified() {
+        return ResponseEntity.ok(dropPointIntegrationService.listNotified());
+    }
+
+    @PutMapping("/droppoints/{id}/accept")
+    public ResponseEntity<DropPointRecord> accept(@PathVariable Long id) {
+        DropPointRecord updated = dropPointIntegrationService.accept(id);
+        return ResponseEntity.ok(updated);
+    }
+
+    @GetMapping("/droppoints/{id}/status")
+    public ResponseEntity<DropPointRecord> status(@PathVariable Long id) {
+        DropPointRecord rec = dropPointIntegrationService.getStatus(id);
+        return ResponseEntity.ok(rec);
     }
 }

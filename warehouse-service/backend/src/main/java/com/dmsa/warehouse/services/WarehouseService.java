@@ -3,7 +3,7 @@ package com.dmsa.warehouse.services;
 import com.dmsa.warehouse.model.BeverageStock;
 import com.dmsa.warehouse.model.EmptyBottleStock;
 import com.dmsa.warehouse.repository.BeverageStockRepository;
-import com.dmsa.warehouse.repository.EmptyBottleStockRepository;
+import com.dmsa.warehouse.repository.DropPointRecordRepository;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 
@@ -17,7 +17,7 @@ public class WarehouseService {
     private BeverageStockRepository beverageRepo;
 
     @Autowired
-    private EmptyBottleStockRepository emptyRepo;
+    private DropPointRecordRepository emptyRepo;
 
     public WarehouseService(BeverageStockRepository beverageRepo) {
         this.beverageRepo = beverageRepo;
@@ -44,15 +44,4 @@ public class WarehouseService {
         beverageRepo.save(stock);
     }
 
- 
-/////rename amele
-    public void acceptEmpties(int quantity) {
-        EmptyBottleStock stock = emptyRepo.findAll().stream().findFirst().orElse(new EmptyBottleStock(0));
-        stock.setQuantity(stock.getQuantity() + quantity);
-        emptyRepo.save(stock);
-    }
-
-    public int getEmptyBottleStock() {
-        return emptyRepo.findAll().stream().findFirst().map(EmptyBottleStock::getQuantity).orElse(0);
-    }
 }
