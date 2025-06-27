@@ -35,7 +35,10 @@ public class DropPointIntegrationService {
       .filter(d -> "FULL_AND_NOTIFIED_TO_WAREHOUSE".equals(d.getStatus()))
       .map(d -> {
         DropPointRecord rec = dropPointRecordRepository.findById(d.getId())
-          .orElse(new DropPointRecord(d.getId()));
+          .orElseGet(() -> new DropPointRecord(d.getId()));
+        if (rec.getStatus() == DropPointRecord.Status.ACCEPTED) {
+          return rec;
+        }
         rec.setLocation(d.getLocation());
         rec.setCurrentEmpties(d.getCurrentEmpties());
         rec.setStatus(Status.NOTIFIED);
@@ -64,7 +67,8 @@ public class DropPointIntegrationService {
 
   @Transactional(readOnly=true)
   public List<DropPointRecord> listNotified() {
-    return dropPointRecordRepository.findByStatus(Status.NOTIFIED);
+    // return dropPointRecordRepository.findByStatus(Status.NOTIFIED);
+    return dropPointRecordRepository.findAll();
   }
 
 }

@@ -41,6 +41,7 @@
       <nav>
         <router-link to="/stock" class="nav-link" active-class="active">Beverage Stock</router-link>
         <router-link to="/supply" class="nav-link" active-class="active">Supply Requests</router-link>
+        <router-link to="/drop-points" class="nav-link" active-class="active">Drop Points</router-link>
       </nav>
     </aside>
 
