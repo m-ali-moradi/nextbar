@@ -6,7 +6,9 @@ CREATE TABLE beverage_stock (
 
 CREATE TABLE empty_bottle_stock (
   id BIGINT AUTO_INCREMENT PRIMARY KEY,
-  quantity INT
+  drop_point_id BIGINT NOT NULL,
+  drop_point_location VARCHAR(255),
+  quantity INT NOT NULL
 );
 
 CREATE TABLE drop_point_records (
