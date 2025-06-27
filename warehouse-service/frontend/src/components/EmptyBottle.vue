@@ -14,7 +14,7 @@ import { ref, onMounted } from 'vue'
 const count = ref(0)
 
 onMounted(async () => {
-  const res = await fetch('http://localhost:8082/warehouse/empty-stock')
+  const res = await fetch('http://localhost:8080/api/warehouse/empty-stock')
   count.value = await res.json()
 })
 </script>

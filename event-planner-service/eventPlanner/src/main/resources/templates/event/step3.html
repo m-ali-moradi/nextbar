@@ -1,0 +1,161 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org">
+<head>
+  <meta charset="UTF-8"/>
+  <title th:text="${eventForm.eventId} != null
+                  ? 'Edit Event – Step 3'
+                  : 'Create Event – Step 3'">
+    Configure Drop Points
+  </title>
+  <link rel="stylesheet"
+        href="https://cdn.jsdelivr.net/npm/bootstrap@4.6.0/dist/css/bootstrap.min.css"/>
+</head>
+<body class="bg-light">
+<div class="container py-4">
+  <h1 th:text="${eventForm.eventId} != null
+                 ? 'Edit Event – Step 3: Configure Drop Points'
+                 : 'Create Event – Step 3: Configure Drop Points'">
+    Configure Drop Points
+  </h1>
+
+  <form th:action="@{/events/create/step3}"
+        th:object="${eventForm}"
+        method="post">
+    <input type="hidden" th:field="*{eventId}"/>
+
+    <div id="dropPointsContainer">
+      <!-- existing drop-points -->
+      <div th:each="dp, idx : *{dropPoints}"
+           class="border rounded p-3 mb-3">
+        <h5>
+          Drop Point <span th:text="${idx.index + 1}">1</span>
+          <button type="button"
+                  class="btn btn-sm btn-danger float-right removeDpBtn">
+            × Remove
+          </button>
+        </h5>
+
+        <!-- keep the ID on edits -->
+        <input type="hidden"
+               th:field="*{dropPoints[__${idx.index}__].dropPointId}"/>
+
+        <div class="form-row">
+          <div class="form-group col-md-6">
+            <label>Location</label>
+            <input type="text"
+                   th:field="*{dropPoints[__${idx.index}__].location}"
+                   class="form-control"
+                   placeholder="e.g. South Entrance"/>
+            <div th:if="${#fields.hasErrors('dropPoints[' + idx.index + '].location')}"
+                 class="text-danger"
+                 th:errors="*{dropPoints[__${idx.index}__].location}">
+            </div>
+          </div>
+          <div class="form-group col-md-6">
+            <label>Capacity</label>
+            <input type="number"
+                   th:field="*{dropPoints[__${idx.index}__].capacity}"
+                   class="form-control"
+                   min="0"
+                   placeholder="e.g. 200"/>
+            <div th:if="${#fields.hasErrors('dropPoints[' + idx.index + '].capacity')}"
+                 class="text-danger"
+                 th:errors="*{dropPoints[__${idx.index}__].capacity}">
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <div th:if="${#lists.isEmpty(eventForm.dropPoints)}"
+           class="alert alert-danger">
+        You must configure at least one drop point
+      </div>
+    </div>
+    <!-- /#dropPointsContainer -->
+
+    <!-- only this button adds new rows -->
+    <button type="button"
+            id="addDropPointBtn"
+            class="btn btn-secondary mb-3">
+      + Add Drop Point
+    </button>
+
+    <div class="d-flex justify-content-between">
+      <a th:href="@{/events/create/step2}"
+         class="btn btn-outline-primary">
+        ← Back to Step 2
+      </a>
+      <!-- this is your real submit -->
+      <button type="submit"
+              class="btn btn-success">
+        Save Event
+      </button>
+    </div>
+
+    <!-- hidden template for JS cloning -->
+    <template id="dpPrototype">
+      <div class="border rounded p-3 mb-3">
+        <h5>
+          Drop Point __DP_NUMBER__
+          <button type="button"
+                  class="btn btn-sm btn-danger float-right removeDpBtn">
+            × Remove
+          </button>
+        </h5>
+
+        <input type="hidden"
+               name="dropPoints[__INDEX__].dropPointId"/>
+
+        <div class="form-row">
+          <div class="form-group col-md-6">
+            <label>Location</label>
+            <input type="text"
+                   name="dropPoints[__INDEX__].location"
+                   class="form-control"
+                   placeholder="e.g. South Entrance"/>
+          </div>
+          <div class="form-group col-md-6">
+            <label>Capacity</label>
+            <input type="number"
+                   name="dropPoints[__INDEX__].capacity"
+                   class="form-control"
+                   min="0"
+                   placeholder="e.g. 200"/>
+          </div>
+        </div>
+      </div>
+    </template>
+  </form>
+</div>
+
+<script th:inline="javascript">
+  /*<![CDATA[*/
+  document.addEventListener('DOMContentLoaded', function() {
+    const addBtn = document.getElementById('addDropPointBtn');
+    const container = document.getElementById('dropPointsContainer');
+    // start count from existing list size
+    let dpCount = /*[[${#lists.size(eventForm.dropPoints)}]]*/0;
+
+    // only “+ Add Drop Point” appends new cards
+    addBtn.addEventListener('click', () => {
+      const tpl = document.getElementById('dpPrototype');
+      const frag = tpl.content.cloneNode(true);
+      let html = frag.firstElementChild.outerHTML
+                    .replace(/__INDEX__/g, dpCount)
+                    .replace(/__DP_NUMBER__/g, dpCount + 1);
+      container.insertAdjacentHTML('beforeend', html);
+      dpCount++;
+    });
+
+    // delegate remove buttons
+    container.addEventListener('click', e => {
+      const btn = e.target.closest('.removeDpBtn');
+      if (!btn) return;
+      const card = btn.closest('.border');
+      card && card.remove();
+    });
+  });
+  /*]]>*/
+</script>
+</body>
+</html>

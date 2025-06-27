@@ -20,6 +20,15 @@ spring:
             allowedHeaders: "*"
             allowCredentials: true
       routes:
+
+      # Event-Planner route
+        - id: eventplanner-service
+          uri: lb://eventplanner-service
+          predicates:
+            - Path=/api/events/**
+          filters:
+            - StripPrefix=0
+
       # Bar route
         - id: bar-service
           uri: lb://bar-service
@@ -32,6 +41,24 @@ spring:
           uri: lb://droppoint-service
           predicates:
             - Path=/api/droppoints/**
+          filters:
+            - StripPrefix=1
+
+
+      # Warehouse route
+        - id: warehouse-service
+          uri: lb://warehouse-service
+          predicates:
+            - Path=/api/warehouse/**
+          filters:
+            - StripPrefix=1
+            
+
+      # Users route
+        - id: users-service
+          uri: lb://users-service
+          predicates:
+            - Path=/api/users/**
           filters:
             - StripPrefix=1
 

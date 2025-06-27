@@ -15,7 +15,7 @@ const beverageType = ref('')
 const quantity = ref(0)
 
 async function submitForm() {
-  await fetch('http://localhost:8082/warehouse/replenish', {
+  await fetch('http://localhost:8080/api/warehouse/replenish', {
     method: 'POST',
     headers: { 'Content-Type': 'application/json' },
     body: JSON.stringify({ beverageType: beverageType.value, quantity: quantity.value })
