@@ -1,5 +1,6 @@
 package de.fhdo.eventPlanner.dto;
 
+import de.fhdo.eventPlanner.model.DefineBeverage;
 import jakarta.validation.constraints.*;
 import java.util.HashMap;
 import java.util.Map;

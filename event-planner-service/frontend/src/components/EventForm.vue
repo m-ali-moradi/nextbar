@@ -31,12 +31,13 @@
           </select>
         </div>
       </section>
-
+      
       <!-- ====== BEVERAGE SELECTION ====== -->
+      <!--
       <section class="section">
         <h2>Select Beverages</h2>
         <div class="form-group">
-          <select v-model="form.beverageIds" multiple required>
+          <select v-model="form.beverageIds" multiple required size="8">
             <option
               v-for="bev in allBeverages"
               :key="bev.id"
@@ -50,6 +51,25 @@
           </small>
         </div>
       </section>
+      -->
+
+      <!-- ====== BEVERAGE SELECTION ====== -->
+      <section class="section">
+        <h2>Select Beverages</h2>
+        <div class="form-group">
+          <div v-for="bev in allBeverages" :key="bev.id" class="checkbox-group">
+            <label>
+              <input
+                type="checkbox"
+                :value="bev.id"
+                v-model="form.beverageIds"
+              />
+              {{ bev.name }} ({{ bev.price }})
+            </label>
+          </div>
+        </div>
+      </section>
+      
 
       <!-- ====== BARS CONFIGURATION ====== -->
       <section class="section">
@@ -165,7 +185,7 @@ const allBeverages = ref([])
 
 onMounted(async () => {
   try {
-    const bevRes = await axios.get('/api/beverages')
+    const bevRes = await axios.get('/api/events/beverages')
     allBeverages.value = bevRes.data
 
     if (isEdit.value) {
