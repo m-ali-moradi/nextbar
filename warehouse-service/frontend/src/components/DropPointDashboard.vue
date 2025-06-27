@@ -1,9 +1,10 @@
 <template>
     <div>
       <h2>Drop-Point Notifications</h2>
-      <button class="button process" @click="refresh">
-        Refresh Drop-Points
-      </button>
+      <button class="button process" @click="refresh()">
+            Refresh Drop-Points
+    </button>
+
   
       <div class="table-container" v-if="records.length">
         <table>
@@ -38,7 +39,6 @@
       <p v-else>No drop-points awaiting acceptance.</p>
     </div>
   </template>
-  
   <script setup lang="ts">
   import { ref, onMounted } from 'vue'
   import axios from 'axios'
@@ -52,39 +52,52 @@
   
   const records = ref<Record[]>([])
   
-  /**
-   * 1) Tell your warehouse to pull in any new notifications
-   * 2) Read back exactly the NOTIFIED ones
-   * 3) Merge into `records` so ACCEPTED rows stick around
-   */
-  async function refresh() {
-    try {
-      // 🔵 1) trigger backend to fetch & save all new FULL notifications
-      await axios.post('http://localhost:8085/warehouse/droppoints/fetch-notified')
+  /**  Only loads whatever is already in your DB */
+//   async function loadNotified() {
+//     try {
+//       const { data: notified } = await axios.get<Record[]>(
+//         'http://localhost:8085/warehouse/droppoints/notified'
+//       )
+//       // rebuild the records list, preserving ACCEPTED
+//       const accepted = records.value.filter(r => r.status === 'ACCEPTED')
+//       records.value = [...accepted, ...notified]
+//     }
+//     catch (e) {
+//       console.error('Load failed', e)
+//     }
+//   }
   
-      // 🔵 2) read back only the NOTIFIED ones
-      const { data: notified } = await axios.get<Record[]>(
-        'http://localhost:8085/warehouse/droppoints/notified'
-      )
-  
-      // 🔵 3) merge them into `records`
-      notified.forEach((r) => {
-        const existing = records.value.find(x => x.id === r.id)
-        if (!existing) {
-          // brand new notification → add it
-          records.value.push(r)
-        } else if (existing.status === 'NOTIFIED') {
-          // update location & count if it's still NOTIFIED
-          existing.location = r.location
-          existing.currentEmpties = r.currentEmpties
-        }
-        // if existing.status==='ACCEPTED' we leave it alone
-      })
-    }
-    catch (e) {
-      console.error('Refresh failed', e)
-    }
-  }
+//   /** Fires when you click the button */
+//   async function refresh() {
+//     try {
+//       // 1) pull in any brand-new notifications
+//       await axios.post(
+//         'http://localhost:8085/warehouse/droppoints/fetch-notified'
+//       )
+//       // 2) then re-load from your DB
+//       await loadNotified()
+//     }
+//     catch (e) {
+//       console.error('Refresh failed', e)
+//     }
+//   }
+
+/** Pull in new notifications *and* then overwrite entire table with exactly what’s in the DB */
+async function refresh() {
+  // 1) fetch from drop-point microservice
+  await axios.post(
+    'http://localhost:8085/warehouse/droppoints/fetch-notified'
+  )
+
+  // 2) read *all* records (NOTIFIED + ACCEPTED) from your own DB
+  const { data: all } = await axios.get<Record[]>(
+    'http://localhost:8085/warehouse/droppoints/all'
+  )
+
+  // 3) replace the UI list wholesale
+  records.value = all
+}
+
   
   /** Flip one from NOTIFIED → ACCEPTED in both backend + local UI */
   async function accept(id: number) {
@@ -117,13 +130,26 @@
     padding: 8px 12px;
     border: 1px solid #ddd;
   }
-  .button {
+  .button{
     padding: 4px 8px;
     border: none;
     border-radius: 4px;
     cursor: pointer;
     font-size: 0.85rem;
+
+   /* Smooth transform & shadow transitions */
+   transition: transform 0.1s ease, box-shadow 0.1s ease;
   }
+ 
+ /* “Pressed” state */
+.button:active {
+   transform: scale(0.95);
+    box-shadow: inset 0 2px 4px rgba(0,0,0,0.2);
+     }
+.button:hover { 
+    box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+  }
+
   .button.process { background: #3182ce; color: white; }
   .button.deliver { background: #38a169; color: white; }
   </style>

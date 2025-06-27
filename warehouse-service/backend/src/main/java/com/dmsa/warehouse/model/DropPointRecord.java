@@ -16,7 +16,7 @@ public class DropPointRecord {
     private Status status;
 
     public enum Status {
-        NOTIFIED, ACCEPTED
+        NOTIFIED, ACCEPTED, STATUS_RESET
     }
 
     public DropPointRecord() {

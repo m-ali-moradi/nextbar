@@ -10,7 +10,6 @@ INSERT INTO beverage_stock (beverage_type, quantity) VALUES ('Apple Cider', 30);
 INSERT INTO beverage_stock (beverage_type, quantity) VALUES ('Beer', 185);
 INSERT INTO beverage_stock (beverage_type, quantity) VALUES ('Dr Pepper', 65);
 INSERT INTO beverage_stock (beverage_type, quantity) VALUES ('Mountain Dew', 70);
-INSERT INTO empty_bottle_stock (quantity) VALUES (0);
 INSERT INTO beverage_stock (beverage_type, quantity) VALUES ('Grape Soda', 40);
 INSERT INTO beverage_stock (beverage_type, quantity) VALUES ('Coconut Water', 50);
 INSERT INTO beverage_stock (beverage_type, quantity) VALUES ('Cola Zero', 180);

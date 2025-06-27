@@ -91,7 +91,7 @@ public class WarehouseController {
 
     @PostMapping("/droppoints/fetch-notified")
     public ResponseEntity<List<DropPointRecord>> fetchNotified() {
-        return ResponseEntity.ok(dropPointIntegrationService.fetchNotified());
+        return ResponseEntity.ok(dropPointIntegrationService.fetchNotified() == null ? List.of() : dropPointIntegrationService.fetchNotified());
     }
 
     @GetMapping("/droppoints/notified")
@@ -109,5 +109,10 @@ public class WarehouseController {
     public ResponseEntity<DropPointRecord> status(@PathVariable Long id) {
         DropPointRecord rec = dropPointIntegrationService.getStatus(id);
         return ResponseEntity.ok(rec);
+    }
+
+    @GetMapping("/droppoints/all")
+    public ResponseEntity<List<DropPointRecord>> listAll() {
+        return ResponseEntity.ok(dropPointIntegrationService.listNotified());
     }
 }
