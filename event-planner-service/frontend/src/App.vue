@@ -2,8 +2,8 @@
   <div id="app">
     <!-- optional nav -->
     <nav>
-      <router-link to="/events">All Events</router-link> |
-      <router-link to="/event/step1">Create Event</router-link>
+      <router-link to="/events">All Events</router-link> 
+      <!--router-link to="/events/step1">Create Event</router-link-->
     </nav>
 
     <!-- this is where your routed components appear -->

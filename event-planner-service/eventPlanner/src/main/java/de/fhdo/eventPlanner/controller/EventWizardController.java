@@ -18,11 +18,9 @@ import org.springframework.validation.BindingResult;
 import org.springframework.web.bind.annotation.*;
 import org.springframework.web.bind.support.SessionStatus;
 import org.springframework.web.servlet.mvc.support.RedirectAttributes;
+import java.util.stream.Collectors;
 
-import java.util.ArrayList;
-import java.util.HashMap;
-import java.util.List;
-import java.util.Optional;
+import java.util.*;
 
 @Controller
 @SessionAttributes("eventForm")
@@ -158,6 +156,13 @@ public class EventWizardController {
         // ─── Convert beverageIds → List<DefineBeverage> and set on event
         List<DefineBeverage> selectedBeverages = warehouseCatalog.getAllBeverages().stream()
                 .filter(b -> eventForm.getBeverageIds().contains(b.getId()))
+                .map(b -> {
+                    DefineBeverage emb = new DefineBeverage();
+                    emb.setId(b.getId());
+                    emb.setName(b.getName());
+                    emb.setPrice(b.getPrice());
+                    return emb;
+                })
                 .toList();
         event.setBeverages(selectedBeverages);
 
@@ -170,7 +175,32 @@ public class EventWizardController {
             bar.setBarName(bf.getBarName());
             bar.setLocation(bf.getLocation());
             bar.setTotalCapacity(bf.getTotalCapacity());
-            bar.setBeverageStock(bf.getBeverageStock());
+
+            //.setBeverageStock(bf.getBeverageStock());
+
+            // Transform beverageStock keys (IDs) into names
+            Map<String, Integer> nameMappedStock = new HashMap<>();
+            for (Map.Entry<String, Integer> entry : bf.getBeverageStock().entrySet()) {
+                String idAsString = entry.getKey();
+                Integer quantity = entry.getValue();
+
+                try {
+                    Long bevId = Long.parseLong(idAsString);  // Key is ID (e.g., "1")
+                    DefineBeverage matched = selectedBeverages.stream()
+                            .filter(b -> b.getId().equals(bevId))
+                            .findFirst()
+                            .orElseThrow(() -> new RuntimeException("Beverage ID not found: " + bevId));
+
+                    nameMappedStock.put(matched.getName(), quantity);  // Use name instead of ID
+
+                } catch (NumberFormatException ex) {
+                    // Already a name? Keep as-is
+                    nameMappedStock.put(idAsString, quantity);
+                }
+            }
+            bar.setBeverageStock(nameMappedStock);  // ✅ Store names as keys
+
+
             event.addBar(bar);
         }
 
@@ -267,6 +297,28 @@ public class EventWizardController {
     public String showDetails(@PathVariable("id") Long id, Model model) {
         Event event = eventService.findEventById(id)
                 .orElseThrow(() -> new IllegalArgumentException("Event not found: " + id));
+
+        //New Addition
+        // 1) build a lookup of beverageId → beverageName
+        Map<Long,String> nameById = event.getBeverages().stream()
+                .collect(Collectors.toMap(
+                        DefineBeverage::getId,
+                        DefineBeverage::getName
+                ));
+
+        // 2) for each bar, rebuild its stock map so keys become "Name (ID)"
+        for (BarPlan bar : event.getBars()) {
+            Map<String,Integer> raw = bar.getBeverageStock();
+            Map<String,Integer> joined = new LinkedHashMap<>();
+            raw.forEach((idStr, qty) -> {
+                Long bevId = Long.valueOf(idStr);
+                String name = nameById.getOrDefault(bevId, "<unknown>");
+                joined.put(String.format("%s (%d)", name, bevId), qty);
+            });
+            bar.setBeverageStock(joined);
+        }
+        //End of New Addition
+
         model.addAttribute("event", event);
         return "event_details";
     }
