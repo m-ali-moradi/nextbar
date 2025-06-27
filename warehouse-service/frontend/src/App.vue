@@ -42,6 +42,7 @@
         <router-link to="/stock" class="nav-link" active-class="active">Beverage Stock</router-link>
         <router-link to="/supply" class="nav-link" active-class="active">Supply Requests</router-link>
         <router-link to="/drop-points" class="nav-link" active-class="active">Drop Points</router-link>
+        <router-link to="/empties"     class="nav-link" active-class="active">Empties Collected</router-link>
       </nav>
     </aside>
 

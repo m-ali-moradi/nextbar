@@ -7,12 +7,15 @@ import com.dmsa.warehouse.dto.SupplyRequestDto;
 import com.dmsa.warehouse.feign.BarServiceClient;
 import com.dmsa.warehouse.model.BeverageStock;
 import com.dmsa.warehouse.model.DropPointRecord;
+import com.dmsa.warehouse.model.EmptyBottleStock;
+
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.web.bind.annotation.*;
 import org.springframework.http.ResponseEntity;
 
 import com.dmsa.warehouse.services.BarFetchService;
 import com.dmsa.warehouse.services.DropPointIntegrationService;
+import com.dmsa.warehouse.services.EmptyBottleStockService;
 import com.dmsa.warehouse.services.SupplyFetchService;
 import com.dmsa.warehouse.services.SupplyUpdateService;
 import com.dmsa.warehouse.services.WarehouseService;
@@ -37,14 +40,17 @@ public class WarehouseController {
 
     private final DropPointIntegrationService dropPointIntegrationService;
 
+    private final EmptyBottleStockService emptyBottleStockService;
+
     public WarehouseController(SupplyUpdateService supplyUpdateService, BarFetchService barFetchService,
             BarServiceClient barServiceClient, SupplyFetchService supplyFetchService,
-            DropPointIntegrationService dropPointIntegrationService) {
+            DropPointIntegrationService dropPointIntegrationService, EmptyBottleStockService emptyBottleStockService) {
         this.barFetchService = barFetchService;
         this.supplyUpdateService = supplyUpdateService;
         this.barServiceClient = barServiceClient;
         this.supplyFetchService = supplyFetchService;
         this.dropPointIntegrationService = dropPointIntegrationService;
+        this.emptyBottleStockService = emptyBottleStockService;
     }
 
     @GetMapping("/stock")
@@ -91,7 +97,8 @@ public class WarehouseController {
 
     @PostMapping("/droppoints/fetch-notified")
     public ResponseEntity<List<DropPointRecord>> fetchNotified() {
-        return ResponseEntity.ok(dropPointIntegrationService.fetchNotified() == null ? List.of() : dropPointIntegrationService.fetchNotified());
+        return ResponseEntity.ok(dropPointIntegrationService.fetchNotified() == null ? List.of()
+                : dropPointIntegrationService.fetchNotified());
     }
 
     @GetMapping("/droppoints/notified")
@@ -115,4 +122,10 @@ public class WarehouseController {
     public ResponseEntity<List<DropPointRecord>> listAll() {
         return ResponseEntity.ok(dropPointIntegrationService.listNotified());
     }
+
+    @GetMapping("/empties")
+    public ResponseEntity<List<EmptyBottleStock>> listEmpties() {
+        return ResponseEntity.ok(emptyBottleStockService.listAll());
+    }
+
 }
