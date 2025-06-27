@@ -31,7 +31,7 @@ public class BarPlan {
     @ElementCollection
     @CollectionTable(name = "bar_beverage_stock",
             joinColumns = @JoinColumn(name = "bar_id"))
-    @MapKeyColumn(name = "beverage_name")       // e.g. "Coke"
+    @MapKeyColumn(name = "beverage_id")       // e.g. "1,2,3"
     @Column(name = "quantity")
     private Map<String, Integer> beverageStock = new HashMap<>();
 

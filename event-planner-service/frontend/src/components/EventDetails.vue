@@ -2,8 +2,8 @@
   <div class="container">
     <!-- Breadcrumb / Back link -->
     <nav class="breadcrumb">
-      <router-link to="/events" class="breadcrumb-item">All Events</router-link>
-      <span class="breadcrumb-item active">{{ event?.name }}</span>
+      <!--router-link to="/events" class="breadcrumb-item">All Events</router-link-->
+      <!--span class="breadcrumb-item active">{{ event?.name }}</span-->
     </nav>
 
     <!-- Page Title + Actions -->

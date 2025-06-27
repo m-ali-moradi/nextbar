@@ -3,8 +3,8 @@
     <header class="header">
       <h1>All Events</h1>
       <nav>
-        <router-link to="/events" class="nav-link active">All Events</router-link>
-        <router-link to="/events/new" class="nav-link">Create Event</router-link>
+        <!--router-link to="/events" class="nav-link active">All Events</router-link-->
+        <!--router-link to="/events/new" class="nav-link">Create Event</router-link-->
       </nav>
     </header>
 
