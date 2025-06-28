@@ -23,10 +23,24 @@
             <input type="text" id="location" v-model="newDropPoint.location" required />
             <label for="capacity">Capacity:</label>
             <input type="number" id="capacity" v-model="newDropPoint.capacity" required />
-            <label v-if="newDropPoint.status === 'FULL' || 'EMPTY'" for="current_empties">Current Empties:</label>
-            <input v-if="newDropPoint.status === 'FULL' || 'EMPTY'" type="number" id="current_empties" v-model="newDropPoint.current_empties" required />
+            <label v-if="newDropPoint.status === 'FULL' || 'EMPTY'" for="current_empties"
+              >Current Empties:</label
+            >
+            <input
+              v-if="newDropPoint.status === 'FULL' || 'EMPTY'"
+              type="number"
+              id="current_empties"
+              v-model="newDropPoint.current_empties"
+              required
+            />
             <label v-if="newDropPoint.status === 'FULL' || 'EMPTY'" for="status">Status:</label>
-            <input v-if="newDropPoint.status === 'FULL' || 'EMPTY'" type="text" id="status" v-model="newDropPoint.status" required />
+            <input
+              v-if="newDropPoint.status === 'FULL' || 'EMPTY'"
+              type="text"
+              id="status"
+              v-model="newDropPoint.status"
+              required
+            />
 
             <button type="submit" class="submit-btn">
               {{ isEditing ? 'Update Drop point' : 'Save Drop point' }}
@@ -57,9 +71,23 @@
             <td>
               <button @click="openModal(item)" class="edit-btn">Edit</button>
               <button @click="deleteDropPoint(item.id)" class="delete-btn">Delete</button>
-              <button v-if="item.status === 'EMPTY'" @click="addEmpty(item.id)" class="add-btn">Add Empties</button>
-              <button v-if="item.status === 'FULL'" @click="notifyWarehouse(item.id)" class="notify-btn">Notify Warehouse</button>
-              <button v-if="item.status === 'FULL_AND_NOTIFIED_TO_WAREHOUSE'" @click="removeEmpties(item.id)" class="remove-btn">Transfer to Warehouse</button>
+              <button v-if="item.status === 'EMPTY'" @click="addEmpty(item.id)" class="add-btn">
+                Add Empties
+              </button>
+              <button
+                v-if="item.status === 'FULL'"
+                @click="notifyWarehouse(item.id)"
+                class="notify-btn"
+              >
+                Notify Warehouse
+              </button>
+              <button
+                v-if="item.status === 'FULL_AND_NOTIFIED_TO_WAREHOUSE'"
+                @click="removeEmpties(item.id)"
+                class="remove-btn"
+              >
+                Verify Transfer
+              </button>
             </td>
           </tr>
         </tbody>
@@ -69,8 +97,8 @@
 </template>
 
 <script>
-import { toast } from 'vue3-toastify';
-import "vue3-toastify/dist/index.css";
+import { toast } from 'vue3-toastify'
+import 'vue3-toastify/dist/index.css'
 import { useDroppointStore } from '@/stores/droppoint.js'
 
 export default {
@@ -100,7 +128,7 @@ export default {
       if (item) {
         this.isEditing = true
         this.editIndex = this.droppoints.findIndex((u) => u.id === item.id)
-        this.newDropPoint= { ...item }
+        this.newDropPoint = { ...item }
       } else {
         this.isEditing = false
         this.editIndex = null
@@ -108,7 +136,7 @@ export default {
           location: '',
           capacity: 100,
           current_empties: 0,
-          status: "EMPTY"
+          status: 'EMPTY',
         }
       }
     },
@@ -124,71 +152,122 @@ export default {
       this.isEditing = false
       this.editIndex = null
     },
-    createDropPoint() {
-      this.dropPointStore.createDropPoint({ ...this.newDropPoint})
-      toast(`Drop point ${this.newDropPoint.location} was created`, {
-        autoClose: 3000,
-        theme: "auto",
-        hideProgressBar: false,
-        type: toast.TYPE.SUCCESS
-      });
+    async createDropPoint() {
+      try {
+        await this.dropPointStore.createDropPoint({ ...this.newDropPoint })
+        toast(`Drop point ${this.newDropPoint.location} was created`, {
+          autoClose: 3000,
+          theme: 'auto',
+          hideProgressBar: false,
+          type: toast.TYPE.SUCCESS,
+        })
+      } catch (err) {
+        toast(`Failed to Create a Drop point ${err.message || err}`, {
+          autoClose: 3000,
+          theme: 'auto',
+          type: toast.TYPE.ERROR,
+        })
+      }
+
       this.closeModal()
     },
     updateDropPoint() {
-      if (this.editIndex !== null) {
-        this.dropPointStore.updateDropPoint(this.editIndex + 1, { ...this.newDropPoint})
-        toast(`Drop Point of id ${this.editIndex + 1} was updated`, {
+      try {
+        if (this.editIndex !== null) {
+          this.dropPointStore.updateDropPoint(this.editIndex + 1, { ...this.newDropPoint })
+          toast(`Drop Point of id ${this.editIndex + 1} was updated`, {
+            autoClose: 3000,
+            theme: 'auto',
+            hideProgressBar: false,
+            type: toast.TYPE.SUCCESS,
+          })
+        }
+      } catch (err) {
+        toast(`Failed to Update a Drop point ${err.message || err}`, {
           autoClose: 3000,
-          theme: "auto",
-          hideProgressBar: false,
-          type: toast.TYPE.SUCCESS
-        });
+          theme: 'auto',
+          type: toast.TYPE.ERROR,
+        })
       }
+
       this.closeModal()
     },
     deleteDropPoint(id) {
-      if (confirm('Are you sure you want to delete this drop point?')) {
-        this.dropPointStore.deleteDropPoint(id)
-        toast(`Drop Point ${id} was added`, {
+      try {
+        if (confirm('Are you sure you want to delete this drop point?')) {
+          this.dropPointStore.deleteDropPoint(id)
+          toast(`Drop Point ${id} was added`, {
+            autoClose: 3000,
+            theme: 'auto',
+            hideProgressBar: false,
+            type: toast.TYPE.WARNING,
+          })
+        }
+      } catch (err) {
+        toast(`Failed to Delete a Drop point ${err.message || err}`, {
           autoClose: 3000,
-          theme: "auto",
-          hideProgressBar: false,
-          type: toast.TYPE.WARNING
-        });
-
+          theme: 'auto',
+          type: toast.TYPE.ERROR,
+        })
       }
     },
-    addEmpty(id) {
-      this.dropPointStore.addEmpties(id)
-      toast(`An empty was added to drop point id ${id}`, {
-        autoClose: 3000,
-        theme: "auto",
-        hideProgressBar: false,
-        type: toast.TYPE.SUCCESS
-
-      });
+    async addEmpty(id) {
+      try {
+        await this.dropPointStore.addEmpties(id)
+        toast(`An empty was added to drop point id ${id}`, {
+          autoClose: 3000,
+          theme: 'auto',
+          hideProgressBar: false,
+          type: toast.TYPE.SUCCESS,
+        })
+      } catch (err) {
+        toast(`Failed to add empties: ${err.message || err}`, {
+          autoClose: 3000,
+          theme: 'auto',
+          type: toast.TYPE.ERROR,
+        })
+      }
     },
-    notifyWarehouse(id) {
+    async notifyWarehouse(id) {
       if (confirm('Are you sure you want to notify warehouse to remove empties?')) {
-        this.dropPointStore.notifyWarehouse(id)
-        toast(`Warehouse notified`, {
-          autoClose: 3000,
-          theme: "auto",
-          hideProgressBar: false,
-          type: toast.TYPE.INFO
-        });
+        try {
+          await this.dropPointStore.notifyWarehouse(id)
+          toast(`Warehouse notified`, {
+            autoClose: 3000,
+            theme: 'auto',
+            hideProgressBar: false,
+            type: toast.TYPE.INFO,
+          })
+        } catch (err) {
+          toast(`Failed to Notify Warehouse ${err.message || err}`, {
+            autoClose: 3000,
+            theme: 'auto',
+            type: toast.TYPE.ERROR,
+          })
+        }
       }
     },
 
-    removeEmpties(id) {
+    async removeEmpties(id) {
       if (confirm('Are you sure you want to transfer empties to warehouse?')) {
-        this.dropPointStore.removeEmpties(id)
-        toast(`Empties from Drop point ID ${id} were transferred to the Warehouse`, {
-          autoClose: 3000,
-          theme: "auto",
-          hideProgressBar: false,
-          type: toast.TYPE.SUCCESS
-        });
+        try {
+          const result = await this.dropPointStore.removeEmpties(id)
+
+          console.log('Result:: ' + result)
+
+          toast(`Empties from drop point ID ${id} were transferred to the Warehouse.`, {
+            autoClose: 3000,
+            theme: 'auto',
+            hideProgressBar: false,
+            type: toast.TYPE.SUCCESS,
+          })
+        } catch (err) {
+          toast(`Failed to transfer empties: ${err.message || err}`, {
+            autoClose: 3000,
+            theme: 'auto',
+            type: toast.TYPE.ERROR,
+          })
+        }
       }
     },
   },

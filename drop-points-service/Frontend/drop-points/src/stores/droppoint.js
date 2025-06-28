@@ -117,15 +117,16 @@ export const useDroppointStore = defineStore('droppoint', {
       this.isLoading = true
       this.error = null
       try {
-        const response = await api.put(`/remove_empties/${dropPointId}`)
+        const response = await api.get(`/verify_transfered_empties/${dropPointId}`)
 
         const index = this.droppoints.findIndex((i) => i.id === dropPointId)
         if (index !== -1) {
           this.droppoints[index] = response.data
         }
       } catch (err) {
-        this.error = `Failed to empties from drop point {id} .`
+        this.error = err
         console.error(err)
+        throw new Error(this.error.response.data)
       } finally {
         this.isLoading = false
       }
