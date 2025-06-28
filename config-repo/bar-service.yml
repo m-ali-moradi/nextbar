@@ -18,6 +18,12 @@ management:
     web:
       exposure:
         include: '*'
+  health:
+    circuitbreakers:
+      enabled: true
+  metrics:
+    enable:
+      resilience4j.circuitbreaker.calls: true
 
 resilience4j:
   circuitbreaker:
@@ -34,3 +40,4 @@ logging:
     root: INFO
     io.github.resilience4j: DEBUG
     org.springframework.cloud.openfeign: DEBUG
+
