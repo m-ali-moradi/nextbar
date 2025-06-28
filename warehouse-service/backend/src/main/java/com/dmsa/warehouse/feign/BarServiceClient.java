@@ -16,20 +16,21 @@ import com.dmsa.warehouse.dto.SupplyRequestDto;
 @FeignClient(name = "bar-service")
 public interface BarServiceClient {
 
-    @PutMapping("/bars/{barId}/supply/{requestId}/status")
-    ResponseEntity<Void> updateSupplyStatus(@PathVariable("barId") UUID barId,
-            @PathVariable("requestId") UUID requestId,
-            @RequestParam("quantity") int quantity,
-            @RequestParam("status") String status);
+        @PutMapping("/bars/{barId}/supply/{requestId}/status")
+        ResponseEntity<Void> updateSupplyStatus(
+                        @PathVariable("barId") UUID barId,
+                        @PathVariable("requestId") UUID requestId,
+                        @RequestParam("quantity") int quantity,
+                        @RequestParam("status") String status);
 
-    @GetMapping("/bars")
-    List<BarDto> getAllBars();
+        @GetMapping("/bars")
+        List<BarDto> getAllBars();
 
-    @GetMapping("/bars/{barId}/supply")
-    List<SupplyRequestDto> getSupplyRequests(@PathVariable("barId") UUID barId);
+        @GetMapping("/bars/{barId}/supply")
+        List<SupplyRequestDto> getSupplyRequests(@PathVariable("barId") UUID barId);
 
-    @GetMapping("/bars/{barId}/supply/{requestId}")
-    SupplyRequestDto getSupplyRequest(
-            @PathVariable("barId") UUID barId,
-            @PathVariable("requestId") UUID requestId);
+        @GetMapping("/bars/{barId}/supply/{requestId}")
+        SupplyRequestDto getSupplyRequest(
+                        @PathVariable("barId") UUID barId,
+                        @PathVariable("requestId") UUID requestId);
 }

@@ -6,3 +6,11 @@ spring:
   cloud:
     config:
       uri: http://localhost:8888
+
+management:
+  tracing:
+    sampling:
+      probability: 1.0 # 100% of requests will be traced
+  zipkin:
+    tracing:
+      endpoint: http://host.docker.internal:9411/api/v2/spans

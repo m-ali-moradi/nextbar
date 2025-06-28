@@ -1,9 +1,14 @@
 package de.fhdo.dropPointsSys.controllers.droppoint;
 
+import com.fasterxml.jackson.databind.ObjectMapper;
+import com.fasterxml.jackson.databind.SerializationFeature;
 import de.fhdo.dropPointsSys.converters.DropPointConverter;
 import de.fhdo.dropPointsSys.domain.DropPoint;
+import de.fhdo.dropPointsSys.domain.DropPointStatus;
 import de.fhdo.dropPointsSys.dto.DropPointDto;
+import de.fhdo.dropPointsSys.feign.WarehouseClient;
 import de.fhdo.dropPointsSys.service.DropPointService;
+import org.springframework.beans.factory.annotation.Qualifier;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
@@ -18,10 +23,12 @@ import java.util.stream.Collectors;
 public class DropPointRestController {
 
     private final DropPointService dropPointService;
+    private final WarehouseClient warehouseClient;
 
 
-    public DropPointRestController(DropPointService dropPointService) {
+    public DropPointRestController(DropPointService dropPointService, WarehouseClient warehouseClient) {
         this.dropPointService = dropPointService;
+        this.warehouseClient = warehouseClient;
     }
 
     // Get all DropPoint
@@ -102,6 +109,40 @@ public class DropPointRestController {
         var dropPoint = dropPointService.notify_warehouse(id);
         return  dropPoint.map(value -> ResponseEntity.ok(DropPointConverter.toDto(value))).orElse(ResponseEntity.notFound().build());
 
+    }
+
+    // Get verification of transfered empties
+    @GetMapping("/verify_transferred_empties/{id}")
+    public ResponseEntity<?> verify_transfer(@PathVariable Long id) {
+        try {
+            var verifiedDropPoint = warehouseClient.status(id);
+            ObjectMapper objectMapper = new ObjectMapper();
+            objectMapper.enable(SerializationFeature.INDENT_OUTPUT);
+
+            System.out.println("verified drop points (JSON)::\n" + objectMapper.writeValueAsString(verifiedDropPoint));
+            if (verifiedDropPoint == null) {
+                return ResponseEntity.status(HttpStatus.NOT_FOUND)
+                        .body("Transfer of Empties in DropPoint " + id + " was rejected.");
+            }
+
+            if (verifiedDropPoint.status == DropPointStatus.ACCEPTED) {
+                return dropPointService.remove_empties(id)
+                        .map(value -> ResponseEntity.ok(DropPointConverter.toDto(value)))
+                        .orElse(ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR)
+                                .build());
+            } else {
+                String message = "Transfer not verified. Current DropPoint status: " + verifiedDropPoint.status;
+                return ResponseEntity.status(HttpStatus.BAD_REQUEST)
+                        .body(message);
+            }
+
+        } catch (Exception e) {
+            e.printStackTrace();
+            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR)
+                    .body("Fallback triggered due to: " +e.getMessage());
+
+
+        }
     }
 
 }

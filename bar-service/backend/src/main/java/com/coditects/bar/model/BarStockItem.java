@@ -29,6 +29,7 @@ public class BarStockItem {
     private UUID productId;
     private int quantity;
     private LocalDateTime updatedAt;
-    
 
+    public BarStockItem(UUID id, UUID uuid, UUID uuid1, String name, int quantity, LocalDateTime localDateTime) {
+    }
 }

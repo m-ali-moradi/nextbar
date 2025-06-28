@@ -1,5 +1,5 @@
 INSERT INTO DROP_POINTS (LOCATION, CAPACITY, CURRENT_EMPTIES_STOCK, STATUS)
-VALUES ('ErdGeschoss', 100, 40, 'FULL'),
+VALUES ('ErdGeschoss', 100, 90, 'FULL'),
        ('3 Stock', 80, 80, 'FULL_AND_NOTIFIED_TO_WAREHOUSE'),
        ('4 Stock', 120, 90, 'FULL'),
        ('6 Stock', 150, 150, 'FULL'),
