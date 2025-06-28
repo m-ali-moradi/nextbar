@@ -5,6 +5,9 @@ import com.dmsa.warehouse.feign.DropPointClient;
 import com.dmsa.warehouse.model.DropPointRecord;
 import com.dmsa.warehouse.repository.DropPointRecordRepository;
 import com.dmsa.warehouse.repository.EmptyBottleStockRepository;
+
+import io.github.resilience4j.circuitbreaker.annotation.CircuitBreaker;
+
 import com.dmsa.warehouse.model.DropPointRecord.Status;
 import com.dmsa.warehouse.model.EmptyBottleStock;
 
@@ -30,6 +33,7 @@ public class DropPointIntegrationService {
   }
 
   @Transactional
+  @CircuitBreaker(name = "dropPointService", fallbackMethod = "fetchNotifiedFallback")
   public List<DropPointRecord> fetchNotified() {
     List<DropPointDto> all = dropPointClient.getAllDropPoints();
     for (DropPointDto d : all) {
@@ -104,6 +108,12 @@ public class DropPointIntegrationService {
   public List<DropPointRecord> listNotified() {
     // return dropPointRecordRepository.findByStatus(Status.NOTIFIED);
     return dropPointRecordRepository.findAll();
+  }
+
+  @SuppressWarnings("unused")
+  private List<DropPointRecord> fetchNotifiedFallback(Throwable t) {
+    System.err.println(">> DROPPOINT FETCH FAILED: " + t.getMessage());
+    return List.of();
   }
 
 }

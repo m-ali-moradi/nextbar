@@ -59,7 +59,7 @@
           `http://localhost:8085/warehouse/bars/${barId}/supply`
         )
         pendingRequests.value   = reqs.filter(r => r.status === 'REQUESTED').length
-        completedRequests.value = reqs.filter(r => r.status === 'COMPLETED').length
+        completedRequests.value = reqs.filter(r => r.status === 'DELIVERED').length
       } catch (e) {
         // If the bar has no supply endpoint yet, just set zeros
         pendingRequests.value   = 0
