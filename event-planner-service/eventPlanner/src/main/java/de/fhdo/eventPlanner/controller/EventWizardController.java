@@ -3,7 +3,8 @@ package de.fhdo.eventPlanner.controller;
 import de.fhdo.eventPlanner.dto.BarPlanForm;
 import de.fhdo.eventPlanner.dto.DropPointForm;
 import de.fhdo.eventPlanner.dto.EventForm;
-import de.fhdo.eventPlanner.mock.WarehouseCatalog;
+//import de.fhdo.eventPlanner.mock.WarehouseCatalog;
+import de.fhdo.eventPlanner.client.WarehouseCatalogueClient;
 import de.fhdo.eventPlanner.service.EventPlanningService;
 import de.fhdo.eventPlanner.model.Event;
 import de.fhdo.eventPlanner.model.DefineBeverage;
@@ -27,14 +28,21 @@ import java.util.*;
 public class EventWizardController {
 
    private final EventPlanningService eventService;
-   private final WarehouseCatalog warehouseCatalog;
+   //private final WarehouseCatalog warehouseCatalog;
+   private final WarehouseCatalogueClient warehouseClient;
 
-   @Autowired
-   public EventWizardController(EventPlanningService eventService,
-                                 WarehouseCatalog warehouseCatalog) {
-        this.eventService = eventService;
-        this.warehouseCatalog = warehouseCatalog;
-    }
+//   @Autowired
+//   public EventWizardController(EventPlanningService eventService,
+//                                 WarehouseCatalog warehouseCatalog) {
+//        this.eventService = eventService;
+//        this.warehouseCatalog = warehouseCatalog;
+//    }
+    @Autowired
+    public EventWizardController(EventPlanningService eventService,
+                                   WarehouseCatalogueClient warehouseClient) {
+          this.eventService = eventService;
+          this.warehouseClient = warehouseClient;
+     }
 
     /**
      * If no EventForm exists in session, provide a fresh one.
@@ -52,7 +60,7 @@ public class EventWizardController {
     @GetMapping("/events/create/step1")
     public String showStep1(@ModelAttribute("eventForm") EventForm eventForm,
                             Model model) {
-        model.addAttribute("allBeverages", warehouseCatalog.getAllBeverages());
+        model.addAttribute("allBeverages", warehouseClient.getAllBeverages());
         return "events/step1";    // templates/events/step1.html
     }
 
@@ -69,7 +77,7 @@ public class EventWizardController {
                 bindingResult.hasFieldErrors("status") ||
                 bindingResult.hasFieldErrors("beverages")) {
 
-            model.addAttribute("allBeverages", warehouseCatalog.getAllBeverages());
+            model.addAttribute("allBeverages", warehouseClient.getAllBeverages());
             return "events/step1";
         }
         return "redirect:/events/create/step2";
@@ -91,7 +99,7 @@ public class EventWizardController {
         }
 
         // 2) Compute only those beverages that were selected in Step 1
-        List<DefineBeverage> fullCatalog = warehouseCatalog.getAllBeverages();
+        List<DefineBeverage> fullCatalog = warehouseClient.getAllBeverages();
         List<DefineBeverage> selectedBeverages = fullCatalog.stream()
                 .filter(b -> eventForm.getBeverageIds().contains(b.getId()))
                 .toList();
@@ -109,7 +117,7 @@ public class EventWizardController {
             Model model
     ) {
         if (bindingResult.hasFieldErrors("bars")) {
-            model.addAttribute("allBeverages", warehouseCatalog.getAllBeverages());
+            model.addAttribute("allBeverages", warehouseClient.getAllBeverages());
             return "events/step2";
         }
         return "redirect:/events/create/step3";
@@ -154,7 +162,7 @@ public class EventWizardController {
         event.setStatus(eventForm.getStatus());
 
         // ─── Convert beverageIds → List<DefineBeverage> and set on event
-        List<DefineBeverage> selectedBeverages = warehouseCatalog.getAllBeverages().stream()
+        List<DefineBeverage> selectedBeverages = warehouseClient.getAllBeverages().stream()
                 .filter(b -> eventForm.getBeverageIds().contains(b.getId()))
                 .map(b -> {
                     DefineBeverage emb = new DefineBeverage();
@@ -276,7 +284,7 @@ public class EventWizardController {
             eventForm.getDropPoints().add(dpf);
         }
 
-        model.addAttribute("allBeverages", warehouseCatalog.getAllBeverages());
+        model.addAttribute("allBeverages", warehouseClient.getAllBeverages());
         return "redirect:/events/create/step1";
     }
 

@@ -16,11 +16,11 @@ public class WarehouseCatalog {
 
     public List<DefineBeverage> getAllBeverages() {
         return Arrays.asList(
-                new DefineBeverage(1L, "Coke", 2.50),
-                new DefineBeverage(2L, "Sprite", 2.50),
-                new DefineBeverage(3L, "Water", 1.00),
-                new DefineBeverage(4L, "Beer", 3.00),
-                new DefineBeverage(5L, "Juice", 2.75)
+                new DefineBeverage(1L, "Coke", 200L),
+                new DefineBeverage(2L, "Sprite", 250L),
+                new DefineBeverage(3L, "Water", 100L),
+                new DefineBeverage(4L, "Beer", 300L),
+                new DefineBeverage(5L, "Juice", 275L)
         );
     }
 }
