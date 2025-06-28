@@ -25,5 +25,7 @@ public interface BarStockService {
     void resetStock(UUID barId);
     // Deletes a specific stock item from a bar by product ID.
     void deleteStockItem(UUID barId, UUID productId);
+
+
 }
 

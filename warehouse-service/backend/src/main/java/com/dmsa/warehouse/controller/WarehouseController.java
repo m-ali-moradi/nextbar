@@ -85,6 +85,7 @@ public class WarehouseController {
     @GetMapping("/bars/{barId}/supply")
     public List<SupplyRequestDto> listSupply(@PathVariable UUID barId) {
         return barServiceClient.getSupplyRequests(barId);
+        // Println("Fetching supply requests for bar: " + barId);
     }
 
     @GetMapping("/bars/{barId}/supply/{requestId}")

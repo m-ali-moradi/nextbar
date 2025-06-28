@@ -12,3 +12,10 @@ spring:
           password: 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 # access token
   application:
     name: config-server
+
+management:
+  endpoints:
+    web:
+      exposure:
+        include: health, info, prometheus
+

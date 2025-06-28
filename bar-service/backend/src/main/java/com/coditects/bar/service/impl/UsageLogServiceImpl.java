@@ -85,9 +85,9 @@ public class UsageLogServiceImpl implements UsageLogService {
             throw new ValidationException("Bar not found: " + barId);
         }
         // Check if there are any logs for the bar
-        if (logRepo.findByBarId(barId).isEmpty()) {
-            throw new ValidationException("No logs found for bar: " + barId);
-        }
+//        if (logRepo.findByBarId(barId).isEmpty()) {
+//            throw new ValidationException("No logs found for bar: " + barId);
+//        }
         // Fetch and convert usage logs for the bar, sorted by timestamp descending
         return logRepo.findByBarId(barId).stream()
                 .map(this::toDto)
