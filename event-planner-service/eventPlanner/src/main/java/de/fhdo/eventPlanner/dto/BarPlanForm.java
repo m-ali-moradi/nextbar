@@ -7,6 +7,8 @@ import java.util.Map;
 
 public class BarPlanForm {
     private Long barId;
+    private Long   eventId;
+    private Integer totalAssignedDrinkQuantity;
 
     @NotBlank(message = "Bar name cannot be blank")
     private String barName;
@@ -61,4 +63,16 @@ public class BarPlanForm {
     public void setBeverageStock(Map<String, Integer> beverageStock) {
         this.beverageStock = beverageStock;
     }
+
+    public Long getEventId() { return eventId; }
+    public void setEventId(Long eventId) { this.eventId = eventId; }
+
+    public Integer getTotalAssignedDrinkQuantity() {
+        return totalAssignedDrinkQuantity;
+    }
+    public void setTotalAssignedDrinkQuantity(Integer totalAssignedDrinkQuantity) {
+        this.totalAssignedDrinkQuantity = totalAssignedDrinkQuantity;
+    }
 }
+
+
