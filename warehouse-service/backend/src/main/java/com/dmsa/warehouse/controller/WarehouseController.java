@@ -128,4 +128,19 @@ public class WarehouseController {
         return ResponseEntity.ok(emptyBottleStockService.listAll());
     }
 
+    @PostMapping("/stock")
+    public ResponseEntity<BeverageStock> createBeverage(@RequestBody BeverageStock incoming) {
+        BeverageStock created = warehouseService
+                .addBeverage(incoming.getBeverageType(), incoming.getQuantity());
+        return ResponseEntity
+                .status(201)
+                .body(created);
+    }
+
+    @DeleteMapping("/stock/{id}")
+    public ResponseEntity<Void> deleteBeverage(@PathVariable Long id) {
+        warehouseService.deleteBeverage(id);
+        return ResponseEntity.noContent().build();
+    }
+
 }
