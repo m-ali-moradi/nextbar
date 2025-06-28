@@ -8,7 +8,8 @@ import de.fhdo.eventPlanner.model.DefineBeverage;
 import de.fhdo.eventPlanner.model.BarPlan;
 import de.fhdo.eventPlanner.model.DropPointPlan;
 import de.fhdo.eventPlanner.service.EventPlanningService;
-import de.fhdo.eventPlanner.mock.WarehouseCatalog;
+//import de.fhdo.eventPlanner.mock.WarehouseCatalog;
+import de.fhdo.eventPlanner.client.WarehouseCatalogueClient;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
 import org.springframework.web.bind.annotation.*;
@@ -25,15 +26,21 @@ import java.util.stream.Collectors;
 public class EventRestController {
 
     private final EventPlanningService eventService;
-    private final WarehouseCatalog warehouseCatalog;
+    //private final WarehouseCatalog warehouseCatalog;
+    private final WarehouseCatalogueClient warehouseClient;
 
-    @Autowired
-    public EventRestController(EventPlanningService eventService,
-                               WarehouseCatalog warehouseCatalog) {
-        this.eventService = eventService;
-        this.warehouseCatalog = warehouseCatalog;
-    }
-
+//    @Autowired
+//    public EventRestController(EventPlanningService eventService,
+//                               WarehouseCatalog warehouseCatalog) {
+//        this.eventService = eventService;
+//        this.warehouseCatalog = warehouseCatalog;
+//    }
+      @Autowired
+      public EventRestController(EventPlanningService eventService,
+                                 WarehouseCatalogueClient warehouseClient) {
+          this.eventService    = eventService;
+          this.warehouseClient = warehouseClient;
+        }
     @GetMapping("/events")
     public List<Event> list() {
         return eventService.findAllEvents();
@@ -117,7 +124,8 @@ public class EventRestController {
 
     @GetMapping("/events/beverages")
     public List<DefineBeverage> beverages() {
-        return warehouseCatalog.getAllBeverages();
+        //return warehouseCatalog.getAllBeverages();
+        return warehouseClient.getAllBeverages();
     }
 
     // New endpoint to fetch all drop-point plans without requiring an event ID
@@ -139,7 +147,9 @@ public class EventRestController {
     @GetMapping("/events/bar-plan")
     public List<BarPlanForm> fetchBarPlans() {
         // 1) Build a lookup from beverage ID → beverage name
-        Map<Long, String> nameById = warehouseCatalog.getAllBeverages().stream()
+        //Map<Long, String> nameById = warehouseCatalog.getAllBeverages().stream()
+                //.collect(Collectors.toMap(DefineBeverage::getId, DefineBeverage::getName));
+        Map<Long, String> nameById = warehouseClient.getAllBeverages().stream()
                 .collect(Collectors.toMap(DefineBeverage::getId, DefineBeverage::getName));
 
         // 2) Stream through every event’s bars, map to BarPlanForm
@@ -152,7 +162,7 @@ public class EventRestController {
                     form.setLocation(bar.getLocation());
                     form.setTotalCapacity(bar.getTotalCapacity());
                     form.setTotalAssignedDrinkQuantity(bar.getTotalAssignedDrinkQuantity());
-                    form.setEventId(bar.getEvent().getEventId());                // ← need this in DTO
+                    form.setEventId(bar.getEvent().getEventId());
 
                     // 3) Turn raw ID→qty map into labelled stock map
                     Map<String,Integer> labeled = new LinkedHashMap<>();
@@ -161,7 +171,7 @@ public class EventRestController {
                         String bevName = nameById.getOrDefault(bevId, "<?>");
                         labeled.put(String.format("%s (%d)", bevName, bevId), qty);
                     });
-                    form.setBeverageStock(labeled);                              // ← and this
+                    form.setBeverageStock(labeled);
 
                     return form;
                 })

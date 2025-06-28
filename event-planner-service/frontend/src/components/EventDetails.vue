@@ -41,12 +41,12 @@
       <div class="card-body p-0">
         <table class="table">
           <thead>
-            <tr><th>Name</th><th>Price</th></tr>
+            <tr><th>Name</th><th>Quantity</th></tr>
           </thead>
           <tbody>
             <tr v-for="bev in event?.beverages || []" :key="bev.id">
               <td>{{ bev.name }}</td>
-              <td>{{ formatPrice(bev.price) }}</td>
+              <td>{{ formatQuantity(bev.price) }}</td>
             </tr>
             <tr v-if="!(event?.beverages?.length)">
               <td colspan="2" class="no-data">No beverages assigned.</td>
@@ -121,8 +121,11 @@ import axios from 'axios';
 const route = useRoute();
 const event = ref(null);
 
-function formatPrice(p) {
-  return p != null ? p.toFixed(2) : '';
+function formatQuantity(q) {
+  if (q == null) return ''
+  return Number.isInteger(q)
+    ? q.toString()
+    : q.toFixed(2)
 }
 
 onMounted(async () => {
