@@ -11,7 +11,7 @@ import java.util.List;
 public class EventPlannerFallback implements EventPlannerClient {
 
     @Override
-    public List<DropPointDto> getDropPoints() {
+    public List<DropPointDto> fetchDropPoints() {
         return Arrays.asList(
                 new DropPointDto(2L, "North Gate", 100, 0, DropPointStatus.EMPTY),
                 new DropPointDto(3L, "South Exit", 80, 0, DropPointStatus.EMPTY)
