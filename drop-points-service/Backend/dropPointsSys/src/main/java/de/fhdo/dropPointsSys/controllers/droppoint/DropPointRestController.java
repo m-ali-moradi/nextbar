@@ -1,5 +1,7 @@
 package de.fhdo.dropPointsSys.controllers.droppoint;
 
+import com.fasterxml.jackson.databind.ObjectMapper;
+import com.fasterxml.jackson.databind.SerializationFeature;
 import de.fhdo.dropPointsSys.converters.DropPointConverter;
 import de.fhdo.dropPointsSys.domain.DropPoint;
 import de.fhdo.dropPointsSys.domain.DropPointStatus;
@@ -24,7 +26,7 @@ public class DropPointRestController {
     private final WarehouseClient warehouseClient;
 
 
-    public DropPointRestController(DropPointService dropPointService, @Qualifier("warehouseFallback") WarehouseClient warehouseClient) {
+    public DropPointRestController(DropPointService dropPointService, WarehouseClient warehouseClient) {
         this.dropPointService = dropPointService;
         this.warehouseClient = warehouseClient;
     }
@@ -110,11 +112,14 @@ public class DropPointRestController {
     }
 
     // Get verification of transfered empties
-    @GetMapping("/verify_transfered_empties/{id}")
+    @GetMapping("/verify_transferred_empties/{id}")
     public ResponseEntity<?> verify_transfer(@PathVariable Long id) {
         try {
-            DropPointDto verifiedDropPoint = warehouseClient.status(id);
+            var verifiedDropPoint = warehouseClient.status(id);
+            ObjectMapper objectMapper = new ObjectMapper();
+            objectMapper.enable(SerializationFeature.INDENT_OUTPUT);
 
+            System.out.println("verified drop points (JSON)::\n" + objectMapper.writeValueAsString(verifiedDropPoint));
             if (verifiedDropPoint == null) {
                 return ResponseEntity.status(HttpStatus.NOT_FOUND)
                         .body("Transfer of Empties in DropPoint " + id + " was rejected.");
@@ -132,8 +137,11 @@ public class DropPointRestController {
             }
 
         } catch (Exception e) {
+            e.printStackTrace();
             return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR)
-                    .body("An unexpected error occurred while verifying DropPoint transfer: " + e.getMessage());
+                    .body("Fallback triggered due to: " +e.getMessage());
+
+
         }
     }
 

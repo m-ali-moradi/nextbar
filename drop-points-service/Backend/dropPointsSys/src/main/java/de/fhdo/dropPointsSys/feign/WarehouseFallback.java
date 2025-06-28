@@ -11,7 +11,7 @@ import java.util.List;
 public class WarehouseFallback implements WarehouseClient {
 
     private final List<DropPointDto> dummyDropPoints = Arrays.asList(
-            new DropPointDto(1L, "ErdGeschoss", 100, 0, DropPointStatus.ACCEPTED),
+            new DropPointDto(1L, "ErdGeschoss From Allen", 100, 0, DropPointStatus.ACCEPTED),
             new DropPointDto(2L, "North Gate", 100, 0, DropPointStatus.ACCEPTED),
             new DropPointDto(3L, "South Exit", 80, 0, DropPointStatus.ACCEPTED),
             new DropPointDto(4L, "East Wing", 60, 0, DropPointStatus.ACCEPTED),

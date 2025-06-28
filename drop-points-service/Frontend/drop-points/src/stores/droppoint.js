@@ -3,12 +3,12 @@ import { defineStore } from 'pinia'
 import axios from 'axios'
 
 // Base URL for API endpoints (gateway server)
-const SERVICE_BASE_URL = 'http://localhost:8083/droppoints'
-// const API_BASE_URL = "http://localhost:8080/api/droppoints";
+//const SERVICE_BASE_URL = 'http://localhost:8083/droppoints'
+const API_BASE_URL = "http://localhost:8080/api/droppoints";
 
 // Axios instance with base URL
 const api = axios.create({
-  baseURL: SERVICE_BASE_URL,
+  baseURL: API_BASE_URL,
 })
 
 export const useDroppointStore = defineStore('droppoint', {
@@ -117,7 +117,7 @@ export const useDroppointStore = defineStore('droppoint', {
       this.isLoading = true
       this.error = null
       try {
-        const response = await api.get(`/verify_transfered_empties/${dropPointId}`)
+        const response = await api.get(`/verify_transferred_empties/${dropPointId}`)
 
         const index = this.droppoints.findIndex((i) => i.id === dropPointId)
         if (index !== -1) {
