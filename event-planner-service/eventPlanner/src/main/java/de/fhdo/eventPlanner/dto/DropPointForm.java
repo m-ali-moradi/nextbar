@@ -4,6 +4,7 @@ import jakarta.validation.constraints.*;
 
 public class DropPointForm {
     private Long dropPointId;
+    private Long eventId;
 
     @NotBlank(message = "Location is required")
     private String location;
@@ -35,4 +36,7 @@ public class DropPointForm {
     public void setCapacity(Integer capacity) {
         this.capacity = capacity;
     }
+
+    public Long getEventId() { return eventId; }
+    public void setEventId(Long eventId) { this.eventId = eventId; }
 }
