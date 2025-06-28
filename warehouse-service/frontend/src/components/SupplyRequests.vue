@@ -178,7 +178,7 @@
     quantity: number
   ) {
     const { data } = await axios.put<ReplenishResponse>(
-      `http://localhost:8085/warehouse/replenish/${req.barId}/${req.id}`,
+      `http://localhost:8085/warehouse/bars/replenish/${req.barId}/${req.id}`,
       { beverageType: req.items[0].productName, quantity },
       { params: { currentStatus } }
     );

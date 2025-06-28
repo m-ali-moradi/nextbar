@@ -85,6 +85,7 @@ public class WarehouseController {
     @GetMapping("/bars/{barId}/supply")
     public List<SupplyRequestDto> listSupply(@PathVariable UUID barId) {
         return barServiceClient.getSupplyRequests(barId);
+        // Println("Fetching supply requests for bar: " + barId);
     }
 
     @GetMapping("/bars/{barId}/supply/{requestId}")
@@ -126,6 +127,21 @@ public class WarehouseController {
     @GetMapping("/empties")
     public ResponseEntity<List<EmptyBottleStock>> listEmpties() {
         return ResponseEntity.ok(emptyBottleStockService.listAll());
+    }
+
+    @PostMapping("/stock")
+    public ResponseEntity<BeverageStock> createBeverage(@RequestBody BeverageStock incoming) {
+        BeverageStock created = warehouseService
+                .addBeverage(incoming.getBeverageType(), incoming.getQuantity());
+        return ResponseEntity
+                .status(201)
+                .body(created);
+    }
+
+    @DeleteMapping("/stock/{id}")
+    public ResponseEntity<Void> deleteBeverage(@PathVariable Long id) {
+        warehouseService.deleteBeverage(id);
+        return ResponseEntity.noContent().build();
     }
 
 }

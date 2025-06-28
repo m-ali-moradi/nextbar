@@ -9,10 +9,10 @@ public class BeverageStock {
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long id;
 
-    @Column(name = "beverage_type")
+    @Column(name = "beverage_type", nullable = false)
     private String beverageType;
 
-    @Column(name = "quantity")
+    @Column(name = "quantity", nullable = false)
     private int quantity;
 
     public BeverageStock() {}

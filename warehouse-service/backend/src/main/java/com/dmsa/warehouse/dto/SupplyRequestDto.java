@@ -1,6 +1,5 @@
 package com.dmsa.warehouse.dto;
 
-import java.time.OffsetDateTime;
 import java.util.List;
 import java.util.UUID;
 
@@ -9,7 +8,7 @@ public class SupplyRequestDto {
     private UUID barId;
     private List<SupplyItemDto> items;
     private String status;
-    private OffsetDateTime createdAt;
+    private String createdAt;
 
     public SupplyRequestDto() {
     }
@@ -46,11 +45,11 @@ public class SupplyRequestDto {
         this.status = s;
     }
 
-    public OffsetDateTime getCreatedAt() {
+    public String getCreatedAt() {
         return createdAt;
     }
 
-    public void setCreatedAt(OffsetDateTime t) {
+    public void setCreatedAt(String t) {
         this.createdAt = t;
     }
 }
