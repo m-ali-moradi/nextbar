@@ -1,0 +1,10 @@
+context BarContext {
+    structure UsageLog<entity> {
+        long id<identifier>,
+        long barId,
+        int productId,
+        int quantity,
+        string timestamp,
+    }
+}
+
