@@ -1,0 +1,12 @@
+technology ActiveMQ {
+	infrastructure technologies {
+		ActiveMQ {
+			operation environments = "activeMQ" default;
+
+			service properties {
+				string user;
+				string password;
+			}
+		}
+	}
+}

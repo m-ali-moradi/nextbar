@@ -1,0 +1,33 @@
+technology Eureka {
+	service aspects {
+		aspect EnableDiscoveryClient<singleval> for microservices;
+		aspect EurekaHostname<singleval> for microservices { string hostname <mandatory>; }
+		aspect EurekaNonSecurePort<singleval> for microservices { int port <mandatory>; }
+		aspect EurekaInstanceId<singleval> for microservices { string instanceId <mandatory>; }
+		aspect EurekaLeaseRenewalIntervalInSeconds<singleval> for microservices { int seconds <mandatory>; }
+		aspect EurekaRegion<singleval> for microservices { string region = "default"; }
+		aspect EurekaRegistryFetchIntervalSeconds<singleval> for microservices { int seconds <mandatory>; }
+		aspect EurekaDefaultZone<singleval> for microservices { string zone <mandatory>; }
+	}
+
+	infrastructure technologies {
+		Eureka {
+			operation environments = "openjdk:11-jdk-slim" default;
+
+			service properties {
+				string name <mandatory, singleval>;
+				string hostname <singleval>;
+				int port <singleval>;
+				int nonSecurePort <singleval>;
+				string instanceId <singleval>;
+				int leaseRenewalIntervalInSeconds <singleval>;
+				string region <singleval>;
+				boolean clientRegisterWithEureka = true <singleval>;
+				int registryFetchIntervalSeconds <singleval>;
+				string defaultZone <singleval>;
+				string username<singleval>;
+				string password<singleval>;
+			}
+		}
+	}
+}
