@@ -7,15 +7,130 @@ import technology from "../../technology/Protocols.technology" as Protocols
 @sync(Protocols::_protocols.rest)
 @JavaSpring::_aspects.Application(name="DropPointService")
 functional microservice de.fhdo.DropPointService {
-    
+
     @endpoints(Protocols::_protocols.rest : "/droppoints";)
     interface DropPointInterface {
-
+        ---
+		Create Drop Point
+		@required inDropPoint incoming payload
+		---
         @endpoints(Protocols::_protocols.rest : "/create";)
         @JavaSpring::_aspects.PostMapping
-        CreateDropPoint (sync in inDropPoint: DropPointData::DropPointContext.DropPoint, sync out outDropPoint : DropPointData::DropPointContext.DropPoint);
+        CreateDropPoint (
+            @JavaSpring::_aspects.RequestBody
+            sync in inDropPoint: DropPointData::DropPointContext.DropPoint, 
+            @JavaSpring::_aspects.ResponseEntity
+            sync out outDropPoint : DropPointData::DropPointContext.DropPoint);
 
+        ---
+        Get All DropPoints
+        ---
+        @endpoints(Protocols::_protocols.rest : "";)
+        @JavaSpring::_aspects.GetMapping
+        GetAllDropPoints(
+            @JavaSpring::_aspects.ResponseEntity
+            sync out outDropPoints: DropPointData::DropPointContext.DropPoint);
 
+        ---
+        Get DropPoint By ID
+        @required id incoming drop point id
+        ---
+        @endpoints(Protocols::_protocols.rest : "/{id}";)
+        @JavaSpring::_aspects.GetMapping
+        GetDropPointById(
+            @JavaSpring::_aspects.PathVariable
+            sync in id: long,
+            @JavaSpring::_aspects.ResponseEntity
+            sync out outDropPoint: DropPointData::DropPointContext.DropPoint);
 
+        ---
+		Update Drop Point
+        @required id incoming drop point id
+		@required inDropPoint incoming payload
+		---
+        @endpoints(Protocols::_protocols.rest:"/{id}";)
+        @JavaSpring::_aspects.PutMapping
+        UpdateDropPoint(
+            @JavaSpring::_aspects.PathVariable
+            sync in id: long, 
+            @JavaSpring::_aspects.RequestBody
+            sync in inDropPoint: DropPointData::DropPointContext.DropPoint,
+            @JavaSpring::_aspects.ResponseEntity
+            sync out outDropPoint: DropPointData::DropPointContext.DropPoint);
+
+        ---
+        Delete Drop Point
+        @required id incoming drop point id
+        ---
+        @endpoints(Protocols::_protocols.rest : "/{id}";)
+        @JavaSpring::_aspects.DeleteMapping
+        DeleteDropPoint(
+            @JavaSpring::_aspects.PathVariable
+            sync in id: long,
+            @JavaSpring::_aspects.ResponseEntity
+            sync out response: string);
+
+        ---
+        Get Level and Status
+        @required id incoming drop point id
+        ---
+
+        @endpoints(Protocols::_protocols.rest : "/level_and_status/{id}";)
+        @JavaSpring::_aspects.GetMapping
+        GetLevelAndStatus(
+            @JavaSpring::_aspects.PathVariable
+            sync in id: long,
+            @JavaSpring::_aspects.ResponseEntity
+            sync out outDropPoint: DropPointData::DropPointContext.DropPoint);
+
+        ---
+        Remove Empties from DropPoint
+        @required id incoming drop point id
+        ---
+        @endpoints(Protocols::_protocols.rest : "/remove_empties/{id}";)
+        @JavaSpring::_aspects.PutMapping
+        RemoveEmptiesFromDropPoint(
+            @JavaSpring::_aspects.PathVariable
+            sync in id: long,
+            @JavaSpring::_aspects.ResponseEntity
+            sync out outDropPoint: DropPointData::DropPointContext.DropPoint);
+
+        ---
+        Add Empties to DropPoint
+        @required id incoming drop point id
+        ---
+        @endpoints(Protocols::_protocols.rest : "/add_empties/{id}";)
+        @JavaSpring::_aspects.PutMapping
+        AddEmptiesToDropPoint(
+            @JavaSpring::_aspects.PathVariable
+            sync in id: long,
+            @JavaSpring::_aspects.ResponseEntity
+            sync out outDropPoint: DropPointData::DropPointContext.DropPoint);
+
+        ---
+        Notify Warehouse
+        @required id incoming drop point id
+        ---
+
+        @endpoints(Protocols::_protocols.rest : "/notify_warehouse/{id}";)
+        @JavaSpring::_aspects.PutMapping
+        NotifyWarehouse(
+            @JavaSpring::_aspects.PathVariable
+            sync in id: long,
+            @JavaSpring::_aspects.ResponseEntity
+            sync out outDropPoint: DropPointData::DropPointContext.DropPoint);
+
+        ---
+        Verify Transferred Empties
+        @required id incoming drop point id
+        ---
+        @endpoints(Protocols::_protocols.rest : "/verify_transferred_empties/{id}";)
+        @JavaSpring::_aspects.GetMapping
+        VerifyTransferredEmpties(
+            @JavaSpring::_aspects.PathVariable
+            sync in id: long,
+            @JavaSpring::_aspects.ResponseEntity
+            sync out response: DropPointData::DropPointContext.DropPoint);
+    
     }
 }
