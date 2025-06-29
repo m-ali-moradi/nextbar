@@ -3,7 +3,7 @@
     <header class="header">
       <div class="logo">Drop Points Service</div>
       <nav class="nav">
-        <a href="/" class="active">Droppoint</a>
+        <a href="#" class="active">Droppoint</a>
 
         <a href="#" class="logout">Logout</a>
       </nav>
