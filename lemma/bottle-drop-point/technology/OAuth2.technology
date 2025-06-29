@@ -1,0 +1,35 @@
+technology OAuth2 {
+	operation aspects {
+		aspect EnableCsrf for infrastructure {
+			boolean enabled = true;
+		}
+
+		aspect EnableOAuth2Client for containers;
+
+		aspect EnableOAuth2Sso for infrastructure;
+
+		aspect Oauth2AccessTokenUri for infrastructure {
+			string uri <mandatory>;
+		}
+
+		aspect Oauth2AuthorizationUri for infrastructure {
+			string uri <mandatory>;
+		}
+
+		aspect Oauth2ClientId for containers, infrastructure {
+			string id <mandatory>;
+		}
+
+		aspect Oauth2ClientSecret for infrastructure {
+			string secret <mandatory>;
+		}
+
+		aspect Oauth2UserInfoUri for containers, infrastructure {
+			string uri <mandatory>;
+		}
+
+		aspect SecurityIgnored for infrastructure {
+			string value;
+		}
+	}
+}

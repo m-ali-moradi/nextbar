@@ -1,0 +1,11 @@
+technology Hystrix {
+	service aspects {
+		aspect HystrixCommand<singleval> for operations {
+			string fallbackMethod <mandatory>;
+		}
+	}
+
+	operation aspects {
+		aspect EnableHystrix for infrastructure;
+	}
+}

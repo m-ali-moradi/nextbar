@@ -1,0 +1,21 @@
+import microservices from "../service/DropPoint.services" as DropPointService
+import technology from "../../technology/Docker.technology" as Docker
+import technology from "../../technology/Protocols.technology" as Protocols
+
+@technology(Docker)
+@technology(Protocols)
+container DropPointContainer
+    deployment technology Docker::_deployment.Docker
+    deploys DropPointService::de.fhdo.DropPointService {
+    default values {
+        Dockerfile('
+			RUN apk --no-cache add curl
+			CMD java ${JAVA_OPTS} -jar droppoint-service.jar
+			COPY build/libs/droppoint-service.jar .
+		')
+
+        basic endpoints {
+            Protocols::_protocols.rest: "localhost:8083";
+        }
+    }
+}

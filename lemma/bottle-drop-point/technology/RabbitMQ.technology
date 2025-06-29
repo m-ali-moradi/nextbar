@@ -1,0 +1,21 @@
+technology RabbitMQ {
+	service aspects {
+		aspect RabbitListener for operations {
+			string queues <mandatory>;
+		}
+		aspect RabbitProducer for operations {
+			string queues <mandatory>;
+		}
+	}
+
+	infrastructure technologies {
+		RabbitMQ {
+			operation environments = "rabbitmq" default;
+
+			service properties {
+				string name <mandatory, singleval>;
+				int expose <mandatory>;
+			}
+		}
+	}
+}

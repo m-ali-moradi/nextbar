@@ -1,0 +1,36 @@
+technology MongoDB {
+	protocols {
+        sync mongo data formats "json";
+    }
+
+	service aspects {
+		aspect SpringDataDatabase<singleval> for microservices {
+			string value<mandatory>;
+		}
+		aspect SpringDataHost<singleval> for microservices {
+			string value<mandatory>;
+		}
+		aspect SpringDataPassword<singleval> for microservices {
+			string value<mandatory>;
+		}
+		aspect SpringDataPort<singleval> for microservices {
+			string value<mandatory>;
+		}
+		aspect SpringDataUri<singleval> for microservices {
+			string value<mandatory>;
+		}
+		aspect SpringDataUsername<singleval> for microservices {
+			string value<mandatory>;
+		}
+	}
+
+    infrastructure technologies {
+    	MongoDB {
+            operation environments = "docker/mongo:latest" default;
+            service properties {
+                string userName;
+                string password;
+            }
+        }
+    }
+}
