@@ -1,0 +1,16 @@
+context DropPointContext {
+    structure DropPoint<entity> {
+        long id<identifier>,
+        string location,
+        int capacity,
+        int current_empties_stock,
+        DropPointStatus status
+    }
+
+    enum DropPointStatus {
+        EMPTY,
+        FULL,
+        FULL_AND_NOTIFIED_TO_WAREHOUSE,
+        ACCEPTED
+    }
+}

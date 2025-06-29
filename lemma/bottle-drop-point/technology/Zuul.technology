@@ -1,0 +1,20 @@
+technology Zuul {
+	service aspects {
+		aspect EnableZuulProxy<singleval> for microservices;
+		aspect EnableZuulServer for microservices;
+
+		aspect ZuulIgnoredServices for microservices {
+			string value <mandatory>;
+		}
+
+		aspect ZuulIgnoredPatterns for microservices {
+			string value <mandatory>;
+		}
+
+		aspect ZuulRoute for microservices {
+			string application <mandatory>;
+			string path <mandatory>;
+			string url;
+		}
+	}
+}

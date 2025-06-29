@@ -1,0 +1,21 @@
+import datatypes from "../domain/DropPoint.data" as DropPointData
+import technology from "../../technology/JavaSpring.technology" as JavaSpring
+import technology from "../../technology/Protocols.technology" as Protocols
+
+@technology(JavaSpring)
+@technology(Protocols)
+@sync(Protocols::_protocols.rest)
+@JavaSpring::_aspects.Application(name="DropPointService")
+functional microservice de.fhdo.DropPointService {
+    
+    @endpoints(Protocols::_protocols.rest : "/droppoints";)
+    interface DropPointInterface {
+
+        @endpoints(Protocols::_protocols.rest : "/create";)
+        @JavaSpring::_aspects.PostMapping
+        CreateDropPoint (sync in inDropPoint: DropPointData::DropPointContext.DropPoint, sync out outDropPoint : DropPointData::DropPointContext.DropPoint);
+
+
+
+    }
+}
