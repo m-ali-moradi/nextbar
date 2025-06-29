@@ -5,6 +5,7 @@ import technology from "../../technology/Protocols.technology" as Protocols
 @technology(JavaSpring)
 @technology(Protocols)
 @sync(Protocols::_protocols.rest)
+@async(Protocols::_protocols.amqp)
 @JavaSpring::_aspects.Application(name="DropPointService")
 functional microservice de.fhdo.DropPointService {
 
