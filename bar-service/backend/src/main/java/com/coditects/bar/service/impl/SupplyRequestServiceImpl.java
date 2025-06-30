@@ -2,7 +2,6 @@ package com.coditects.bar.service.impl;
 
 import java.time.LocalDateTime;
 import java.util.List;
-import java.util.Optional;
 import java.util.UUID;
 
 import org.springframework.stereotype.Service;
@@ -56,10 +55,12 @@ public class SupplyRequestServiceImpl implements SupplyRequestService {
             }
         }
 
-        // check if there is an existing supply request that are in REQUESTED, IN_PROGRESS, or DELIVERED status
-        if (requestRepo.existsByBarIdAndStatusIn(barId, List.of(SupplyStatus.REQUESTED, SupplyStatus.IN_PROGRESS, SupplyStatus.DELIVERED))) {
-            throw new ValidationException("A supply request already exists for the bar in REQUESTED, IN_PROGRESS, or DELIVERED status.");
-        }
+        // check if there is already a supply request for the bar and product in REQUESTED, IN_PROGRESS, or DELIVERED status
+        // for (SupplyItemDto item : items) {
+        //     if (requestRepo.existsByBarIdAndProductIdAndStatusIn(barId, item.productId(), List.of(SupplyStatus.REQUESTED, SupplyStatus.IN_PROGRESS, SupplyStatus.DELIVERED))) {
+        //         throw new ValidationException("A supply request already exists for the bar and product in REQUESTED, IN_PROGRESS, or DELIVERED status. Product ID: " + item.productId());
+        //     }
+        // }
 
         // Create a new supply request
         SupplyRequest req = new SupplyRequest();

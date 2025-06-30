@@ -22,6 +22,6 @@ public interface SupplyRequestRepository extends JpaRepository<SupplyRequest, UU
      * @return a list of SupplyRequest entities associated with the specified bar ID
      */
     List<SupplyRequest> findByBarId(UUID barId);
-    // Checks if a supply request exists for a specific bar ID and a list of product IDs.
-    boolean existsByBarIdAndStatusIn(UUID barId, List<SupplyStatus> statuses);
+    // Checks if a supply request exists for a specific bar ID and product ID.
+//    boolean existsByBarIdAndProductIdAndStatusIn(UUID barId, UUID productId, List<SupplyStatus> statuses);
 }

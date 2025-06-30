@@ -1,0 +1,23 @@
+context BarContext {
+    structure SupplyRequest<entity> {
+        long id<identifier>,
+        long barId<identifier>,
+        SupplyStatus status<status>,
+        LocalDateTime createdAt<timestamp>,
+        List<SupplyItem> items,
+    }
+
+    structure SupplyItem<valueobject> {
+        long productId<>,
+        int quantity,
+       
+    }
+}
+
+enum SupplyStatus {
+    REQUESTED,
+    IN_PROGRESS,
+    DELIVERED,
+    REJECTED,
+    COMPLETED
+}

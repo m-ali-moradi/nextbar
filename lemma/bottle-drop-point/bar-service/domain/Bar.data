@@ -1,0 +1,15 @@
+context BarContext {
+    structure Bar<entity> {
+        long id<identifier>,
+        string name,
+        string location,
+        int maxCapacity,
+        BarStockItem[] stockItems,
+    },
+
+    structure BarStockItem {
+        long id<identifier>,
+        string name,
+        int quantity
+    }
+}
