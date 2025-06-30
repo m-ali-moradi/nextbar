@@ -1,0 +1,34 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <title>User Service</title>
+  <link rel="stylesheet" href="css/styles.css">
+</head>
+<body>
+<h2>Register</h2>
+<form id="registerForm">
+  <label for="regUsername">Username:</label>
+  <input id="regUsername" type="text" name="username" placeholder="Choose a username" required />
+
+  <label for="regEmail">Email:</label>
+  <input id="regEmail" type="email" name="email" placeholder="Enter your email" required />
+
+  <label for="regPassword">Password:</label>
+  <input id="regPassword" type="password" name="password" placeholder="Create a password" required />
+  <label for="regRole">Role:</label>
+  <select id="regRole" name="role">
+    <option value="VISITOR">Visitor</option>
+    <option value="PLANNER">Planner</option>
+    <option value="BARTENDER">Bartender</option>
+    <option value="STOCKIST">Stockist</option>
+    <option value="WAREHOUSE_STAFF">Warehouse Staff</option>
+  </select>
+
+  <button type="submit">Register</button>
+</form>
+
+<p>Already registered? <a href="index.html">Login</a></p>
+<script src="js/auth.js"></script>
+</body>
+</html>

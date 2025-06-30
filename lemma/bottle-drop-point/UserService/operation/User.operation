@@ -1,0 +1,37 @@
+import microservices from "../service/User.services" as UserService
+import technology from "../../technology/Docker.technology" as Docker
+import technology from "../../technology/Protocols.technology" as Protocols
+import technology from "../../technology/MariaDB.technology" as MariaDB
+
+@technology(Docker)
+@technology(Protocols)
+container UserServiceContainer
+    deployment technology Docker::_deployment.Docker
+    deploys UserService::de.fhdo.UserService {
+    default values {
+        Dockerfile('
+			RUN apk --no-cache add curl
+			CMD java ${JAVA_OPTS} -jar User-service.jar
+			COPY build/libs/User-service.jar .
+		')
+
+        basic endpoints {
+            Protocols::_protocols.rest: "localhost:8083";
+        }
+    }
+}
+
+@technology(MariaDB)
+MariaDB is MariaDB::_infrastructure.MariaDB
+	used by nodes UserServiceContainer {
+	default values {
+		hostName = "localhost"
+		rootPassword = "rootpassword"
+		userName = "mysqluser"
+		userPassword = "mysqlpw"
+        port = "3306"
+	}
+	endpoints {
+		MariaDB::_protocols.connectorJ: "3306:3306";
+	}
+}
