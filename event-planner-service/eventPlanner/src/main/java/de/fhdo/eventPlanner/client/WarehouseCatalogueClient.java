@@ -7,7 +7,7 @@ import java.util.List;
 import java.util.stream.Collectors;
 
 //Feign client for the external Warehouse Catalogue microservice.
-@FeignClient(name = "warehouse-service", url = "http://localhost:8085")
+@FeignClient(name = "warehouse-service", url = "http://localhost:8085", fallback = WarehouseCatalogueFallback.class)
 public interface WarehouseCatalogueClient {
 
 
