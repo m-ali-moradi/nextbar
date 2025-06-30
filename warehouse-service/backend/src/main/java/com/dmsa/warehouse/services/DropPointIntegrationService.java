@@ -112,8 +112,12 @@ public class DropPointIntegrationService {
 
   @SuppressWarnings("unused")
   private List<DropPointRecord> fetchNotifiedFallback(Throwable t) {
-    System.err.println(">> DROPPOINT FETCH FAILED: " + t.getMessage());
-    return List.of();
+    System.err.println("fetchNotified() failed – returning dummy record: " + t.toString());
+    DropPointRecord dummy = new DropPointRecord(-1L);
+    dummy.setLocation("Location1");
+    dummy.setCurrentEmpties(0);
+    dummy.setStatus(Status.NOTIFIED);
+    return List.of(dummy);
   }
 
 }

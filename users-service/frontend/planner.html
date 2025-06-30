@@ -1,0 +1,28 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>Admin Panel</title>
+</head>
+<body>
+<h2>Assign Role</h2>
+<input id="assignUserId" placeholder="User ID">
+<select id="newRole">
+    <option value="VISITOR">Visitor</option>
+    <option value="BARTENDER">Bartender</option>
+    <option value="WAREHOUSE_STAFF">Warehouse Staff</option>
+    <option value="STOCKIST">Stockist</option>
+    <option value="PLANNER">Planner</option>
+</select>
+<button onclick="assignRole()">Assign Role</button>
+
+<h2>Delete User</h2>
+<input id="deleteUserId" placeholder="User ID">
+<button onclick="deleteUser()">Delete</button>
+
+<h2>All Users</h2>
+<ul id="userList"></ul>
+
+<script src="js/planner.js"></script>
+</body>
+</html>

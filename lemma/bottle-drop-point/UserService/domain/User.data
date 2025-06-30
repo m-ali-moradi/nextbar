@@ -1,0 +1,18 @@
+context UserContext {
+    structure User<entity> {
+        long id<identifier>,
+        string username,
+        string email,
+        string password,
+        RoleStatus role
+    }
+
+    enum RoleStatus {
+        EMPTY, //put roles
+        FULL,
+        FULL_AND_NOTIFIED_TO_WAREHOUSE,
+        ACCEPTED
+    }
+
+    
+}
