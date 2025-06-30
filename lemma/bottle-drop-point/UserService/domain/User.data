@@ -8,10 +8,11 @@ context UserContext {
     }
 
     enum RoleStatus {
-        EMPTY, //put roles
-        FULL,
-        FULL_AND_NOTIFIED_TO_WAREHOUSE,
-        ACCEPTED
+        VISITOR,
+        PLANNER,
+        BARTENDER,
+        WAREHOUSE_STAFF,
+        STOCKIST
     }
 
     
