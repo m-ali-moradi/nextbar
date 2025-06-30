@@ -1,0 +1,64 @@
+import datatypes from "../domain/User.data" as UserData
+import technology from "../../technology/JavaSpring.technology" as JavaSpring
+import technology from "../../technology/Protocols.technology" as Protocols
+
+@technology(JavaSpring)
+@technology(Protocols)
+@sync(Protocols::_protocols.rest)
+@async(Protocols::_protocols.amqp)
+@JavaSpring::_aspects.Application(name="UserService")
+functional microservice de.fhdo.UserService {
+
+    @endpoints(Protocols::_protocols.rest : "/Users";)
+    interface UserInterface {
+        ---
+		Create User
+		@required inUser incoming payload
+		---
+        @endpoints(Protocols::_protocols.rest : "/create";)
+        @JavaSpring::_aspects.PostMapping
+        CreateUser (
+            @JavaSpring::_aspects.RequestBody
+            sync in inUser: UserData::UserContext.User, 
+            @JavaSpring::_aspects.ResponseEntity
+            sync out outUser : UserData::UserContext.User);
+
+        ---
+        Get All Users
+        ---
+        @endpoints(Protocols::_protocols.rest : "";)
+        @JavaSpring::_aspects.GetMapping
+        GetAllUsers(
+            @JavaSpring::_aspects.ResponseEntity
+            sync out outUsers: UserData::UserContext.User);
+
+        ---
+        Get User By ID
+        @required id incoming user id
+        ---
+        @endpoints(Protocols::_protocols.rest : "/{id}";)
+        @JavaSpring::_aspects.GetMapping
+        GetUserById(
+            @JavaSpring::_aspects.PathVariable
+            sync in id: long,
+            @JavaSpring::_aspects.ResponseEntity
+            sync out outUser: UserData::UserContext.User);
+
+        ---
+		Update user
+        @required id incoming user id
+		@required inUser incoming payload
+		---
+        @endpoints(Protocols::_protocols.rest:"/{id}";)
+        @JavaSpring::_aspects.PutMapping
+        UpdateUser(
+            @JavaSpring::_aspects.PathVariable
+            sync in id: long, 
+            @JavaSpring::_aspects.RequestBody
+            sync in inUser: UserData::UserContext.User,
+            @JavaSpring::_aspects.ResponseEntity
+            sync out outUser: UserData::UserContext.User);
+
+    
+    }
+}
