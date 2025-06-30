@@ -1,0 +1,37 @@
+import microservices from "../service/EventPlanner.services" as EventPlannerService
+import technology from "../../technology/Docker.technology" as Docker
+import technology from "../../technology/Protocols.technology" as Protocols
+import technology from "../../technology/MariaDB.technology" as MariaDB
+
+@technology(Docker)
+@technology(Protocols)
+container EventPlannerServiceContainer
+    deployment technology Docker::_deployment.Docker
+    deploys EventPlannerService::de.fhdo.EventPlannerService {
+    default values {
+        Dockerfile('
+			RUN apk --no-cache add curl
+			CMD java ${JAVA_OPTS} -jar EventPlanner-service.jar
+			COPY build/libs/EventPlanner-service.jar .
+		')
+
+        basic endpoints {
+            Protocols::_protocols.rest: "localhost:8082";
+        }
+    }
+}
+
+@technology(MariaDB)
+MariaDB is MariaDB::_infrastructure.MariaDB
+	used by nodes EventPlannerServiceContainer {
+	default values {
+		hostName = "localhost"
+		rootPassword = "rootpassword"
+		userName = "mysqluser"
+		userPassword = "mysqlpw"
+        port = "3306"
+	}
+	endpoints {
+		MariaDB::_protocols.connectorJ: "3306:3306";
+	}
+}
