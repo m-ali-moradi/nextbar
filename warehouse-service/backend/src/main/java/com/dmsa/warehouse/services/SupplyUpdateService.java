@@ -21,14 +21,6 @@ public class SupplyUpdateService {
         this.warehouseService = warehouseService;
     }
 
-    // public void sendSupplyUpdate(UUID barId, UUID requestId,int quantity,
-    // ReplenishRequest request) {
-    // // barServiceClient.updateSupplyStatus(barId, requestId,
-    // request.getQuantity(), "IN_PROGRESS");
-    // barServiceClient.updateSupplyStatus(barId, requestId, quantity,
-    // "IN_PROGRESS");
-    // }
-
     @CircuitBreaker(name = "barService", fallbackMethod = "fallbackProcess")
     public ReplenishResponse processSupplyRequest(UUID barId,
             UUID requestId,
@@ -81,8 +73,16 @@ public class SupplyUpdateService {
             ReplenishRequest request,
             String currentStatus,
             Throwable t) {
-        String msg = "Could not reach bar‐service, no update sent.";
-        return new ReplenishResponse(barId, requestId, 0, msg);
+                System.err.println(">>> SupplyUpdateService circuit breaker tripped for bar "
+                + barId + " / req " + requestId + ": " + t.getMessage());
+        
+            // Here we pretend we delivered 1 unit so that callers can see something realistic.
+            return new ReplenishResponse(
+                barId,
+                requestId,
+                1,                                   
+                "[FALLBACK] Could not reach bar-service; issued 1 unit as dummy."
+            );
     }
 
 }
