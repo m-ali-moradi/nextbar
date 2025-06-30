@@ -19,10 +19,7 @@
   import { ref, onMounted, watch, computed } from 'vue'
   import axios from 'axios'
   
-  /** 
-   * If you pass barId in, summary will fetch supply counts for that bar.
-   * Otherwise it will leave them blank.
-   */
+
   const props = defineProps<{
     barId?: string
   }>()
@@ -31,7 +28,6 @@
   const pendingRequests   = ref(0)
   const completedRequests = ref(0)
   
-  // Labels: show “–” when no barId yet
   const pendingRequestsLabel   = computed(() => props.barId ? pendingRequests.value : '–')
   const completedRequestsLabel = computed(() => props.barId ? completedRequests.value : '–')
   
@@ -45,7 +41,6 @@
     }
   })
   
-  // When barId changes (and is non-empty), fetch its supply
   watch(
     () => props.barId,
     async (barId) => {

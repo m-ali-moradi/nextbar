@@ -11,8 +11,6 @@ functional microservice com.dmsa.warehouse.WarehouseService {
   @endpoints(Protocols::_protocols.rest : "/warehouse";)
   interface WarehouseInterface {
 
-    /// Stock (BeverageStock) CRUD
-
     @endpoints(Protocols::_protocols.rest : "/stock";)
     @JavaSpring::_aspects.GetMapping
     GetAllStock(
@@ -35,8 +33,6 @@ functional microservice com.dmsa.warehouse.WarehouseService {
       @JavaSpring::_aspects.PathVariable
       sync in id: long
     );
-
-    /// Bars & Supply (via Feign)
 
     @endpoints(Protocols::_protocols.rest : "/bars";)
     @JavaSpring::_aspects.GetMapping
@@ -65,8 +61,6 @@ functional microservice com.dmsa.warehouse.WarehouseService {
       sync out req: WarehouseData::WarehouseContext.SupplyRequestDto
     );
 
-    /// Supply update
-
     @endpoints(Protocols::_protocols.rest : "/bars/replenish/{barId}/{reqId}";)
     @JavaSpring::_aspects.PutMapping
     UpdateSupplyStatus(
@@ -83,8 +77,6 @@ functional microservice com.dmsa.warehouse.WarehouseService {
       @JavaSpring::_aspects.ResponseEntity
       sync out resp: WarehouseData::WarehouseContext.ReplenishResponse
     );
-
-    /// Drop-Point integration
 
     @endpoints(Protocols::_protocols.rest : "/droppoints/fetch-notified";)
     @JavaSpring::_aspects.PostMapping

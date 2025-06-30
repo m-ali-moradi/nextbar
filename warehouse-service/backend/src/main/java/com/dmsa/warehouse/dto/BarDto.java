@@ -1,4 +1,3 @@
-// src/main/java/com/dmsa/warehouse/dto/BarDto.java
 package com.dmsa.warehouse.dto;
 
 import java.util.UUID;

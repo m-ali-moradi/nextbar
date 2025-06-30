@@ -1,33 +1,4 @@
-/*
-entity BeverageStock {
-  id: Long [id, generated]
-  beverageType: String [column="beverage_type", not null]
-  quantity: Integer [not null]
-}
-
-enum DropPointStatus {
-  NOTIFIED
-  ACCEPTED
-  STATUS_RESET
-}
-
-entity DropPointRecord {
-  id: Long [id]
-  location: String
-  currentEmpties: Integer
-  status: DropPointStatus
-}
-
-entity EmptyBottleStock {
-  id: Long [id, generated]
-  dropPointId: Long [column="drop_point_id", not null]
-  dropPointLocation: String [column="drop_point_location"]
-  quantity: Integer [not null]
-}
-*/
-
 context WarehouseContext {
-  // your first JPA entity
   structure BeverageStock<entity> {
     long    id<identifier>,
     string  beverageType,
@@ -50,9 +21,8 @@ context WarehouseContext {
   structure SupplyRequestDto {
     string id,
     string barId,
-    // collection SupplyItemDto items,         /// array of line items
     string status,
-    string createdAt               /// we treat timestamp as ISO string
+    string createdAt
   }
 
   structure ReplenishRequest {
@@ -65,7 +35,6 @@ context WarehouseContext {
     int quantitySent,
     string message
   }
-  // the DropPointRecord entity you persisted
   structure DropPointRecord<entity> {
     long   id<identifier>,
     string location,
@@ -73,7 +42,6 @@ context WarehouseContext {
     DropPointStatus status
   }
 
-  // tracks the empties you've collected
   structure EmptyBottleStock<entity> {
     long   id<identifier>,
     long   dropPointId,
@@ -81,7 +49,6 @@ context WarehouseContext {
     int    quantity
   }
 
-  // reuse your existing enum
   enum DropPointStatus {
     NOTIFIED,
     ACCEPTED,

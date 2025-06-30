@@ -1,6 +1,5 @@
 <template>
   <div class="stock-page">
-    <!-- bind a key so DashboardSummary remounts on change -->
     <DashboardSummary :key="refreshKey" />
 
     <h3>Beverage Stock</h3>
@@ -96,7 +95,6 @@ const newType    = ref('')
 const newQty     = ref<number|null>(null)
 const tableEl    = ref<HTMLDivElement|null>(null)
 
-// bump this to force DashboardSummary remount
 const refreshKey = ref(0)
 
 async function loadStock(scrollToBottom = false) {
@@ -105,7 +103,6 @@ async function loadStock(scrollToBottom = false) {
   )
   stock.value = data
 
-  // force the summary to update
   refreshKey.value++
 
   if (scrollToBottom) {
@@ -204,7 +201,6 @@ onMounted(() => loadStock())
   box-shadow: inset 0 2px 4px rgba(0,0,0,0.2);
 }
 
-/* reduce height so last row is reachable */
 .table-container {
   flex: 1;
   max-height: 300px;

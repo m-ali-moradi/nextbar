@@ -1,4 +1,3 @@
-// src/main/java/com/dmsa/warehouse/services/BarFetchService.java
 package com.dmsa.warehouse.services;
 
 import com.dmsa.warehouse.dto.BarDto;

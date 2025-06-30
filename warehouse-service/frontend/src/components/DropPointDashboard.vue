@@ -52,38 +52,7 @@
   
   const records = ref<Record[]>([])
   
-  /**  Only loads whatever is already in your DB */
-//   async function loadNotified() {
-//     try {
-//       const { data: notified } = await axios.get<Record[]>(
-//         'http://localhost:8085/warehouse/droppoints/notified'
-//       )
-//       // rebuild the records list, preserving ACCEPTED
-//       const accepted = records.value.filter(r => r.status === 'ACCEPTED')
-//       records.value = [...accepted, ...notified]
-//     }
-//     catch (e) {
-//       console.error('Load failed', e)
-//     }
-//   }
-  
-//   /** Fires when you click the button */
-//   async function refresh() {
-//     try {
-//       // 1) pull in any brand-new notifications
-//       await axios.post(
-//         'http://localhost:8085/warehouse/droppoints/fetch-notified'
-//       )
-//       // 2) then re-load from your DB
-//       await loadNotified()
-//     }
-//     catch (e) {
-//       console.error('Refresh failed', e)
-//     }
-//   }
-
-/** Pull in new notifications *and* then overwrite entire table with exactly what’s in the DB */
-async function refresh() {
+  async function refresh() {
   // 1) fetch from drop-point microservice
   await axios.post(
     'http://localhost:8085/warehouse/droppoints/fetch-notified'
@@ -99,7 +68,6 @@ async function refresh() {
 }
 
   
-  /** Flip one from NOTIFIED → ACCEPTED in both backend + local UI */
   async function accept(id: number) {
     try {
       await axios.put(`http://localhost:8085/warehouse/droppoints/${id}/accept`)
@@ -137,11 +105,9 @@ async function refresh() {
     cursor: pointer;
     font-size: 0.85rem;
 
-   /* Smooth transform & shadow transitions */
    transition: transform 0.1s ease, box-shadow 0.1s ease;
   }
  
- /* “Pressed” state */
 .button:active {
    transform: scale(0.95);
     box-shadow: inset 0 2px 4px rgba(0,0,0,0.2);

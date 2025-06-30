@@ -4,7 +4,6 @@
   
       <h3>Supply Dashboard</h3>
   
-      <!-- Mode Toggle -->
       <div class="mode-toggle">
         <button
           :class="{ active: mode==='all' }"
@@ -16,7 +15,6 @@
         >Bar Supply</button>
       </div>
   
-      <!-- ── ALL BARS MODE ── -->
       <div v-if="mode==='all'" class="table-container">
         <table>
           <thead>
@@ -45,7 +43,6 @@
         <p v-if="bars.length===0">Loading bars…</p>
       </div>
   
-      <!-- ── BAR SUPPLY MODE ── -->
       <div v-else>
         <div class="controls">
           <label for="bar-select">Bar:</label>
@@ -137,10 +134,7 @@
     bars.value = data;
   });
   
-  /**
-   * Switch between All Bars / Bar Supply.
-   * If switching to 'bar' and a bar is already selected, fetch its requests.
-   */
+
   function switchMode(newMode: 'all'|'bar') {
     mode.value = newMode;
     requests.value = [];
@@ -149,14 +143,12 @@
     }
   }
   
-  /** Handler for the “View Requests” button in All Bars table. */
   function viewBar(barId: string) {
     selectedBarId.value = barId;
     mode.value = 'bar';
     fetchSupply();
   }
   
-  /** Fetch supply requests for the selected bar. */
   async function fetchSupply() {
     requests.value = [];
     if (!selectedBarId.value) return;
@@ -166,12 +158,7 @@
     requests.value = data;
   }
   
-  /**
-   * Send a status update with the given quantity & status.
-   * - REQUESTED → IN_PROGRESS: send full quantity
-   * - REQUESTED → REJECTED: send 0
-   * - IN_PROGRESS → DELIVERED: send full quantity
-   */
+
   async function update(
     req: SupplyRequestDto,
     currentStatus: 'REQUESTED'|'IN_PROGRESS',

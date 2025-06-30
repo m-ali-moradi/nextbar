@@ -63,7 +63,6 @@ public class SupplyUpdateService {
                     "Supply delivered. Status set to DELIVERED.");
         }
 
-        // All other transitions are invalid
         throw new IllegalStateException("Cannot update status from " + currentStatus);
     }
 
@@ -76,7 +75,6 @@ public class SupplyUpdateService {
                 System.err.println(">>> SupplyUpdateService circuit breaker tripped for bar "
                 + barId + " / req " + requestId + ": " + t.getMessage());
         
-            // Here we pretend we delivered 1 unit so that callers can see something realistic.
             return new ReplenishResponse(
                 barId,
                 requestId,
