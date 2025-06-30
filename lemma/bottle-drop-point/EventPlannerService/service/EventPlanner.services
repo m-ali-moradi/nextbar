@@ -1,0 +1,76 @@
+import datatypes from "../domain/EventPlanner.data" as EventPlannerData
+import technology from "../../technology/JavaSpring.technology" as JavaSpring
+import technology from "../../technology/Protocols.technology" as Protocols
+
+@technology(JavaSpring)
+@technology(Protocols)
+@sync(Protocols::_protocols.rest)
+@async(Protocols::_protocols.amqp)
+@JavaSpring::_aspects.Application(name="EventPlannerService")
+functional microservice de.fhdo.EventPlannerService {
+
+    @endpoints(Protocols::_protocols.rest : "/EventPlanners";)
+    interface EventPlannerInterface {
+        ---
+		Create event
+		@required inEventPlanner incoming payload
+		---
+        @endpoints(Protocols::_protocols.rest : "/create";)
+        @JavaSpring::_aspects.PostMapping
+        CreateEventPlanner (
+            @JavaSpring::_aspects.RequestBody
+            sync in inEventPlanner: EventPlannerData::EventPlannerContext.EventPlanner, 
+            @JavaSpring::_aspects.ResponseEntity
+            sync out outEventPlanner : EventPlannerData::EventPlannerContext.EventPlanner);
+
+        ---
+        Get All EventPlanners
+        ---
+        @endpoints(Protocols::_protocols.rest : "";)
+        @JavaSpring::_aspects.GetMapping
+        GetAllEventPlanners(
+            @JavaSpring::_aspects.ResponseEntity
+            sync out outEventPlanners: EventPlannerData::EventPlannerContext.EventPlanner);
+
+        ---
+        Get EventPlanner By ID
+        @required id incoming event id
+        ---
+        @endpoints(Protocols::_protocols.rest : "/{id}";)
+        @JavaSpring::_aspects.GetMapping
+        GetEventPlannerById(
+            @JavaSpring::_aspects.PathVariable
+            sync in id: long,
+            @JavaSpring::_aspects.ResponseEntity
+            sync out outEventPlanner: EventPlannerData::EventPlannerContext.EventPlanner);
+
+        ---
+		Update Event
+        @required id incoming event id
+		@required inEventPlanner incoming payload
+		---
+        @endpoints(Protocols::_protocols.rest:"/{id}";)
+        @JavaSpring::_aspects.PutMapping
+        UpdateEventPlanner(
+            @JavaSpring::_aspects.PathVariable
+            sync in id: long, 
+            @JavaSpring::_aspects.RequestBody
+            sync in inEventPlanner: EventPlannerData::EventPlannerContext.EventPlanner,
+            @JavaSpring::_aspects.ResponseEntity
+            sync out outEventPlanner: EventPlannerData::EventPlannerContext.EventPlanner);
+
+        ---
+        Delete Event
+        @required id incoming event id
+        ---
+        @endpoints(Protocols::_protocols.rest : "/{id}";)
+        @JavaSpring::_aspects.DeleteMapping
+        DeleteEventPlanner(
+            @JavaSpring::_aspects.PathVariable
+            sync in id: long,
+            @JavaSpring::_aspects.ResponseEntity
+            sync out response: string);
+
+        
+    }
+}
