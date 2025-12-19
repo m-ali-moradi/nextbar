@@ -1,0 +1,21 @@
+## Current Problems and Gaps
+
+- Architecture coupling: Services rely on implicit contracts; no shared API specs (OpenAPI) or client libraries, making integrations brittle and inconsistent across bar, warehouse, drop-points, and event-planner backends.
+- Service discovery/config: Config Server and Eureka are present but not consistently wired; several services hardcode ports/URLs instead of using discovery + config-repo, causing runtime mismatches when topology changes.
+- Gateway alignment: API Gateway routes are incomplete/unsynchronized with actual service endpoints; missing auth filters and per-route RBAC, so calls can bypass expected checks.
+- Authentication/authorization: JWT guide exists, but services apply security unevenly; some endpoints are unprotected or use inconsistent role names/claims; token validation and key management not centralized; no token refresh/expiration handling across frontends.
+- Cross-service trust: Lacks service-to-service authentication (no mTLS or signed service tokens), so downstream calls cannot verify caller identity, risking spoofing and confused-deputy issues.
+- Data consistency: Inventory and bottle-return flows span multiple services without transactions or outbox/Saga; updates can diverge (e.g., bar decrements stock but warehouse not replenished) leading to inconsistent counts.
+- Event orchestration: Event planner writes initial layouts/stocks, but downstream services are not automatically synced (no provisioning workflow or idempotent seeding), creating drift between planned and actual state.
+- Domain overlap: Overlapping models (Drink, Stock, DropPoint) differ between services; no shared schema versioning, causing payload/validation mismatches and mapping errors.
+- Error handling: Downstream failures are not wrapped with retries/circuit breakers/timeouts; clients hang on slow services, and partial failures are not compensated.
+- Observability: Limited centralized logging/metrics/tracing; no correlation IDs across services; actuator endpoints not aggregated; makes diagnosing auth/integration issues difficult.
+- Validation and input hygiene: Missing request validation on many REST endpoints (quantities, capacities, roles), enabling invalid states (negative stock, over-capacity drop points) and security bugs (mass assignment).
+- Frontend-backend drift: Multiple Vue apps call differing endpoints/ports and skip auth headers in places; API typings not enforced, leading to runtime errors and unauthorized calls.
+- Testing debt: Few automated integration tests across services; no contract tests between frontends/backends; JWT flows and gateway routing lack regression coverage.
+- Local dev UX: Startup scripts assume fixed ports and running databases; poor failure messaging; partial startup leaves system unusable (e.g., gateway up but discovery/config down).
+- CI/CD gaps: No unified pipeline to build/test all modules; no quality gates (lint, tests, SCA); config-repo changes are not validated against service expectations.
+- Database migrations: No visible migration management per service; schema drift likely; cross-service references (e.g., user IDs) lack referential guarantees.
+- Caching/performance: No caching on hot reads (inventory, drop-point status); risk of unnecessary load and slow UIs; no rate limiting or backpressure at gateway.
+- Security basics: Mixed HTTP usage, no CORS hardening, no CSRF protection for state-changing calls, and secrets likely in config files instead of vault/Key Vault.
+- Deployment resilience: No health-check-based readiness/liveness configs per service; restarts can flap; scale-out strategy undefined.

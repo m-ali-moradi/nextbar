@@ -57,6 +57,14 @@ spring:
             - StripPrefix=1
             
 
+      # Auth route (login, register)
+        - id: auth-service
+          uri: lb://users-service
+          predicates:
+            - Path=/api/auth/**
+          filters:
+            - StripPrefix=1
+
       # Users route
         - id: users-service
           uri: lb://users-service

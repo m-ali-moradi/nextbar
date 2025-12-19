@@ -1,9 +1,0 @@
-{
-  "dependencies": {
-    "vite": "^7.0.0"
-  },
-  "scripts": {
-    "dev": "vite --port 3000"
-  }
-}
-
