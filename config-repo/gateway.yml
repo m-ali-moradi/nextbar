@@ -39,6 +39,7 @@ spring:
             - Path=/api/bars/**
           filters:
             - StripPrefix=1
+            - name: AuthenticationFilter
       # Droppoints route
         - id: droppoint-service
           uri: lb://droppoint-service
