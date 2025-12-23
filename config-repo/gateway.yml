@@ -39,7 +39,7 @@ spring:
             - Path=/api/bars/**
           filters:
             - StripPrefix=1
-            - JwtAuthenticationFilter
+            - JwtAuthenticationGatewayFilterFactory
       # Droppoints route
         - id: droppoint-service
           uri: lb://droppoint-service
@@ -73,6 +73,11 @@ spring:
             - Path=/api/users/**
           filters:
             - StripPrefix=1
+
+security:
+  jwt:
+    secret: 2YrmlATq8aGvu9r5OSwV2s3g6tZqYbhyZnMNsnU/wvO27lfYxbgm5foq7F2Vsmw1eZC4WbdKHx3IXW5J7PddEA==
+    expiration: 3600000
 
 eureka:
   client:
