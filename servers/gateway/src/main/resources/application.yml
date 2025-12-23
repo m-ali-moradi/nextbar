@@ -12,11 +12,3 @@ security:
     secret: yourSecretKeyForJWTTokenGenerationMustBeLongEnoughForHS256Algorithm
     expiration: 3600000
     issuer: users-service
-
-
-eureka:
-  client:
-    serviceUrl:
-      defaultZone: http://localhost:8761/eureka/
-  instance:
-    preferIpAddress: true

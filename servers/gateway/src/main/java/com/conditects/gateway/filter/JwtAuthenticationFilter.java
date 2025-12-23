@@ -1,10 +1,9 @@
 package com.conditects.gateway.filter;
 
 
-import com.google.common.net.HttpHeaders;
-import io.jsonwebtoken.Claims;
-import io.jsonwebtoken.Jwts;
-import io.jsonwebtoken.security.Keys;
+import java.util.List;
+import java.util.stream.Collectors;
+
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.cloud.gateway.filter.GatewayFilter;
 import org.springframework.cloud.gateway.filter.GatewayFilterChain;
@@ -12,9 +11,13 @@ import org.springframework.http.HttpStatus;
 import org.springframework.http.server.reactive.ServerHttpRequest;
 import org.springframework.stereotype.Component;
 import org.springframework.web.server.ServerWebExchange;
-import reactor.core.publisher.Mono;
 
-import java.util.List;
+import com.google.common.net.HttpHeaders;
+
+import io.jsonwebtoken.Claims;
+import io.jsonwebtoken.Jwts;
+import io.jsonwebtoken.security.Keys;
+import reactor.core.publisher.Mono;
 
 @Component
 public class JwtAuthenticationFilter implements GatewayFilter {
@@ -47,11 +50,15 @@ public class JwtAuthenticationFilter implements GatewayFilter {
         }
 
         // Forward user info to downstream services
-        @SuppressWarnings("unchecked")
-        List<String> roles = claims.get("roles", List.class);
+        List<String> roles = List.of();
+        Object rolesClaim = claims.get("roles");
+        if (rolesClaim instanceof List<?> roleList) {
+            roles = roleList.stream().map(String::valueOf).collect(Collectors.toList());
+        }
+
         ServerHttpRequest mutatedRequest = exchange.getRequest().mutate()
                 .header("X-User-Id", claims.getSubject())
-                .header("X-Roles", String.join(",", roles))
+            .header("X-Roles", String.join(",", roles))
                 .build();
 
         return chain.filter(exchange.mutate().request(mutatedRequest).build());

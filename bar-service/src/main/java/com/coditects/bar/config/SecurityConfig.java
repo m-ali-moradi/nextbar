@@ -53,7 +53,11 @@ public class SecurityConfig {
     public CorsConfigurationSource corsConfigurationSource() {
         CorsConfiguration config = new CorsConfiguration();
         config.setAllowCredentials(true);
-        config.setAllowedOrigins(List.of("http://localhost:5173", "http://localhost:5174"));
+
+        // The browser Origin stays the frontend dev server (e.g. 5175) even when calling through the gateway.
+        // Use origin patterns to support different Vite ports during development.
+        config.setAllowedOriginPatterns(List.of("http://localhost:*"));
+
         config.setAllowedMethods(List.of("GET", "POST", "PUT", "PATCH", "DELETE", "OPTIONS"));
         config.setAllowedHeaders(List.of("*"));
         UrlBasedCorsConfigurationSource source = new UrlBasedCorsConfigurationSource();
