@@ -9,7 +9,7 @@ spring:
           search-paths: config-repo
           default-label: main
           username: m-ali-moradi
-          password: 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 # access token
+          password: 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 # access token
   application:
     name: config-server
 
