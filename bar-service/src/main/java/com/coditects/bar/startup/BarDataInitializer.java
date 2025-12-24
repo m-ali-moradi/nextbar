@@ -53,7 +53,7 @@ public class BarDataInitializer implements ApplicationRunner {
 
             // Create fallback bar
             UUID fallbackBarId = UUID.fromString("11111111-1111-1111-1111-111111111111");
-            barService.registerBar(fallbackBarId, "CoolBar", "EF38B", 300);
+            barService.registerBar(fallbackBarId, "CoolBar", "EF38D", 300);
 
             // Add fallback stock items
             barStockService.addStock(fallbackBarId, UUID.fromString("aaaaaaaa-aaaa-aaaa-aaaa-aaaaaaaaaaaa"), 100);
