@@ -1,4 +1,4 @@
-package com.coditects.usersservice;
+package com.nextbar.usersservice;
 
 import org.springframework.boot.SpringApplication;
 import org.springframework.boot.autoconfigure.SpringBootApplication;

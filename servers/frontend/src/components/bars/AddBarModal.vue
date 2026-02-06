@@ -1,60 +1,82 @@
 <template>
-  <div
-    v-if="isOpen"
-    class="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50"
-  >
-    <form class="bg-white p-6 rounded shadow-lg w-full max-w-md">
-      <h2 class="text-xl font-bold mb-4">Add New Bar</h2>
-      <div class="mb-4">
-        <label class="block text-sm font-medium text-gray-700">Bar Name:</label>
-        <input
-          v-model="barName"
-          type="text"
-          class="w-full border rounded px-3 py-2"
-          placeholder="Enter bar name"
-          required
-        />
+  <Transition name="modal">
+    <div
+      v-if="isOpen"
+      class="modal-overlay"
+      @click.self="$emit('close')"
+    >
+      <div class="modal-content">
+        <div class="px-6 py-4 border-b border-slate-100 flex items-center justify-between">
+          <div class="flex items-center gap-3">
+            <div class="w-10 h-10 rounded-xl bg-bar-100 flex items-center justify-center">
+              <i class="fas fa-glass-martini text-bar-600"></i>
+            </div>
+            <h2 class="text-lg font-semibold text-slate-900">Add New Bar</h2>
+          </div>
+          <button 
+            @click="$emit('close')" 
+            class="p-2 rounded-lg text-slate-400 hover:text-slate-600 hover:bg-slate-100 transition-colors"
+          >
+            <i class="fas fa-times"></i>
+          </button>
+        </div>
+
+        <form @submit.prevent="addBar" class="p-6 space-y-5">
+          <div>
+            <label for="barName" class="label">Bar Name</label>
+            <input
+              v-model="barName"
+              id="barName"
+              type="text"
+              class="input"
+              placeholder="e.g., Main Stage Bar"
+              required
+            />
+          </div>
+
+          <div>
+            <label for="barLocation" class="label">Location</label>
+            <input
+              v-model="barLocation"
+              id="barLocation"
+              type="text"
+              class="input"
+              placeholder="e.g., North Wing"
+              required
+            />
+          </div>
+
+          <div>
+            <label for="barStockCapacity" class="label">Stock Capacity</label>
+            <input
+              v-model="barStockCapacity"
+              id="barStockCapacity"
+              type="number"
+              class="input"
+              placeholder="Maximum items the bar can hold"
+              required
+              min="1"
+              max="1000"
+            />
+          </div>
+
+          <div class="flex gap-3 pt-2">
+            <button type="submit" class="btn-primary flex-1">
+              <i class="fas fa-plus"></i>
+              <span>Create Bar</span>
+            </button>
+            <button 
+              type="button" 
+              @click="$emit('close')" 
+              class="btn-secondary flex-1"
+            >
+              Cancel
+            </button>
+          </div>
+        </form>
       </div>
-      <div class="mb-4">
-        <label class="block text-sm font-medium text-gray-700">Location:</label>
-        <input
-          v-model="barLocation"
-          type="text"
-          class="w-full border rounded px-3 py-2 required"
-          placeholder="Enter location"
-          required
-        />
-      </div>
-      <div class="mb-4">
-        <label class="block text-sm font-medium text-gray-700"
-          >Stock Capacity:</label
-        >
-        <input
-          v-model="barStockCapacity"
-          type="number"
-          class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-green-400 focus:border-green-400 text-lg"
-          placeholder="Enter max stock capacity"
-          required
-          min="1"
-          max="1000"
-        />
-      </div>
-      <div class="flex justify-end">
-        <button
-          @click="$emit('close')"
-          class="mr-2 bg-gray-300 px-4 py-2 rounded hover:bg-gray-400"
-        >
-          Cancel
-        </button>
-        <button
-          @click="addBar"
-          class="bg-blue-500 text-white px-4 py-2 rounded hover:bg-blue-600"
-        >
-          Save
-        </button>
-      </div>
-    </form>
-  </div>
+    </div>
+  </Transition>
 </template>
 
 <script>
@@ -86,3 +108,20 @@ export default {
   },
 };
 </script>
+
+<style scoped>
+.modal-enter-active,
+.modal-leave-active {
+  transition: all 0.3s ease;
+}
+
+.modal-enter-from,
+.modal-leave-to {
+  opacity: 0;
+}
+
+.modal-enter-from .modal-content,
+.modal-leave-to .modal-content {
+  transform: scale(0.95);
+}
+</style>

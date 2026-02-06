@@ -79,6 +79,25 @@
             <scope>runtime</scope>
         </dependency>
 
+        <!-- ============================================== -->
+        <!-- WebSocket Support for Real-time Updates       -->
+        <!-- ============================================== -->
+        
+        <!-- RabbitMQ AMQP for consuming events from services -->
+        <dependency>
+            <groupId>org.springframework.boot</groupId>
+            <artifactId>spring-boot-starter-amqp</artifactId>
+        </dependency>
+        
+        <!-- Reactive WebSocket support (already included in webflux) -->
+        <!-- Server-Sent Events (SSE) for simpler real-time push -->
+        
+        <!-- JSON processing for event serialization -->
+        <dependency>
+            <groupId>com.fasterxml.jackson.core</groupId>
+            <artifactId>jackson-databind</artifactId>
+        </dependency>
+
     </dependencies>
 
     <dependencyManagement>

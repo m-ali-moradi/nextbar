@@ -1,4 +1,4 @@
-package com.coditects.usersservice.dto;
+package com.nextbar.usersservice.dto;
 
 import java.util.List;
 import java.util.UUID;

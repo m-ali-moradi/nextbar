@@ -1,343 +1,677 @@
 <template>
-  <div class="warehouse-container">
-    <header class="page-header">
-      <h1 class="text-3xl font-bold text-gray-800">Warehouse Management</h1>
-    </header>
+  <div class="flex min-h-screen bg-slate-50">
+    <Sidebar />
+    
+    <div class="flex-1 ml-72">
+      <Navbar />
 
-    <!-- Dashboard Summary -->
-    <div class="summary-cards">
-      <div class="card">
-        <h3>Total Items</h3>
-        <div class="value">{{ totalSKUs }}</div>
-      </div>
-      <div class="card">
-        <h3>Pending Requests</h3>
-        <div class="value">{{ pendingRequests.length }}</div>
-      </div>
-      <div class="card">
-        <h3>Completed Requests</h3>
-        <div class="value">{{ completedRequests.length }}</div>
-      </div>
-      <div class="card warning" v-if="lowStockItems.length > 0">
-        <h3>Low Stock Items</h3>
-        <div class="value">{{ lowStockItems.length }}</div>
-      </div>
-    </div>
-
-    <!-- Tab Navigation -->
-    <div class="tabs">
-      <button
-        :class="['tab', { active: activeTab === 'stock' }]"
-        @click="activeTab = 'stock'"
-      >
-        Stock Inventory
-      </button>
-      <button
-        :class="['tab', { active: activeTab === 'supply' }]"
-        @click="activeTab = 'supply'"
-      >
-        Supply Requests
-      </button>
-      <button
-        :class="['tab', { active: activeTab === 'empties' }]"
-        @click="activeTab = 'empties'"
-      >
-        Empties Collected
-      </button>
-    </div>
-
-    <!-- Stock Inventory Tab -->
-    <div v-if="activeTab === 'stock'" class="tab-content">
-      <div class="section-header">
-        <h2>Stock Inventory</h2>
-        <button @click="openReplenishModal" class="btn-primary">
-          + Replenish Stock
-        </button>
-      </div>
-
-      <div v-if="loading" class="loading-state">Loading stock...</div>
-
-      <div v-else class="table-container">
-        <table class="data-table">
-          <thead>
-            <tr>
-              <th>Product ID</th>
-              <th>Product Name</th>
-              <th>Quantity</th>
-              <th>Unit Price</th>
-              <th>Total Value</th>
-              <th>Status</th>
-            </tr>
-          </thead>
-          <tbody>
-            <tr v-for="item in stock" :key="item.id">
-              <td>{{ item.id }}</td>
-              <td>{{ item.productName }}</td>
-              <td>{{ item.quantity }}</td>
-              <td>€{{ item.unitPrice?.toFixed(2) || '0.00' }}</td>
-              <td>€{{ ((item.quantity * (item.unitPrice || 0))).toFixed(2) }}</td>
-              <td>
-                <span
-                  class="status-badge"
-                  :class="item.quantity < 10 ? 'status-low' : 'status-ok'"
-                >
-                  {{ item.quantity < 10 ? 'Low Stock' : 'In Stock' }}
-                </span>
-              </td>
-            </tr>
-          </tbody>
-        </table>
-
-        <div v-if="stock.length === 0" class="empty-state">
-          No stock items found.
+      <main class="p-6">
+        <!-- Page Header -->
+        <div class="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4 mb-8">
+          <div>
+            <h1 class="text-2xl font-bold text-slate-900">Warehouse Management</h1>
+            <p class="text-slate-500 mt-1">Manage inventory, supply requests, and collections</p>
+          </div>
+          <!-- WebSocket Connection Status -->
+          <div class="flex items-center gap-2 px-3 py-1.5 rounded-lg" 
+               :class="connected ? 'bg-emerald-100 text-emerald-700' : 'bg-rose-100 text-rose-700'">
+            <span class="w-2 h-2 rounded-full animate-pulse" 
+                  :class="connected ? 'bg-emerald-500' : 'bg-rose-500'"></span>
+            <span class="text-sm font-medium">
+              {{ connected ? '🔌 Live Updates' : '⚠️ Disconnected' }}
+            </span>
+          </div>
         </div>
-      </div>
-    </div>
 
-    <!-- Supply Requests Tab -->
-    <div v-if="activeTab === 'supply'" class="tab-content">
-      <div class="section-header">
-        <h2>Supply Requests</h2>
-        <div class="mode-toggle">
-          <button
-            :class="{ active: viewMode === 'all' }"
-            @click="switchViewMode('all')"
+        <!-- Stats Overview -->
+        <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 mb-8">
+          <div class="card p-5 card-interactive">
+            <div class="flex items-center justify-between">
+              <div>
+                <p class="text-sm text-slate-500 font-medium">Total Items</p>
+                <p class="text-2xl font-bold text-slate-900 mt-1">{{ totalSKUs }}</p>
+              </div>
+              <div class="w-12 h-12 rounded-xl bg-warehouse-100 flex items-center justify-center">
+                <i class="fas fa-boxes text-xl text-warehouse-600"></i>
+              </div>
+            </div>
+          </div>
+          
+          <div class="card p-5 card-interactive">
+            <div class="flex items-center justify-between">
+              <div>
+                <p class="text-sm text-slate-500 font-medium">Pending Requests</p>
+                <p class="text-2xl font-bold text-amber-600 mt-1">{{ pendingRequests.length }}</p>
+              </div>
+              <div class="w-12 h-12 rounded-xl bg-amber-100 flex items-center justify-center">
+                <i class="fas fa-clock text-xl text-amber-600"></i>
+              </div>
+            </div>
+          </div>
+
+          <div class="card p-5 card-interactive">
+            <div class="flex items-center justify-between">
+              <div>
+                <p class="text-sm text-slate-500 font-medium">Completed</p>
+                <p class="text-2xl font-bold text-emerald-600 mt-1">{{ completedRequests.length }}</p>
+              </div>
+              <div class="w-12 h-12 rounded-xl bg-emerald-100 flex items-center justify-center">
+                <i class="fas fa-check-circle text-xl text-emerald-600"></i>
+              </div>
+            </div>
+          </div>
+
+          <div 
+            v-if="lowStockItems.length > 0" 
+            class="card p-5 card-interactive bg-amber-50 border-amber-200"
           >
-            All Bars
+            <div class="flex items-center justify-between">
+              <div>
+                <p class="text-sm text-amber-700 font-medium">Low Stock</p>
+                <p class="text-2xl font-bold text-amber-700 mt-1">{{ lowStockItems.length }}</p>
+              </div>
+              <div class="w-12 h-12 rounded-xl bg-amber-100 flex items-center justify-center">
+                <i class="fas fa-exclamation-triangle text-xl text-amber-600"></i>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <!-- Tab Navigation -->
+        <div class="flex gap-1 p-1.5 bg-white rounded-xl border border-slate-200 shadow-sm mb-6 inline-flex">
+          <button
+            @click="activeTab = 'stock'"
+            class="px-5 py-2.5 rounded-lg text-sm font-medium transition-all duration-200"
+            :class="activeTab === 'stock' 
+              ? 'bg-warehouse-600 text-white shadow-sm' 
+              : 'text-slate-600 hover:text-slate-900 hover:bg-slate-50'"
+          >
+            <i class="fas fa-boxes mr-2"></i>
+            Stock Inventory
           </button>
           <button
-            :class="{ active: viewMode === 'bar' }"
-            @click="switchViewMode('bar')"
+            @click="activeTab = 'supply'"
+            class="px-5 py-2.5 rounded-lg text-sm font-medium transition-all duration-200"
+            :class="activeTab === 'supply' 
+              ? 'bg-warehouse-600 text-white shadow-sm' 
+              : 'text-slate-600 hover:text-slate-900 hover:bg-slate-50'"
           >
-            By Bar
+            <i class="fas fa-truck mr-2"></i>
+            Supply Requests
+          </button>
+          <button
+            @click="activeTab = 'empties'"
+            class="px-5 py-2.5 rounded-lg text-sm font-medium transition-all duration-200"
+            :class="activeTab === 'empties' 
+              ? 'bg-warehouse-600 text-white shadow-sm' 
+              : 'text-slate-600 hover:text-slate-900 hover:bg-slate-50'"
+          >
+            <i class="fas fa-recycle mr-2"></i>
+            Empties Collected
           </button>
         </div>
-      </div>
 
-      <!-- All Bars View -->
-      <div v-if="viewMode === 'all'" class="table-container">
-        <table class="data-table">
-          <thead>
-            <tr>
-              <th>Bar ID</th>
-              <th>Bar Name</th>
-              <th>Location</th>
-              <th>Capacity</th>
-              <th>Action</th>
-            </tr>
-          </thead>
-          <tbody>
-            <tr v-for="bar in bars" :key="bar.id">
-              <td>{{ bar.id }}</td>
-              <td>{{ bar.name }}</td>
-              <td>{{ bar.location }}</td>
-              <td>{{ bar.maxCapacity }}</td>
-              <td>
-                <button @click="viewBarRequests(bar)" class="btn-view">
-                  View Requests
+        <!-- Stock Inventory Tab -->
+        <Transition name="fade" mode="out-in">
+          <div v-if="activeTab === 'stock'" key="stock">
+            <div class="card overflow-hidden">
+              <div class="px-6 py-4 border-b border-slate-100 flex items-center justify-between">
+                <h2 class="font-semibold text-slate-900">Stock Inventory</h2>
+                <button @click="openReplenishModal" class="btn-primary">
+                  <i class="fas fa-plus"></i>
+                  <span>Replenish Stock</span>
                 </button>
-              </td>
-            </tr>
-          </tbody>
-        </table>
-      </div>
+              </div>
 
-      <!-- By Bar View -->
-      <div v-else>
-        <div class="controls">
-          <label for="bar-select">Select Bar:</label>
-          <select id="bar-select" v-model="selectedBarId" @change="onBarSelected">
-            <option value="">-- Choose a bar --</option>
-            <option v-for="bar in bars" :key="bar.id" :value="bar.id">
-              {{ bar.name }} ({{ bar.location }})
-            </option>
-          </select>
-        </div>
+              <div v-if="loading" class="p-12 text-center">
+                <div class="w-10 h-10 border-4 border-warehouse-200 border-t-warehouse-600 rounded-full animate-spin mx-auto mb-3"></div>
+                <p class="text-slate-500">Loading stock...</p>
+              </div>
 
-        <div v-if="selectedBarRequests.length > 0" class="table-container">
-          <table class="data-table">
-            <thead>
-              <tr>
-                <th>Request ID</th>
-                <th>Product</th>
-                <th>Quantity</th>
-                <th>Status</th>
-                <th>Actions</th>
-              </tr>
-            </thead>
-            <tbody>
-              <tr v-for="request in selectedBarRequests" :key="request.id">
-                <td>{{ request.id }}</td>
-                <td>{{ request.items[0]?.productName }}</td>
-                <td>{{ request.items[0]?.quantity }}</td>
-                <td>
-                  <span
-                    class="status-badge"
-                    :class="getRequestStatusClass(request.status)"
-                  >
-                    {{ request.status }}
-                  </span>
-                </td>
-                <td class="actions-cell">
-                  <button
-                    v-if="request.status === 'REQUESTED'"
-                    @click="processRequest(request, 'REQUESTED')"
-                    class="btn-process"
-                  >
-                    Process
-                  </button>
-                  <button
-                    v-if="request.status === 'REQUESTED'"
-                    @click="rejectRequest(request)"
-                    class="btn-reject"
-                  >
-                    Reject
-                  </button>
-                  <button
-                    v-if="request.status === 'IN_PROGRESS'"
-                    @click="deliverRequest(request)"
-                    class="btn-deliver"
-                  >
-                    Deliver
-                  </button>
-                </td>
-              </tr>
-            </tbody>
-          </table>
-        </div>
+              <div v-else-if="stock.length" class="overflow-x-auto">
+                <table class="table-modern">
+                  <thead>
+                    <tr>
+                      <th>Product ID</th>
+                      <th>Product Name</th>
+                      <th>Quantity</th>
+                      <th>Unit Price</th>
+                      <th>Total Value</th>
+                      <th>Status</th>
+                    </tr>
+                  </thead>
+                  <tbody>
+                    <tr v-for="item in stock" :key="item.id">
+                      <td class="font-mono text-slate-500">#{{ item.id }}</td>
+                      <td class="font-medium text-slate-900">{{ item.productName }}</td>
+                      <td>{{ item.quantity }}</td>
+                      <td>€{{ item.unitPrice?.toFixed(2) || '0.00' }}</td>
+                      <td class="font-medium">€{{ ((item.quantity * (item.unitPrice || 0))).toFixed(2) }}</td>
+                      <td>
+                        <span 
+                          class="badge"
+                          :class="item.quantity < 10 ? 'badge-warning' : 'badge-success'"
+                        >
+                          {{ item.quantity < 10 ? 'Low Stock' : 'In Stock' }}
+                        </span>
+                      </td>
+                    </tr>
+                  </tbody>
+                </table>
+              </div>
 
-        <div v-else-if="selectedBarId" class="empty-state">
-          No supply requests for this bar.
-        </div>
-      </div>
-    </div>
-
-    <!-- Empties Collected Tab -->
-    <div v-if="activeTab === 'empties'" class="tab-content">
-      <div class="section-header">
-        <h2>Empties Collected from Drop Points</h2>
-        <button @click="fetchEmptiesData" class="btn-refresh">
-          Refresh
-        </button>
-      </div>
-
-      <div v-if="loading" class="loading-state">Loading empties data...</div>
-
-      <div v-else-if="emptiesCollected.length > 0" class="table-container">
-        <table class="data-table">
-          <thead>
-            <tr>
-              <th>Drop Point ID</th>
-              <th>Location</th>
-              <th>Empties Collected</th>
-              <th>Collection Date</th>
-            </tr>
-          </thead>
-          <tbody>
-            <tr v-for="item in emptiesCollected" :key="item.id">
-              <td>{{ item.dropPointId }}</td>
-              <td>{{ item.location }}</td>
-              <td>{{ item.emptiesCount }}</td>
-              <td>{{ formatDate(item.collectionDate) }}</td>
-            </tr>
-          </tbody>
-        </table>
-      </div>
-
-      <div v-else class="empty-state">
-        No empties collected yet.
-      </div>
-    </div>
-
-    <!-- Replenish Stock Modal -->
-    <div v-if="showReplenishModal" class="modal-overlay" @click.self="closeReplenishModal">
-      <div class="modal-content">
-        <div class="modal-header">
-          <h2>Replenish Stock</h2>
-          <button @click="closeReplenishModal" class="close-btn">&times;</button>
-        </div>
-
-        <form @submit.prevent="handleReplenish" class="modal-form">
-          <div class="form-group">
-            <label for="productName">Product Name</label>
-            <input
-              id="productName"
-              v-model="replenishForm.productName"
-              type="text"
-              required
-              placeholder="e.g., Beer, Cola"
-            />
+              <div v-else class="p-12 text-center">
+                <div class="w-16 h-16 rounded-full bg-slate-100 flex items-center justify-center mx-auto mb-4">
+                  <i class="fas fa-box-open text-2xl text-slate-400"></i>
+                </div>
+                <p class="text-slate-500">No stock items found</p>
+              </div>
+            </div>
           </div>
+        </Transition>
 
-          <div class="form-group">
-            <label for="quantity">Quantity</label>
-            <input
-              id="quantity"
-              v-model.number="replenishForm.quantity"
-              type="number"
-              required
-              min="1"
-              placeholder="Number of units"
-            />
-          </div>
+        <!-- Supply Requests Tab -->
+        <Transition name="fade" mode="out-in">
+          <div v-if="activeTab === 'supply'" key="supply">
+            <div class="card overflow-hidden">
+              <div class="px-6 py-4 border-b border-slate-100 flex items-center justify-between">
+                <div>
+                  <h2 class="font-semibold text-slate-900">Supply Requests</h2>
+                  <p class="text-sm text-slate-500">Track requests across bars and update statuses</p>
+                </div>
+                <div class="flex items-center gap-3">
+                  <div class="flex gap-1 p-1 bg-slate-100 rounded-lg">
+                    <button
+                      @click="switchViewMode('all')"
+                      class="px-4 py-1.5 rounded-md text-sm font-medium transition-all"
+                      :class="viewMode === 'all' ? 'bg-white shadow-sm text-slate-900' : 'text-slate-600'"
+                    >
+                      All Requests
+                    </button>
+                    <button
+                      @click="switchViewMode('bar')"
+                      class="px-4 py-1.5 rounded-md text-sm font-medium transition-all"
+                      :class="viewMode === 'bar' ? 'bg-white shadow-sm text-slate-900' : 'text-slate-600'"
+                    >
+                      By Bar
+                    </button>
+                  </div>
+                  <button @click="refreshAllRequests" class="btn-secondary text-sm py-1.5">
+                    <i class="fas fa-sync-alt"></i>
+                    Refresh
+                  </button>
+                </div>
+              </div>
 
-          <div class="modal-actions">
-            <button type="submit" class="btn-primary">Replenish</button>
-            <button type="button" @click="closeReplenishModal" class="btn-secondary">
-              Cancel
-            </button>
+              <!-- All Bars View -->
+              <div v-if="viewMode === 'all'" class="p-6">
+                <div class="flex flex-col lg:flex-row lg:items-center lg:justify-between gap-4 mb-6">
+                  <div class="flex flex-wrap gap-2">
+                    <span class="badge badge-info">Requested: {{ pendingRequests.length }}</span>
+                    <span class="badge badge-warning">In Progress: {{ inProgressRequests.length }}</span>
+                    <span class="badge badge-success">Delivered: {{ completedRequests.length }}</span>
+                    <span class="badge badge-danger">Rejected: {{ rejectedRequests.length }}</span>
+                  </div>
+                  <div class="flex flex-col sm:flex-row gap-3">
+                    <select v-model="statusFilter" class="input w-full sm:w-44">
+                      <option value="ALL">All Statuses</option>
+                      <option value="REQUESTED">Requested</option>
+                      <option value="IN_PROGRESS">In Progress</option>
+                      <option value="DELIVERED">Delivered</option>
+                      <option value="REJECTED">Rejected</option>
+                    </select>
+                    <div class="relative">
+                      <i class="fas fa-search absolute left-3 top-3 text-slate-400 text-sm"></i>
+                      <input
+                        v-model="supplySearch"
+                        type="text"
+                        placeholder="Search bar, item, request id"
+                        class="input pl-9 w-full sm:w-64"
+                      />
+                    </div>
+                  </div>
+                </div>
+
+                <div v-if="loading" class="p-12 text-center">
+                  <div class="w-10 h-10 border-4 border-warehouse-200 border-t-warehouse-600 rounded-full animate-spin mx-auto mb-3"></div>
+                  <p class="text-slate-500">Loading supply requests...</p>
+                </div>
+
+                <div v-else-if="filteredAllRequests.length" class="overflow-x-auto -mx-6">
+                  <table class="table-modern">
+                    <thead>
+                      <tr>
+                        <th>Request ID</th>
+                        <th>Bar</th>
+                        <th>Items</th>
+                        <th>Total Qty</th>
+                        <th>Status</th>
+                        <th>Requested</th>
+                        <th class="text-right">Actions</th>
+                      </tr>
+                    </thead>
+                    <tbody>
+                      <tr v-for="request in filteredAllRequests" :key="request.id">
+                        <td class="font-mono text-slate-500">#{{ request.id }}</td>
+                        <td>
+                          <p class="font-medium text-slate-900">{{ getBarLabel(request) }}</p>
+                          <p class="text-xs text-slate-500">{{ getBarLocation(request) }}</p>
+                        </td>
+                        <td :title="getItemsDetail(request)">
+                          <p class="text-sm text-slate-900">{{ getItemsSummary(request) }}</p>
+                        </td>
+                        <td class="font-medium text-slate-900">{{ getTotalQuantity(request) }}</td>
+                        <td>
+                          <span class="badge" :class="getStatusBadgeClass(request.status)">
+                            {{ request.status }}
+                          </span>
+                          <p v-if="request.status === 'REJECTED' && request.rejectionReason" class="text-xs text-rose-600 mt-1">
+                            {{ request.rejectionReason }}
+                          </p>
+                        </td>
+                        <td>{{ formatDate(request.createdAt || request.requestedAt || '') }}</td>
+                        <td class="text-right">
+                          <div class="flex items-center justify-end gap-2">
+                            <button
+                              v-if="request.status === 'REQUESTED'"
+                              @click="processRequest(request)"
+                              class="btn-primary text-sm py-1.5"
+                            >
+                              Start
+                            </button>
+                            <button
+                              v-if="request.status === 'REQUESTED'"
+                              @click="openRejectModal(request)"
+                              class="btn-danger text-sm py-1.5"
+                            >
+                              Reject
+                            </button>
+                            <button
+                              v-if="request.status === 'IN_PROGRESS'"
+                              @click="deliverRequest(request)"
+                              class="inline-flex items-center gap-2 px-3 py-1.5 bg-emerald-600 text-white 
+                                     rounded-lg text-sm font-medium hover:bg-emerald-700 transition-colors"
+                            >
+                              Deliver
+                            </button>
+                          </div>
+                        </td>
+                      </tr>
+                    </tbody>
+                  </table>
+                </div>
+
+                <div v-else class="text-center py-12">
+                  <div class="w-16 h-16 rounded-full bg-slate-100 flex items-center justify-center mx-auto mb-4">
+                    <i class="fas fa-inbox text-2xl text-slate-400"></i>
+                  </div>
+                  <p class="text-slate-500">No supply requests found</p>
+                </div>
+              </div>
+
+              <!-- By Bar View -->
+              <div v-else class="p-6">
+                <div class="mb-6">
+                  <label for="bar-select" class="label">Select Bar</label>
+                  <select 
+                    id="bar-select" 
+                    v-model="selectedBarId" 
+                    @change="onBarSelected"
+                    class="input max-w-sm"
+                  >
+                    <option value="">-- Choose a bar --</option>
+                    <option v-for="bar in bars" :key="bar.id" :value="bar.id">
+                      {{ bar.name }} ({{ bar.location }})
+                    </option>
+                  </select>
+                </div>
+
+                <div v-if="selectedBarRequests.length > 0" class="overflow-x-auto -mx-6">
+                  <table class="table-modern">
+                    <thead>
+                      <tr>
+                        <th>Request ID</th>
+                        <th>Items</th>
+                        <th>Total Qty</th>
+                        <th>Status</th>
+                        <th>Requested</th>
+                        <th class="text-right">Actions</th>
+                      </tr>
+                    </thead>
+                    <tbody>
+                      <tr v-for="request in selectedBarRequests" :key="request.id">
+                        <td class="font-mono text-slate-500">#{{ request.id }}</td>
+                        <td class="font-medium text-slate-900" :title="getItemsDetail(request)">
+                          {{ getItemsSummary(request) }}
+                        </td>
+                        <td>{{ getTotalQuantity(request) }}</td>
+                        <td>
+                          <span class="badge" :class="getStatusBadgeClass(request.status)">
+                            {{ request.status }}
+                          </span>
+                          <p v-if="request.status === 'REJECTED' && request.rejectionReason" class="text-xs text-rose-600 mt-1">
+                            {{ request.rejectionReason }}
+                          </p>
+                        </td>
+                        <td>{{ formatDate(request.createdAt || request.requestedAt || '') }}</td>
+                        <td class="text-right">
+                          <div class="flex items-center justify-end gap-2">
+                            <button
+                              v-if="request.status === 'REQUESTED'"
+                              @click="processRequest(request)"
+                              class="btn-primary text-sm py-1.5"
+                            >
+                              Start
+                            </button>
+                            <button
+                              v-if="request.status === 'REQUESTED'"
+                              @click="openRejectModal(request)"
+                              class="btn-danger text-sm py-1.5"
+                            >
+                              Reject
+                            </button>
+                            <button
+                              v-if="request.status === 'IN_PROGRESS'"
+                              @click="deliverRequest(request)"
+                              class="inline-flex items-center gap-2 px-3 py-1.5 bg-emerald-600 text-white 
+                                     rounded-lg text-sm font-medium hover:bg-emerald-700 transition-colors"
+                            >
+                              Deliver
+                            </button>
+                          </div>
+                        </td>
+                      </tr>
+                    </tbody>
+                  </table>
+                </div>
+
+                <div v-else-if="selectedBarId" class="text-center py-12">
+                  <div class="w-16 h-16 rounded-full bg-slate-100 flex items-center justify-center mx-auto mb-4">
+                    <i class="fas fa-inbox text-2xl text-slate-400"></i>
+                  </div>
+                  <p class="text-slate-500">No supply requests for this bar</p>
+                </div>
+              </div>
+            </div>
           </div>
-        </form>
-      </div>
+        </Transition>
+
+        <!-- Empties Collected Tab -->
+        <Transition name="fade" mode="out-in">
+          <div v-if="activeTab === 'empties'" key="empties">
+            <div class="card overflow-hidden">
+              <div class="px-6 py-4 border-b border-slate-100 flex items-center justify-between">
+                <h2 class="font-semibold text-slate-900">Empties Collected from Drop Points</h2>
+                <button @click="fetchEmptiesData" class="btn-secondary">
+                  <i class="fas fa-sync-alt"></i>
+                  <span>Refresh</span>
+                </button>
+              </div>
+
+              <div v-if="loading" class="p-12 text-center">
+                <div class="w-10 h-10 border-4 border-droppoint-200 border-t-droppoint-600 rounded-full animate-spin mx-auto mb-3"></div>
+                <p class="text-slate-500">Loading empties data...</p>
+              </div>
+
+              <div v-else-if="emptiesCollected.length > 0" class="overflow-x-auto">
+                <table class="table-modern">
+                  <thead>
+                    <tr>
+                      <th>Drop Point ID</th>
+                      <th>Location</th>
+                      <th>Empties Collected</th>
+                      <th>Collection Date</th>
+                    </tr>
+                  </thead>
+                  <tbody>
+                    <tr v-for="item in emptiesCollected" :key="item.id">
+                      <td class="font-mono text-slate-500">#{{ item.dropPointId }}</td>
+                      <td>{{ item.location }}</td>
+                      <td class="font-medium">{{ item.emptiesCount }}</td>
+                      <td>{{ formatDate(item.collectionDate) }}</td>
+                    </tr>
+                  </tbody>
+                </table>
+              </div>
+
+              <div v-else class="p-12 text-center">
+                <div class="w-16 h-16 rounded-full bg-slate-100 flex items-center justify-center mx-auto mb-4">
+                  <i class="fas fa-recycle text-2xl text-slate-400"></i>
+                </div>
+                <p class="text-slate-500">No empties collected yet</p>
+              </div>
+            </div>
+          </div>
+        </Transition>
+
+        <!-- Replenish Stock Modal -->
+        <Transition name="modal">
+          <div 
+            v-if="showReplenishModal" 
+            class="modal-overlay" 
+            @click.self="closeReplenishModal"
+          >
+            <div class="modal-content">
+              <div class="px-6 py-4 border-b border-slate-100 flex items-center justify-between">
+                <h2 class="text-lg font-semibold text-slate-900">Replenish Stock</h2>
+                <button 
+                  @click="closeReplenishModal" 
+                  class="p-2 rounded-lg text-slate-400 hover:text-slate-600 hover:bg-slate-100 transition-colors"
+                >
+                  <i class="fas fa-times"></i>
+                </button>
+              </div>
+
+              <form @submit.prevent="handleReplenish" class="p-6 space-y-5">
+                <div>
+                  <label for="productName" class="label">Product Name</label>
+                  <input
+                    id="productName"
+                    v-model="replenishForm.productName"
+                    type="text"
+                    required
+                    placeholder="e.g., Beer, Cola"
+                    class="input"
+                  />
+                </div>
+
+                <div>
+                  <label for="quantity" class="label">Quantity</label>
+                  <input
+                    id="quantity"
+                    v-model.number="replenishForm.quantity"
+                    type="number"
+                    required
+                    min="1"
+                    placeholder="Number of units"
+                    class="input"
+                  />
+                </div>
+
+                <div class="flex gap-3 pt-2">
+                  <button type="submit" class="btn-primary flex-1">
+                    <i class="fas fa-plus"></i>
+                    Replenish
+                  </button>
+                  <button type="button" @click="closeReplenishModal" class="btn-secondary flex-1">
+                    Cancel
+                  </button>
+                </div>
+              </form>
+            </div>
+          </div>
+        </Transition>
+
+        <!-- Reject Supply Request Modal -->
+        <Transition name="modal">
+          <div
+            v-if="showRejectModal"
+            class="modal-overlay"
+            @click.self="closeRejectModal"
+          >
+            <div class="modal-content">
+              <div class="px-6 py-4 border-b border-slate-100 flex items-center justify-between">
+                <h2 class="text-lg font-semibold text-slate-900">Reject Supply Request</h2>
+                <button
+                  @click="closeRejectModal"
+                  class="p-2 rounded-lg text-slate-400 hover:text-slate-600 hover:bg-slate-100 transition-colors"
+                >
+                  <i class="fas fa-times"></i>
+                </button>
+              </div>
+
+              <form @submit.prevent="confirmReject" class="p-6 space-y-5">
+                <div>
+                  <label for="reject-reason" class="label">Rejection reason</label>
+                  <textarea
+                    id="reject-reason"
+                    v-model="rejectForm.reason"
+                    rows="4"
+                    required
+                    maxlength="255"
+                    placeholder="e.g., Out of stock, supplier delay"
+                    class="input"
+                  ></textarea>
+                  <p class="text-xs text-slate-500 mt-2">
+                    This reason will be shared with the bar for transparency.
+                  </p>
+                </div>
+
+                <div class="flex flex-wrap gap-2">
+                  <button type="button" class="btn-secondary text-sm" @click="setQuickReason('Out of stock')">
+                    Out of stock
+                  </button>
+                  <button type="button" class="btn-secondary text-sm" @click="setQuickReason('Supplier delay')">
+                    Supplier delay
+                  </button>
+                  <button type="button" class="btn-secondary text-sm" @click="setQuickReason('Quality issue')">
+                    Quality issue
+                  </button>
+                </div>
+
+                <div class="flex gap-3 pt-2">
+                  <button type="submit" class="btn-danger flex-1" :disabled="!rejectForm.reason.trim()">
+                    <i class="fas fa-ban"></i>
+                    Reject request
+                  </button>
+                  <button type="button" @click="closeRejectModal" class="btn-secondary flex-1">
+                    Cancel
+                  </button>
+                </div>
+              </form>
+            </div>
+          </div>
+        </Transition>
+      </main>
     </div>
   </div>
 </template>
 
 <script setup lang="ts">
-import { ref, computed, onMounted } from 'vue';
+import { ref, computed, onMounted, watch } from 'vue';
 import { useWarehouseStore } from '@/stores/warehouseStore';
-import { Bar, SupplyRequest } from '@/api/warehouseApi';
+import { useWebSocketEvents } from '@/composables/useWebSocketEvents';
+import { SupplyRequest } from '@/api/warehouseApi';
 import { toast } from 'vue3-toastify';
 import 'vue3-toastify/dist/index.css';
+import Sidebar from '@/components/common/Sidebar.vue';
+import Navbar from '@/components/common/Navbar.vue';
 
 const warehouseStore = useWarehouseStore();
+
+// ============================================================
+// WebSocket Real-time Updates
+// ============================================================
+const { connected, eventsByType, onEvent } = useWebSocketEvents();
+
+// Watch for SUPPLY_REQUEST_UPDATED events and auto-refresh
+watch(
+  () => eventsByType['SUPPLY_REQUEST_UPDATED'],
+  async (newEvent) => {
+    if (newEvent) {
+      console.log('[WarehouseView] 📡 SUPPLY_REQUEST_UPDATED event detected!', newEvent);
+      toast.info('Supply request updated - refreshing...');
+      await refreshAllRequests();
+      toast.success('Data refreshed!');
+    }
+  }
+);
 
 // State
 const activeTab = ref<'stock' | 'supply' | 'empties'>('stock');
 const viewMode = ref<'all' | 'bar'>('all');
 const selectedBarId = ref<string>('');
+const statusFilter = ref<'ALL' | 'REQUESTED' | 'IN_PROGRESS' | 'DELIVERED' | 'REJECTED'>('ALL');
+const supplySearch = ref('');
 const showReplenishModal = ref(false);
+const showRejectModal = ref(false);
 const replenishForm = ref({
   productName: '',
   quantity: 0,
+});
+const rejectForm = ref<{ request: SupplyRequest | null; reason: string }>({
+  request: null,
+  reason: '',
 });
 
 // Computed
 const stock = computed(() => warehouseStore.stock);
 const bars = computed(() => warehouseStore.bars);
-const supplyRequests = computed(() => warehouseStore.supplyRequests);
+const allSupplyRequests = computed(() => warehouseStore.allSupplyRequests);
 const selectedBarRequests = computed(() => warehouseStore.selectedBarRequests);
 const emptiesCollected = computed(() => warehouseStore.emptiesCollected);
 const loading = computed(() => warehouseStore.loading);
 const totalSKUs = computed(() => warehouseStore.totalSKUs);
 const lowStockItems = computed(() => warehouseStore.lowStockItems);
 const pendingRequests = computed(() => warehouseStore.pendingRequests);
+const inProgressRequests = computed(() => warehouseStore.inProgressRequests);
 const completedRequests = computed(() => warehouseStore.completedRequests);
+const rejectedRequests = computed(() => warehouseStore.rejectedRequests);
+
+const filteredAllRequests = computed(() => {
+  const status = statusFilter.value;
+  const query = supplySearch.value.trim().toLowerCase();
+
+  return allSupplyRequests.value.filter(request => {
+    if (status !== 'ALL' && request.status !== status) return false;
+
+    if (!query) return true;
+
+    const barLabel = getBarLabel(request).toLowerCase();
+    const barLocation = getBarLocation(request).toLowerCase();
+    const itemsText = request.items
+      .map(item => `${item.productName} ${item.quantity}`)
+      .join(' ')
+      .toLowerCase();
+    const idText = String(request.id).toLowerCase();
+
+    return (
+      barLabel.includes(query)
+      || barLocation.includes(query)
+      || itemsText.includes(query)
+      || idText.includes(query)
+    );
+  });
+});
 
 // Methods
+const getStatusBadgeClass = (status: string) => {
+  const classes: Record<string, string> = {
+    'REQUESTED': 'badge-info',
+    'IN_PROGRESS': 'badge-warning',
+    'DELIVERED': 'badge-success',
+    'REJECTED': 'badge-danger',
+  };
+  return classes[status] || 'badge-neutral';
+};
+
 const switchViewMode = async (mode: 'all' | 'bar') => {
   viewMode.value = mode;
   if (mode === 'all') {
     selectedBarId.value = '';
     warehouseStore.setSelectedBar(null);
+    await refreshAllRequests();
   }
-};
-
-const viewBarRequests = async (bar: Bar) => {
-  viewMode.value = 'bar';
-  selectedBarId.value = bar.id.toString();
-  warehouseStore.setSelectedBar(bar);
-  await warehouseStore.fetchBarSupplyRequests(bar.id);
 };
 
 const onBarSelected = async () => {
@@ -353,32 +687,59 @@ const onBarSelected = async () => {
   }
 };
 
-const processRequest = async (request: SupplyRequest, currentStatus: string) => {
-  if (!confirm('Process this request?')) return;
+const processRequest = async (request: SupplyRequest) => {
+  if (!confirm('Move this request to In Progress?')) return;
+
+  const beverageType = request.items[0]?.productName || request.items[0]?.productId;
+  const quantity = getTotalQuantity(request);
+
+  if (!beverageType) {
+    toast.error('Missing beverage information for this request');
+    return;
+  }
 
   try {
-    await warehouseStore.updateSupplyRequest(request.barId, request.id, {
-      status: 'IN_PROGRESS',
-      quantity: request.items[0]?.quantity || 0,
-    });
-    toast.success('Request processed successfully');
-    await warehouseStore.fetchBarSupplyRequests(request.barId);
+    await warehouseStore.processSupplyRequest(request.barId, request.id, beverageType, quantity, request.status);
+    toast.success('Request moved to In Progress');
+    await refreshAllRequests();
+    if (selectedBarId.value) {
+      await warehouseStore.fetchBarSupplyRequests(request.barId);
+    }
   } catch (err) {
     const errorMessage = err instanceof Error ? err.message : 'Failed to process request';
     toast.error(errorMessage);
   }
 };
 
-const rejectRequest = async (request: SupplyRequest) => {
-  if (!confirm('Reject this request?')) return;
+const openRejectModal = (request: SupplyRequest) => {
+  rejectForm.value = { request, reason: '' };
+  showRejectModal.value = true;
+};
+
+const closeRejectModal = () => {
+  showRejectModal.value = false;
+  rejectForm.value = { request: null, reason: '' };
+};
+
+const setQuickReason = (reason: string) => {
+  rejectForm.value.reason = reason;
+};
+
+const confirmReject = async () => {
+  if (!rejectForm.value.request) return;
 
   try {
-    await warehouseStore.updateSupplyRequest(request.barId, request.id, {
-      status: 'REJECTED',
-      quantity: 0,
-    });
+    await warehouseStore.rejectSupplyRequest(
+      rejectForm.value.request.barId,
+      rejectForm.value.request.id,
+      rejectForm.value.reason.trim()
+    );
     toast.warning('Request rejected');
-    await warehouseStore.fetchBarSupplyRequests(request.barId);
+    closeRejectModal();
+    await refreshAllRequests();
+    if (selectedBarId.value) {
+      await warehouseStore.fetchBarSupplyRequests(rejectForm.value.request.barId);
+    }
   } catch (err) {
     const errorMessage = err instanceof Error ? err.message : 'Failed to reject request';
     toast.error(errorMessage);
@@ -388,17 +749,64 @@ const rejectRequest = async (request: SupplyRequest) => {
 const deliverRequest = async (request: SupplyRequest) => {
   if (!confirm('Mark as delivered?')) return;
 
+  const beverageType = request.items[0]?.productName || request.items[0]?.productId;
+  const quantity = getTotalQuantity(request);
+
+  if (!beverageType) {
+    toast.error('Missing beverage information for this request');
+    return;
+  }
+
   try {
-    await warehouseStore.updateSupplyRequest(request.barId, request.id, {
-      status: 'DELIVERED',
-      quantity: request.items[0]?.quantity || 0,
-    });
+    await warehouseStore.processSupplyRequest(request.barId, request.id, beverageType, quantity, request.status);
     toast.success('Request delivered successfully');
-    await warehouseStore.fetchBarSupplyRequests(request.barId);
+    await refreshAllRequests();
+    if (selectedBarId.value) {
+      await warehouseStore.fetchBarSupplyRequests(request.barId);
+    }
   } catch (err) {
     const errorMessage = err instanceof Error ? err.message : 'Failed to deliver request';
     toast.error(errorMessage);
   }
+};
+
+const refreshAllRequests = async () => {
+  try {
+    await warehouseStore.fetchAllSupplyRequests();
+  } catch (err) {
+    const errorMessage = err instanceof Error ? err.message : 'Failed to fetch supply requests';
+    toast.error(errorMessage);
+  }
+};
+
+const getTotalQuantity = (request: SupplyRequest) =>
+  request.items.reduce((sum, item) => sum + (item.quantity || 0), 0);
+
+const getItemsSummary = (request: SupplyRequest) => {
+  if (!request.items.length) return 'No items';
+  const firstTwo = request.items
+    .slice(0, 2)
+    .map(item => `${item.productName || item.productId} x${item.quantity}`);
+  const remaining = request.items.length - firstTwo.length;
+  return remaining > 0 ? `${firstTwo.join(', ')} +${remaining} more` : firstTwo.join(', ');
+};
+
+const getItemsDetail = (request: SupplyRequest) => {
+  if (!request.items.length) return 'No items';
+  return request.items
+    .map(item => `${item.productName || item.productId} x${item.quantity}`)
+    .join(', ');
+};
+
+const getBarLabel = (request: SupplyRequest) => {
+  if (request.barName) return request.barName;
+  const bar = bars.value.find(b => String(b.id) === String(request.barId));
+  return bar ? bar.name : `Bar #${request.barId}`;
+};
+
+const getBarLocation = (request: SupplyRequest) => {
+  const bar = bars.value.find(b => String(b.id) === String(request.barId));
+  return bar ? bar.location : 'Unknown location';
 };
 
 const openReplenishModal = () => {
@@ -432,21 +840,6 @@ const fetchEmptiesData = async () => {
   }
 };
 
-const getRequestStatusClass = (status: string) => {
-  switch (status) {
-    case 'REQUESTED':
-      return 'status-requested';
-    case 'IN_PROGRESS':
-      return 'status-in-progress';
-    case 'DELIVERED':
-      return 'status-delivered';
-    case 'REJECTED':
-      return 'status-rejected';
-    default:
-      return '';
-  }
-};
-
 const formatDate = (date: string) => {
   if (!date) return 'N/A';
   return new Date(date).toLocaleDateString();
@@ -454,387 +847,43 @@ const formatDate = (date: string) => {
 
 // Lifecycle
 onMounted(async () => {
+  console.log('[WarehouseView] Mounted, WebSocket connected:', connected.value);
   await warehouseStore.fetchStock();
   await warehouseStore.fetchBars();
+  await refreshAllRequests();
+});
+
+watch(activeTab, async (tab) => {
+  if (tab === 'supply') {
+    await refreshAllRequests();
+  }
 });
 </script>
 
 <style scoped>
-.warehouse-container {
-  padding: 2rem;
-  max-width: 1400px;
-  margin: 0 auto;
+.fade-enter-active,
+.fade-leave-active {
+  transition: all 0.2s ease-out;
 }
 
-.page-header {
-  margin-bottom: 2rem;
+.fade-enter-from,
+.fade-leave-to {
+  opacity: 0;
+  transform: translateY(8px);
 }
 
-.summary-cards {
-  display: grid;
-  grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
-  gap: 1rem;
-  margin-bottom: 2rem;
+.modal-enter-active,
+.modal-leave-active {
+  transition: all 0.3s ease;
 }
 
-.card {
-  background: white;
-  padding: 1.5rem;
-  border-radius: 0.5rem;
-  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
+.modal-enter-from,
+.modal-leave-to {
+  opacity: 0;
 }
 
-.card.warning {
-  background: #fef3c7;
-}
-
-.card h3 {
-  font-size: 0.875rem;
-  color: #6b7280;
-  margin-bottom: 0.5rem;
-}
-
-.card .value {
-  font-size: 2rem;
-  font-weight: bold;
-  color: #111827;
-}
-
-.tabs {
-  display: flex;
-  gap: 0.5rem;
-  margin-bottom: 2rem;
-  border-bottom: 2px solid #e5e7eb;
-}
-
-.tab {
-  padding: 0.75rem 1.5rem;
-  background: none;
-  border: none;
-  cursor: pointer;
-  font-weight: 500;
-  color: #6b7280;
-  border-bottom: 3px solid transparent;
-  transition: all 0.2s;
-}
-
-.tab.active {
-  color: #3b82f6;
-  border-bottom-color: #3b82f6;
-}
-
-.tab-content {
-  background: white;
-  padding: 2rem;
-  border-radius: 0.5rem;
-  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
-}
-
-.section-header {
-  display: flex;
-  justify-content: space-between;
-  align-items: center;
-  margin-bottom: 1.5rem;
-}
-
-.section-header h2 {
-  font-size: 1.5rem;
-  font-weight: 700;
-}
-
-.btn-primary,
-.btn-refresh,
-.btn-view,
-.btn-process,
-.btn-reject,
-.btn-deliver,
-.btn-secondary {
-  padding: 0.5rem 1rem;
-  border-radius: 0.375rem;
-  border: none;
-  cursor: pointer;
-  font-weight: 500;
-  transition: all 0.2s;
-}
-
-.btn-primary {
-  background-color: #3b82f6;
-  color: white;
-}
-
-.btn-primary:hover {
-  background-color: #2563eb;
-}
-
-.btn-refresh {
-  background-color: #10b981;
-  color: white;
-}
-
-.btn-refresh:hover {
-  background-color: #059669;
-}
-
-.btn-view {
-  background-color: #8b5cf6;
-  color: white;
-  font-size: 0.875rem;
-}
-
-.btn-view:hover {
-  background-color: #7c3aed;
-}
-
-.btn-process {
-  background-color: #3b82f6;
-  color: white;
-  font-size: 0.875rem;
-}
-
-.btn-process:hover {
-  background-color: #2563eb;
-}
-
-.btn-reject {
-  background-color: #ef4444;
-  color: white;
-  font-size: 0.875rem;
-}
-
-.btn-reject:hover {
-  background-color: #dc2626;
-}
-
-.btn-deliver {
-  background-color: #10b981;
-  color: white;
-  font-size: 0.875rem;
-}
-
-.btn-deliver:hover {
-  background-color: #059669;
-}
-
-.btn-secondary {
-  background-color: #e5e7eb;
-  color: #374151;
-}
-
-.btn-secondary:hover {
-  background-color: #d1d5db;
-}
-
-.mode-toggle {
-  display: flex;
-  gap: 0.5rem;
-}
-
-.mode-toggle button {
-  padding: 0.5rem 1rem;
-  background: #f3f4f6;
-  border: 1px solid #d1d5db;
-  border-radius: 0.375rem;
-  cursor: pointer;
-  font-weight: 500;
-}
-
-.mode-toggle button.active {
-  background: #3b82f6;
-  color: white;
-  border-color: #3b82f6;
-}
-
-.controls {
-  margin-bottom: 1.5rem;
-}
-
-.controls label {
-  display: inline-block;
-  margin-right: 1rem;
-  font-weight: 500;
-}
-
-.controls select {
-  padding: 0.5rem;
-  border: 1px solid #d1d5db;
-  border-radius: 0.375rem;
-  font-size: 1rem;
-}
-
-.table-container {
-  overflow-x: auto;
-}
-
-.data-table {
-  width: 100%;
-  border-collapse: collapse;
-}
-
-.data-table thead {
-  background-color: #f9fafb;
-  border-bottom: 2px solid #e5e7eb;
-}
-
-.data-table th {
-  padding: 0.75rem;
-  text-align: left;
-  font-weight: 600;
-  color: #374151;
-  font-size: 0.875rem;
-  text-transform: uppercase;
-}
-
-.data-table td {
-  padding: 0.75rem;
-  border-bottom: 1px solid #e5e7eb;
-}
-
-.data-table tbody tr:hover {
-  background-color: #f9fafb;
-}
-
-.status-badge {
-  display: inline-block;
-  padding: 0.25rem 0.75rem;
-  border-radius: 9999px;
-  font-size: 0.875rem;
-  font-weight: 500;
-}
-
-.status-ok {
-  background-color: #d1fae5;
-  color: #065f46;
-}
-
-.status-low {
-  background-color: #fef3c7;
-  color: #92400e;
-}
-
-.status-requested {
-  background-color: #dbeafe;
-  color: #1e40af;
-}
-
-.status-in-progress {
-  background-color: #fef3c7;
-  color: #92400e;
-}
-
-.status-delivered {
-  background-color: #d1fae5;
-  color: #065f46;
-}
-
-.status-rejected {
-  background-color: #fee2e2;
-  color: #991b1b;
-}
-
-.actions-cell {
-  display: flex;
-  gap: 0.5rem;
-}
-
-.loading-state,
-.empty-state {
-  text-align: center;
-  padding: 2rem;
-  color: #6b7280;
-}
-
-/* Modal Styles */
-.modal-overlay {
-  position: fixed;
-  top: 0;
-  left: 0;
-  right: 0;
-  bottom: 0;
-  background-color: rgba(0, 0, 0, 0.5);
-  display: flex;
-  justify-content: center;
-  align-items: center;
-  z-index: 1000;
-}
-
-.modal-content {
-  background: white;
-  border-radius: 0.75rem;
-  width: 90%;
-  max-width: 500px;
-  box-shadow: 0 20px 25px -5px rgba(0, 0, 0, 0.1);
-}
-
-.modal-header {
-  display: flex;
-  justify-content: space-between;
-  align-items: center;
-  padding: 1.5rem;
-  border-bottom: 1px solid #e5e7eb;
-}
-
-.modal-header h2 {
-  font-size: 1.5rem;
-  font-weight: 700;
-}
-
-.close-btn {
-  background: none;
-  border: none;
-  font-size: 2rem;
-  color: #6b7280;
-  cursor: pointer;
-  padding: 0;
-  width: 2rem;
-  height: 2rem;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  border-radius: 0.375rem;
-  transition: background-color 0.2s;
-}
-
-.close-btn:hover {
-  background-color: #f3f4f6;
-}
-
-.modal-form {
-  padding: 1.5rem;
-}
-
-.form-group {
-  margin-bottom: 1.5rem;
-}
-
-.form-group label {
-  display: block;
-  margin-bottom: 0.5rem;
-  font-weight: 500;
-  color: #374151;
-}
-
-.form-group input {
-  width: 100%;
-  padding: 0.75rem;
-  border: 1px solid #d1d5db;
-  border-radius: 0.5rem;
-  font-size: 1rem;
-}
-
-.form-group input:focus {
-  outline: none;
-  border-color: #3b82f6;
-}
-
-.modal-actions {
-  display: flex;
-  gap: 1rem;
-}
-
-.modal-actions button {
-  flex: 1;
-  padding: 0.75rem;
-  border-radius: 0.5rem;
-  font-weight: 600;
+.modal-enter-from .modal-content,
+.modal-leave-to .modal-content {
+  transform: scale(0.95);
 }
 </style>

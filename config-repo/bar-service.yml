@@ -8,9 +8,6 @@ spring:
 server:
   port: 8081
 
-jwt:
-  secret: 2YrmlATq8aGvu9r5OSwV2s3g6tZqYbhyZnMNsnU/wvO27lfYxbgm5foq7F2Vsmw1eZC4WbdKHx3IXW5J7PddEA==
-
 eureka:
   client:
     serviceUrl:

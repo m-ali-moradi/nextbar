@@ -1,14 +1,35 @@
 server:
   port: 8080
+
 spring:
   application:
     name: gateway
   cloud:
     config:
       uri: http://localhost:8888
+  
+  # ============================================
+  # RabbitMQ Configuration for WebSocket Events
+  # ============================================
+  # Gateway connects to RabbitMQ to receive events from
+  # backend services and broadcast them via WebSocket
+  rabbitmq:
+    host: localhost
+    port: 5672
+    username: nextbar
+    password: nextbar123
 
 security:
   jwt:
     secret: yourSecretKeyForJWTTokenGenerationMustBeLongEnoughForHS256Algorithm
     expiration: 3600000
     issuer: users-service
+
+# ============================================
+# Logging Configuration
+# ============================================
+logging:
+  level:
+    # WebSocket and RabbitMQ logging for debugging
+    com.nextbar.gateway.websocket: DEBUG
+    org.springframework.amqp: INFO

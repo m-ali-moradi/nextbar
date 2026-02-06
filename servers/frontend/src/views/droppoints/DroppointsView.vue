@@ -1,150 +1,289 @@
 <template>
-  <div class="droppoints-container">
-    <header class="page-header">
-      <h1 class="text-3xl font-bold text-gray-800">Manage Drop Points</h1>
-      <button @click="openModal()" class="btn-primary">
-        <span class="text-lg">+</span> New Drop Point
-      </button>
-    </header>
+  <div class="flex min-h-screen bg-slate-50">
+    <Sidebar />
+    
+    <div class="flex-1 ml-72">
+      <Navbar />
 
-    <!-- Loading State -->
-    <div v-if="loading" class="loading-state">
-      <p>Loading drop points...</p>
-    </div>
-
-    <!-- Error State -->
-    <div v-if="error" class="error-banner">
-      {{ error }}
-    </div>
-
-    <!-- Drop Points Table -->
-    <div v-if="!loading && droppoints.length > 0" class="table-container">
-      <table class="data-table">
-        <thead>
-          <tr>
-            <th>ID</th>
-            <th>Location</th>
-            <th>Capacity</th>
-            <th>Current Empties</th>
-            <th>Status</th>
-            <th>Actions</th>
-          </tr>
-        </thead>
-        <tbody>
-          <tr v-for="droppoint in droppoints" :key="droppoint.id">
-            <td>{{ droppoint.id }}</td>
-            <td>{{ droppoint.location }}</td>
-            <td>{{ droppoint.capacity }}</td>
-            <td>{{ droppoint.current_empties }}</td>
-            <td>
-              <span 
-                class="status-badge" 
-                :class="getStatusClass(droppoint.status)"
-              >
-                {{ formatStatus(droppoint.status) }}
-              </span>
-            </td>
-            <td class="actions-cell">
-              <button @click="openModal(droppoint)" class="btn-edit">
-                Edit
-              </button>
-              <button @click="handleDelete(droppoint.id!)" class="btn-delete">
-                Delete
-              </button>
-              <button 
-                v-if="droppoint.status === 'EMPTY'" 
-                @click="handleAddEmpty(droppoint.id!)" 
-                class="btn-action"
-              >
-                Add Empty
-              </button>
-              <button 
-                v-if="droppoint.status === 'FULL'" 
-                @click="handleNotifyWarehouse(droppoint.id!)" 
-                class="btn-warning"
-              >
-                Notify Warehouse
-              </button>
-              <button 
-                v-if="droppoint.status === 'FULL_AND_NOTIFIED_TO_WAREHOUSE'" 
-                @click="handleVerifyTransfer(droppoint.id!)" 
-                class="btn-success"
-              >
-                Verify Transfer
-              </button>
-            </td>
-          </tr>
-        </tbody>
-      </table>
-    </div>
-
-    <!-- Empty State -->
-    <div v-if="!loading && droppoints.length === 0" class="empty-state">
-      <p>No drop points found. Create one to get started!</p>
-    </div>
-
-    <!-- Modal Form -->
-    <div v-if="showModal" class="modal-overlay" @click.self="closeModal">
-      <div class="modal-content">
-        <div class="modal-header">
-          <h2>{{ isEditing ? 'Edit Drop Point' : 'New Drop Point' }}</h2>
-          <button @click="closeModal" class="close-btn">&times;</button>
+      <main class="p-6">
+        <!-- Page Header -->
+        <div class="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4 mb-8">
+          <div>
+            <h1 class="text-2xl font-bold text-slate-900">Drop Points</h1>
+            <p class="text-slate-500 mt-1">Manage bottle collection points</p>
+          </div>
+          <button @click="openModal()" class="btn-primary">
+            <i class="fas fa-plus"></i>
+            <span>New Drop Point</span>
+          </button>
         </div>
 
-        <form @submit.prevent="handleSubmit" class="modal-form">
-          <div class="form-group">
-            <label for="location">Location</label>
-            <input 
-              id="location" 
-              v-model="formData.location" 
-              type="text" 
-              required 
-              placeholder="e.g., Main Entrance"
-            />
+        <!-- Stats Overview -->
+        <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 mb-8">
+          <div class="card p-5 card-interactive">
+            <div class="flex items-center justify-between">
+              <div>
+                <p class="text-sm text-slate-500 font-medium">Total Points</p>
+                <p class="text-2xl font-bold text-slate-900 mt-1">{{ droppoints.length }}</p>
+              </div>
+              <div class="w-12 h-12 rounded-xl bg-droppoint-100 flex items-center justify-center">
+                <i class="fas fa-map-marker-alt text-xl text-droppoint-600"></i>
+              </div>
+            </div>
+          </div>
+          
+          <div class="card p-5 card-interactive">
+            <div class="flex items-center justify-between">
+              <div>
+                <p class="text-sm text-slate-500 font-medium">Empty</p>
+                <p class="text-2xl font-bold text-blue-600 mt-1">{{ emptyCount }}</p>
+              </div>
+              <div class="w-12 h-12 rounded-xl bg-blue-100 flex items-center justify-center">
+                <i class="fas fa-check text-xl text-blue-600"></i>
+              </div>
+            </div>
           </div>
 
-          <div class="form-group">
-            <label for="capacity">Capacity</label>
-            <input 
-              id="capacity" 
-              v-model.number="formData.capacity" 
-              type="number" 
-              required 
-              min="1"
-              placeholder="Maximum bottle capacity"
-            />
+          <div class="card p-5 card-interactive">
+            <div class="flex items-center justify-between">
+              <div>
+                <p class="text-sm text-slate-500 font-medium">Full</p>
+                <p class="text-2xl font-bold text-amber-600 mt-1">{{ fullCount }}</p>
+              </div>
+              <div class="w-12 h-12 rounded-xl bg-amber-100 flex items-center justify-center">
+                <i class="fas fa-exclamation-circle text-xl text-amber-600"></i>
+              </div>
+            </div>
           </div>
 
-          <div v-if="isEditing" class="form-group">
-            <label for="current_empties">Current Empties</label>
-            <input 
-              id="current_empties" 
-              v-model.number="formData.current_empties" 
-              type="number" 
-              min="0"
-              :max="formData.capacity"
-            />
+          <div class="card p-5 card-interactive">
+            <div class="flex items-center justify-between">
+              <div>
+                <p class="text-sm text-slate-500 font-medium">Notified</p>
+                <p class="text-2xl font-bold text-violet-600 mt-1">{{ notifiedCount }}</p>
+              </div>
+              <div class="w-12 h-12 rounded-xl bg-violet-100 flex items-center justify-center">
+                <i class="fas fa-bell text-xl text-violet-600"></i>
+              </div>
+            </div>
           </div>
+        </div>
 
-          <div v-if="isEditing" class="form-group">
-            <label for="status">Status</label>
-            <select id="status" v-model="formData.status">
-              <option value="EMPTY">Empty</option>
-              <option value="FULL">Full</option>
-              <option value="FULL_AND_NOTIFIED_TO_WAREHOUSE">Full & Notified</option>
-            </select>
+        <!-- Loading State -->
+        <div v-if="loading" class="flex items-center justify-center py-20">
+          <div class="text-center">
+            <div class="w-12 h-12 border-4 border-droppoint-200 border-t-droppoint-600 rounded-full animate-spin mx-auto mb-4"></div>
+            <p class="text-slate-500">Loading drop points...</p>
           </div>
+        </div>
 
-          <div class="modal-actions">
-            <button type="submit" class="btn-primary">
-              {{ isEditing ? 'Update' : 'Create' }}
-            </button>
-            <button type="button" @click="closeModal" class="btn-secondary">
-              Cancel
-            </button>
+        <!-- Error State -->
+        <div v-else-if="error" class="card p-8 text-center">
+          <div class="w-16 h-16 rounded-full bg-red-100 flex items-center justify-center mx-auto mb-4">
+            <i class="fas fa-exclamation-triangle text-2xl text-red-600"></i>
           </div>
-        </form>
-      </div>
+          <h3 class="text-lg font-semibold text-slate-900 mb-2">Error Loading Data</h3>
+          <p class="text-slate-500 mb-4">{{ error }}</p>
+          <button @click="droppointStore.fetchDropPoints" class="btn-primary">
+            <i class="fas fa-redo"></i>
+            <span>Try Again</span>
+          </button>
+        </div>
+
+        <!-- Drop Points Table -->
+        <div v-else-if="droppoints.length > 0" class="card overflow-hidden">
+          <div class="px-6 py-4 border-b border-slate-100">
+            <h2 class="font-semibold text-slate-900">All Drop Points</h2>
+          </div>
+          
+          <div class="overflow-x-auto">
+            <table class="table-modern">
+              <thead>
+                <tr>
+                  <th>Location</th>
+                  <th>Capacity</th>
+                  <th>Current Fill</th>
+                  <th>Status</th>
+                  <th class="text-right">Actions</th>
+                </tr>
+              </thead>
+              <tbody>
+                <tr v-for="droppoint in droppoints" :key="droppoint.id">
+                  <td>
+                    <div class="flex items-center gap-3">
+                      <div class="w-10 h-10 rounded-xl bg-droppoint-100 flex items-center justify-center">
+                        <i class="fas fa-map-marker-alt text-droppoint-600"></i>
+                      </div>
+                      <div>
+                        <p class="font-medium text-slate-900">{{ droppoint.location }}</p>
+                        <p class="text-xs text-slate-500">#{{ droppoint.id }}</p>
+                      </div>
+                    </div>
+                  </td>
+                  <td>{{ droppoint.capacity }} bottles</td>
+                  <td>
+                    <div class="flex items-center gap-3">
+                      <div class="flex-1 h-2 bg-slate-100 rounded-full overflow-hidden max-w-[120px]">
+                        <div 
+                          class="h-full rounded-full transition-all duration-300"
+                          :class="getFillBarClass(droppoint)"
+                          :style="{ width: getFillPercentage(droppoint) + '%' }"
+                        ></div>
+                      </div>
+                      <span class="text-sm font-medium text-slate-600">
+                        {{ droppoint.current_empties }}/{{ droppoint.capacity }}
+                      </span>
+                    </div>
+                  </td>
+                  <td>
+                    <span class="badge" :class="getStatusBadgeClass(droppoint.status)">
+                      {{ formatStatus(droppoint.status) }}
+                    </span>
+                  </td>
+                  <td>
+                    <div class="flex items-center justify-end gap-2">
+                      <button 
+                        @click="openModal(droppoint)" 
+                        class="p-2 rounded-lg text-slate-500 hover:text-slate-700 hover:bg-slate-100 transition-colors"
+                        title="Edit"
+                      >
+                        <i class="fas fa-edit"></i>
+                      </button>
+                      <button 
+                        @click="handleDelete(droppoint.id!)" 
+                        class="p-2 rounded-lg text-slate-500 hover:text-red-600 hover:bg-red-50 transition-colors"
+                        title="Delete"
+                      >
+                        <i class="fas fa-trash-alt"></i>
+                      </button>
+                      
+                      <!-- Action Buttons based on status -->
+                      <button 
+                        v-if="droppoint.status === 'EMPTY'" 
+                        @click="handleAddEmpty(droppoint.id!)" 
+                        class="inline-flex items-center gap-1.5 px-3 py-1.5 bg-droppoint-600 text-white 
+                               rounded-lg text-sm font-medium hover:bg-droppoint-700 transition-colors"
+                      >
+                        <i class="fas fa-plus"></i>
+                        Add
+                      </button>
+                      <button 
+                        v-if="droppoint.status === 'FULL'" 
+                        @click="handleNotifyWarehouse(droppoint.id!)" 
+                        class="inline-flex items-center gap-1.5 px-3 py-1.5 bg-amber-500 text-white 
+                               rounded-lg text-sm font-medium hover:bg-amber-600 transition-colors"
+                      >
+                        <i class="fas fa-bell"></i>
+                        Notify
+                      </button>
+                      <button 
+                        v-if="droppoint.status === 'FULL_AND_NOTIFIED_TO_WAREHOUSE'" 
+                        @click="handleVerifyTransfer(droppoint.id!)" 
+                        class="inline-flex items-center gap-1.5 px-3 py-1.5 bg-violet-600 text-white 
+                               rounded-lg text-sm font-medium hover:bg-violet-700 transition-colors"
+                      >
+                        <i class="fas fa-check"></i>
+                        Verify
+                      </button>
+                    </div>
+                  </td>
+                </tr>
+              </tbody>
+            </table>
+          </div>
+        </div>
+
+        <!-- Empty State -->
+        <div v-else class="card p-12 text-center">
+          <div class="w-20 h-20 rounded-2xl bg-droppoint-100 flex items-center justify-center mx-auto mb-6">
+            <i class="fas fa-map-marker-alt text-3xl text-droppoint-400"></i>
+          </div>
+          <h3 class="text-xl font-semibold text-slate-900 mb-2">No drop points yet</h3>
+          <p class="text-slate-500 mb-6 max-w-sm mx-auto">
+            Create your first drop point to start collecting empties.
+          </p>
+          <button @click="openModal()" class="btn-primary">
+            <i class="fas fa-plus"></i>
+            <span>Create Drop Point</span>
+          </button>
+        </div>
+
+        <!-- Modal Form -->
+        <Transition name="modal">
+          <div v-if="showModal" class="modal-overlay" @click.self="closeModal">
+            <div class="modal-content">
+              <div class="px-6 py-4 border-b border-slate-100 flex items-center justify-between">
+                <h2 class="text-lg font-semibold text-slate-900">
+                  {{ isEditing ? 'Edit Drop Point' : 'New Drop Point' }}
+                </h2>
+                <button 
+                  @click="closeModal" 
+                  class="p-2 rounded-lg text-slate-400 hover:text-slate-600 hover:bg-slate-100 transition-colors"
+                >
+                  <i class="fas fa-times"></i>
+                </button>
+              </div>
+
+              <form @submit.prevent="handleSubmit" class="p-6 space-y-5">
+                <div>
+                  <label for="location" class="label">Location</label>
+                  <input 
+                    id="location" 
+                    v-model="formData.location" 
+                    type="text" 
+                    required 
+                    placeholder="e.g., Main Entrance"
+                    class="input"
+                  />
+                </div>
+
+                <div>
+                  <label for="capacity" class="label">Capacity (bottles)</label>
+                  <input 
+                    id="capacity" 
+                    v-model.number="formData.capacity" 
+                    type="number" 
+                    required 
+                    min="1"
+                    placeholder="Maximum bottle capacity"
+                    class="input"
+                  />
+                </div>
+
+                <div v-if="isEditing">
+                  <label for="current_empties" class="label">Current Empties</label>
+                  <input 
+                    id="current_empties" 
+                    v-model.number="formData.current_empties" 
+                    type="number" 
+                    min="0"
+                    :max="formData.capacity"
+                    class="input"
+                  />
+                </div>
+
+                <div v-if="isEditing">
+                  <label for="status" class="label">Status</label>
+                  <select id="status" v-model="formData.status" class="input">
+                    <option value="EMPTY">Empty</option>
+                    <option value="FULL">Full</option>
+                    <option value="FULL_AND_NOTIFIED_TO_WAREHOUSE">Full & Notified</option>
+                  </select>
+                </div>
+
+                <div class="flex gap-3 pt-2">
+                  <button type="submit" class="btn-primary flex-1">
+                    {{ isEditing ? 'Update' : 'Create' }}
+                  </button>
+                  <button type="button" @click="closeModal" class="btn-secondary flex-1">
+                    Cancel
+                  </button>
+                </div>
+              </form>
+            </div>
+          </div>
+        </Transition>
+      </main>
     </div>
   </div>
 </template>
@@ -155,6 +294,8 @@ import { useDroppointStore } from '@/stores/droppointStore';
 import { DropPoint } from '@/api/droppointApi';
 import { toast } from 'vue3-toastify';
 import 'vue3-toastify/dist/index.css';
+import Sidebar from '@/components/common/Sidebar.vue';
+import Navbar from '@/components/common/Navbar.vue';
 
 const droppointStore = useDroppointStore();
 
@@ -175,7 +316,40 @@ const droppoints = computed(() => droppointStore.droppoints);
 const loading = computed(() => droppointStore.loading);
 const error = computed(() => droppointStore.error);
 
+const emptyCount = computed(() => droppoints.value.filter(d => d.status === 'EMPTY').length);
+const fullCount = computed(() => droppoints.value.filter(d => d.status === 'FULL').length);
+const notifiedCount = computed(() => droppoints.value.filter(d => d.status === 'FULL_AND_NOTIFIED_TO_WAREHOUSE').length);
+
 // Methods
+const getFillPercentage = (droppoint: DropPoint) => {
+  if (!droppoint.capacity) return 0;
+  return Math.min(100, (droppoint.current_empties / droppoint.capacity) * 100);
+};
+
+const getFillBarClass = (droppoint: DropPoint) => {
+  const percentage = getFillPercentage(droppoint);
+  if (percentage >= 90) return 'bg-red-500';
+  if (percentage >= 70) return 'bg-amber-500';
+  return 'bg-droppoint-500';
+};
+
+const getStatusBadgeClass = (status: string) => {
+  switch (status) {
+    case 'EMPTY': return 'badge-info';
+    case 'FULL': return 'badge-warning';
+    case 'FULL_AND_NOTIFIED_TO_WAREHOUSE': return 'bg-violet-100 text-violet-700';
+    default: return 'badge-neutral';
+  }
+};
+
+const formatStatus = (status: string) => {
+  if (status === 'FULL_AND_NOTIFIED_TO_WAREHOUSE') return 'Notified';
+  return status.replace(/_/g, ' ').toLowerCase()
+    .split(' ')
+    .map(word => word.charAt(0).toUpperCase() + word.slice(1))
+    .join(' ');
+};
+
 const openModal = (droppoint?: DropPoint) => {
   showModal.value = true;
   if (droppoint && droppoint.id) {
@@ -273,22 +447,6 @@ const handleVerifyTransfer = async (id: number) => {
   }
 };
 
-const getStatusClass = (status: string) => {
-  switch (status) {
-    case 'EMPTY': return 'status-empty';
-    case 'FULL': return 'status-full';
-    case 'FULL_AND_NOTIFIED_TO_WAREHOUSE': return 'status-notified';
-    default: return '';
-  }
-};
-
-const formatStatus = (status: string) => {
-  return status.replace(/_/g, ' ').toLowerCase()
-    .split(' ')
-    .map(word => word.charAt(0).toUpperCase() + word.slice(1))
-    .join(' ');
-};
-
 // Lifecycle
 onMounted(() => {
   droppointStore.fetchDropPoints();
@@ -296,280 +454,18 @@ onMounted(() => {
 </script>
 
 <style scoped>
-.droppoints-container {
-  padding: 2rem;
-  max-width: 1400px;
-  margin: 0 auto;
+.modal-enter-active,
+.modal-leave-active {
+  transition: all 0.3s ease;
 }
 
-.page-header {
-  display: flex;
-  justify-content: space-between;
-  align-items: center;
-  margin-bottom: 2rem;
+.modal-enter-from,
+.modal-leave-to {
+  opacity: 0;
 }
 
-.btn-primary {
-  background-color: #3b82f6;
-  color: white;
-  padding: 0.75rem 1.5rem;
-  border-radius: 0.5rem;
-  border: none;
-  cursor: pointer;
-  font-weight: 600;
-  display: flex;
-  align-items: center;
-  gap: 0.5rem;
-  transition: background-color 0.2s;
-}
-
-.btn-primary:hover {
-  background-color: #2563eb;
-}
-
-.loading-state, .empty-state {
-  text-align: center;
-  padding: 3rem;
-  color: #6b7280;
-}
-
-.error-banner {
-  background-color: #fee2e2;
-  color: #991b1b;
-  padding: 1rem;
-  border-radius: 0.5rem;
-  margin-bottom: 1rem;
-}
-
-.table-container {
-  background: white;
-  border-radius: 0.5rem;
-  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
-  overflow: hidden;
-}
-
-.data-table {
-  width: 100%;
-  border-collapse: collapse;
-}
-
-.data-table thead {
-  background-color: #f9fafb;
-  border-bottom: 2px solid #e5e7eb;
-}
-
-.data-table th {
-  padding: 1rem;
-  text-align: left;
-  font-weight: 600;
-  color: #374151;
-  font-size: 0.875rem;
-  text-transform: uppercase;
-  letter-spacing: 0.05em;
-}
-
-.data-table td {
-  padding: 1rem;
-  border-bottom: 1px solid #e5e7eb;
-}
-
-.data-table tbody tr:hover {
-  background-color: #f9fafb;
-}
-
-.status-badge {
-  display: inline-block;
-  padding: 0.25rem 0.75rem;
-  border-radius: 9999px;
-  font-size: 0.875rem;
-  font-weight: 500;
-}
-
-.status-empty {
-  background-color: #dbeafe;
-  color: #1e40af;
-}
-
-.status-full {
-  background-color: #fef3c7;
-  color: #92400e;
-}
-
-.status-notified {
-  background-color: #fce7f3;
-  color: #831843;
-}
-
-.actions-cell {
-  display: flex;
-  gap: 0.5rem;
-  flex-wrap: wrap;
-}
-
-.btn-edit, .btn-delete, .btn-action, .btn-warning, .btn-success, .btn-secondary {
-  padding: 0.375rem 0.75rem;
-  border-radius: 0.375rem;
-  border: none;
-  cursor: pointer;
-  font-size: 0.875rem;
-  font-weight: 500;
-  transition: all 0.2s;
-}
-
-.btn-edit {
-  background-color: #3b82f6;
-  color: white;
-}
-
-.btn-edit:hover {
-  background-color: #2563eb;
-}
-
-.btn-delete {
-  background-color: #ef4444;
-  color: white;
-}
-
-.btn-delete:hover {
-  background-color: #dc2626;
-}
-
-.btn-action {
-  background-color: #10b981;
-  color: white;
-}
-
-.btn-action:hover {
-  background-color: #059669;
-}
-
-.btn-warning {
-  background-color: #f59e0b;
-  color: white;
-}
-
-.btn-warning:hover {
-  background-color: #d97706;
-}
-
-.btn-success {
-  background-color: #8b5cf6;
-  color: white;
-}
-
-.btn-success:hover {
-  background-color: #7c3aed;
-}
-
-.btn-secondary {
-  background-color: #e5e7eb;
-  color: #374151;
-}
-
-.btn-secondary:hover {
-  background-color: #d1d5db;
-}
-
-/* Modal Styles */
-.modal-overlay {
-  position: fixed;
-  top: 0;
-  left: 0;
-  right: 0;
-  bottom: 0;
-  background-color: rgba(0, 0, 0, 0.5);
-  display: flex;
-  justify-content: center;
-  align-items: center;
-  z-index: 1000;
-}
-
-.modal-content {
-  background: white;
-  border-radius: 0.75rem;
-  width: 90%;
-  max-width: 500px;
-  max-height: 90vh;
-  overflow-y: auto;
-  box-shadow: 0 20px 25px -5px rgba(0, 0, 0, 0.1);
-}
-
-.modal-header {
-  display: flex;
-  justify-content: space-between;
-  align-items: center;
-  padding: 1.5rem;
-  border-bottom: 1px solid #e5e7eb;
-}
-
-.modal-header h2 {
-  font-size: 1.5rem;
-  font-weight: 700;
-  color: #111827;
-}
-
-.close-btn {
-  background: none;
-  border: none;
-  font-size: 2rem;
-  color: #6b7280;
-  cursor: pointer;
-  padding: 0;
-  width: 2rem;
-  height: 2rem;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  border-radius: 0.375rem;
-  transition: background-color 0.2s;
-}
-
-.close-btn:hover {
-  background-color: #f3f4f6;
-}
-
-.modal-form {
-  padding: 1.5rem;
-}
-
-.form-group {
-  margin-bottom: 1.5rem;
-}
-
-.form-group label {
-  display: block;
-  margin-bottom: 0.5rem;
-  font-weight: 500;
-  color: #374151;
-}
-
-.form-group input,
-.form-group select {
-  width: 100%;
-  padding: 0.75rem;
-  border: 1px solid #d1d5db;
-  border-radius: 0.5rem;
-  font-size: 1rem;
-  transition: border-color 0.2s;
-}
-
-.form-group input:focus,
-.form-group select:focus {
-  outline: none;
-  border-color: #3b82f6;
-  box-shadow: 0 0 0 3px rgba(147, 197, 253, 0.5);
-}
-
-.modal-actions {
-  display: flex;
-  gap: 1rem;
-  margin-top: 2rem;
-}
-
-.modal-actions button {
-  flex: 1;
-  padding: 0.75rem;
-  border-radius: 0.5rem;
-  font-weight: 600;
+.modal-enter-from .modal-content,
+.modal-leave-to .modal-content {
+  transform: scale(0.95);
 }
 </style>

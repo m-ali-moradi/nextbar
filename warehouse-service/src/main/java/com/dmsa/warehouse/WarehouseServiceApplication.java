@@ -2,27 +2,21 @@ package com.dmsa.warehouse;
 
 import org.springframework.boot.SpringApplication;
 import org.springframework.boot.autoconfigure.SpringBootApplication;
-import org.springframework.context.annotation.Bean;
-import org.springframework.web.servlet.config.annotation.WebMvcConfigurer;
 import org.springframework.cloud.openfeign.EnableFeignClients;
 
+/**
+ * Warehouse Service Application.
+ * 
+ * Core responsibilities:
+ * 1. Manage beverage stock inventory
+ * 2. Process and fulfill supply requests from bars
+ * 3. Collect empty bottles from drop points
+ */
 @SpringBootApplication
-@EnableFeignClients(basePackages = "com.dmsa.warehouse.feign")
-
+@EnableFeignClients(basePackages = "com.dmsa.warehouse.client")
 public class WarehouseServiceApplication {
+
     public static void main(String[] args) {
         SpringApplication.run(WarehouseServiceApplication.class, args);
-    }
-
-    @Bean
-    public WebMvcConfigurer corsConfigurer() {
-        return new WebMvcConfigurer() {
-            @Override
-            public void addCorsMappings(org.springframework.web.servlet.config.annotation.CorsRegistry registry) {
-                registry.addMapping("/**")
-                        .allowedOrigins("http://localhost:5173")
-                        .allowedMethods("*");
-            }
-        };
     }
 }

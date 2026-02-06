@@ -1,0 +1,205 @@
+@startuml NextBar Architecture
+!define RECTANGLE class
+
+skinparam backgroundColor #FEFEFE
+skinparam componentStyle rectangle
+skinparam defaultFontName Segoe UI
+skinparam shadowing false
+
+skinparam component {
+    BackgroundColor<<infrastructure>> #E3F2FD
+    BackgroundColor<<service>> #E8F5E9
+    BackgroundColor<<frontend>> #FFF3E0
+    BackgroundColor<<gateway>> #FCE4EC
+    BorderColor #546E7A
+}
+
+skinparam database {
+    BackgroundColor #FFFDE7
+    BorderColor #546E7A
+}
+
+skinparam arrow {
+    Color #37474F
+    Thickness 1.5
+}
+
+title NextBar Microservices Architecture
+
+' ============================================================
+' FRONTEND LAYER
+' ============================================================
+package "Frontend" <<Rectangle>> {
+    component "Vue.js SPA\n(Port 5174)" as FE <<frontend>> {
+        component "Pinia Stores" as Stores
+        component "API Service (Axios)" as Axios
+        component "WebSocket Composable" as WSClient
+        component "Vue Router" as Router
+    }
+}
+
+' ============================================================
+' GATEWAY LAYER
+' ============================================================
+package "Gateway Layer" <<Rectangle>> {
+    component "Spring Cloud Gateway\n(Port 8080)" as GW <<gateway>> {
+        component "JWT Auth Filter" as JWTFilter
+        component "Route Predicates" as Routes
+        component "CORS Handler" as CORS
+    }
+    component "WebSocket Handler\n/ws/events" as WSHandler <<gateway>>
+}
+
+' ============================================================
+' INFRASTRUCTURE
+' ============================================================
+package "Infrastructure Services" <<Rectangle>> {
+    component "Config Server\n(Port 8888)" as CONFIG <<infrastructure>>
+    component "Eureka Server\n(Port 8761)" as EUREKA <<infrastructure>>
+    database "config-repo/\n(YAML Files)" as ConfigRepo
+}
+
+' ============================================================
+' BUSINESS SERVICES
+' ============================================================
+package "Business Services" <<Rectangle>> {
+    
+    component "Users Service\n(Port 8090)" as USERS <<service>> {
+        component "Auth Controller" as AuthCtrl
+        component "User Controller" as UserCtrl
+        component "JWT Provider" as JWTProvider
+    }
+    
+    component "Bar Service\n(Port 8081)" as BAR <<service>> {
+        component "Bar Controller" as BarCtrl
+        component "Stock Management" as StockMgmt
+        component "EventPlanner Client" as BarEventClient
+    }
+    
+    component "Event Planner\n(Port 8082)" as EVENT <<service>> {
+        component "Event Controller" as EventCtrl
+        component "Warehouse Client" as EventWHClient
+    }
+    
+    component "Drop Points\n(Port 8083)" as DROP <<service>> {
+        component "DropPoint Controller" as DropCtrl
+        component "Warehouse Client" as DropWHClient
+    }
+    
+    component "Warehouse\n(Port 8085)" as WAREHOUSE <<service>> {
+        component "Warehouse Controller" as WHCtrl
+        component "Bar Client" as WHBarClient
+        component "DropPoint Client" as WHDropClient
+    }
+}
+
+' ============================================================
+' DATABASES (H2 In-Memory for Dev)
+' ============================================================
+package "Data Layer" <<Rectangle>> {
+    database "Users DB\n(MySQL)" as UsersDB
+    database "Bar DB\n(H2)" as BarDB
+    database "Event DB\n(H2)" as EventDB
+    database "DropPoint DB\n(H2)" as DropDB
+    database "Warehouse DB\n(H2)" as WHDB
+}
+
+' ============================================================
+' CONNECTIONS - Frontend to Gateway
+' ============================================================
+FE -down-> GW : "HTTP REST\n(Bearer JWT)"
+WSClient -down-> WSHandler : "WebSocket\nws://localhost:8080/ws/events"
+
+' ============================================================
+' CONNECTIONS - Gateway to Services
+' ============================================================
+GW -down-> USERS : "/api/auth/**\n/api/users/**"
+GW -down-> BAR : "/api/bars/**\n(JWT Required)"
+GW -down-> EVENT : "/api/events/**\n(JWT Required)"
+GW -down-> DROP : "/api/droppoints/**\n(JWT Required)"
+GW -down-> WAREHOUSE : "/api/warehouse/**\n(JWT Required)"
+
+' ============================================================
+' CONNECTIONS - Inter-Service (OpenFeign)
+' ============================================================
+BarEventClient ..> EVENT : "<<Feign>>\nFetch Bar Plans"
+EventWHClient ..> WAREHOUSE : "<<Feign>>\nGet Beverage Catalog"
+DropWHClient ..> WAREHOUSE : "<<Feign>>\nGet Status"
+WHBarClient ..> BAR : "<<Feign>>\nSupply Requests"
+WHDropClient ..> DROP : "<<Feign>>\nGet DropPoints"
+
+' ============================================================
+' CONNECTIONS - Infrastructure
+' ============================================================
+CONFIG -[hidden]right-> EUREKA
+ConfigRepo -up-> CONFIG : "Load configs"
+
+CONFIG ..> USERS : "<<Config>>"
+CONFIG ..> BAR : "<<Config>>"
+CONFIG ..> EVENT : "<<Config>>"
+CONFIG ..> DROP : "<<Config>>"
+CONFIG ..> WAREHOUSE : "<<Config>>"
+CONFIG ..> GW : "<<Config>>"
+
+EUREKA <.. USERS : "<<Register>>"
+EUREKA <.. BAR : "<<Register>>"
+EUREKA <.. EVENT : "<<Register>>"
+EUREKA <.. DROP : "<<Register>>"
+EUREKA <.. WAREHOUSE : "<<Register>>"
+EUREKA <.. GW : "<<Register>>"
+
+' ============================================================
+' CONNECTIONS - Databases
+' ============================================================
+USERS -down-> UsersDB
+BAR -down-> BarDB
+EVENT -down-> EventDB
+DROP -down-> DropDB
+WAREHOUSE -down-> WHDB
+
+' ============================================================
+' LEGEND
+' ============================================================
+legend right
+  |= Color |= Component Type |
+  |<#E3F2FD>| Infrastructure |
+  |<#E8F5E9>| Business Service |
+  |<#FFF3E0>| Frontend |
+  |<#FCE4EC>| Gateway |
+  |<#FFFDE7>| Database |
+  
+  **Arrows:**
+  —— HTTP/REST
+  .... Feign Client / Config
+endlegend
+
+' ============================================================
+' NOTES
+' ============================================================
+note right of CONFIG
+  Centralized configuration
+  using YAML files in
+  config-repo/ directory
+end note
+
+note right of EUREKA
+  Service discovery
+  enables load-balanced
+  Feign calls (lb://)
+end note
+
+note bottom of JWTFilter
+  Validates JWT tokens
+  on protected routes
+end note
+
+note right of WSHandler
+  Broadcasts real-time
+  events to frontend:
+  - SUPPLY_REQUEST_UPDATED
+  - BAR_STOCK_UPDATED
+  - WAREHOUSE_STOCK_UPDATED
+  - DROPPOINT_STATUS_CHANGED
+end note
+
+@enduml

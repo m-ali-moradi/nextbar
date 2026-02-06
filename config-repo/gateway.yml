@@ -32,6 +32,7 @@ spring:
             - Path=/api/events/**
           filters:
             - StripPrefix=0
+            - JwtAuthentication
 
       # Bar route
         - id: bar-service
@@ -48,6 +49,7 @@ spring:
             - Path=/api/droppoints/**
           filters:
             - StripPrefix=1
+            - JwtAuthentication
 
 
       # Warehouse route
@@ -57,7 +59,7 @@ spring:
             - Path=/api/warehouse/**
           filters:
             - StripPrefix=1
-            
+            - JwtAuthentication
 
       # Auth route (login, register)
         - id: auth-service

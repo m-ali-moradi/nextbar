@@ -1,70 +1,154 @@
 <template>
-  <div
-    v-if="isOpen"
-    class="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50"
-  >
-    <div class="bg-white p-6 rounded shadow-lg w-full max-w-md">
-      <h1 class="mb-4 align-middle text-center">
-        <span
-          :class="[
-            'inline-block px-10 py-2 rounded text-white text-2xl font-semibold',
-            item.name.toLowerCase() === 'fanta'
-              ? 'bg-yellow-600'
-              : item.name.toLowerCase() === 'coca zero'
-              ? 'bg-black'
-              : item.name.toLowerCase() === 'red bull'
-              ? 'bg-red-500'
-              : item.name.toLowerCase() === 'beer'
-              ? 'bg-yellow-500'
-              : item.name.toLowerCase() === 'wine'
-              ? 'bg-purple-500'
-              : 'bg-gray-500',
-          ]"
-        >
-          {{ item.name }}
-        </span>
-      </h1>
-      <p class="mb-4"></p>
-      <div class="mb-4">
-        <label class="block text-sm font-medium text-gray-700">Quantity:</label>
-        <input
-          v-model.number="quantity"
-          type="number"
-          :max="item.quantity"
-          min="1"
-          :placeholder="`Available: ${item.quantity}`"
-          :disabled="item.quantity === 0"
-          @input="validateQuantity"
-          class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-green-400 focus:border-green-400 text-lg"
-        />
-      </div>
-      <div class="flex justify-end">
-        <button
-          @click="$emit('close')"
-          class="mr-2 bg-gray-300 px-4 py-2 rounded hover:bg-gray-400"
-        >
-          Cancel
-        </button>
-        <button
-          @click="confirmSale"
-          :disabled="quantity === 0"
-          :class="[
-            'text-md text-white px-10 py-2 rounded',
-            quantity === 0
-              ? 'bg-gray-400 cursor-not-allowed'
-              : 'bg-green-500 hover:bg-green-600',
-          ]"
-        >
-          Sell
-        </button>
+  <Transition name="modal">
+    <div
+      v-if="isOpen"
+      class="modal-overlay"
+      @click.self="$emit('close')"
+    >
+      <div class="modal-content max-w-md">
+        <!-- Header with Product Info -->
+        <div class="px-6 py-6 border-b border-slate-100">
+          <div class="flex items-center gap-4">
+            <div 
+              class="w-16 h-16 rounded-2xl flex items-center justify-center"
+              :class="getProductBgClass(productName)"
+            >
+              <i class="fas fa-wine-bottle text-white text-2xl"></i>
+            </div>
+            <div class="flex-1">
+              <h2 class="text-xl font-bold text-slate-900">Sell Item</h2>
+              <p class="text-lg font-semibold" :class="getProductTextClass(productName)">
+                {{ productName }}
+              </p>
+            </div>
+            <button 
+              @click="$emit('close')" 
+              class="p-3 rounded-xl text-slate-400 hover:text-slate-600 hover:bg-slate-100 transition-colors"
+            >
+              <i class="fas fa-times text-xl"></i>
+            </button>
+          </div>
+        </div>
+
+        <!-- Body -->
+        <div class="p-6">
+          <!-- Stock Info -->
+          <div class="flex items-center justify-between p-4 bg-slate-50 rounded-xl mb-6">
+            <div class="flex items-center gap-3">
+              <div class="w-10 h-10 rounded-lg bg-white flex items-center justify-center shadow-sm">
+                <i class="fas fa-boxes text-slate-400"></i>
+              </div>
+              <div>
+                <p class="text-sm text-slate-500">Available Stock</p>
+                <p class="text-xl font-bold text-slate-900">{{ availableQuantity }} units</p>
+              </div>
+            </div>
+            <span 
+              class="badge"
+              :class="availableQuantity > 10 ? 'badge-success' : availableQuantity > 0 ? 'badge-warning' : 'badge-danger'"
+            >
+              {{ availableQuantity > 10 ? 'In Stock' : availableQuantity > 0 ? 'Low Stock' : 'Empty' }}
+            </span>
+          </div>
+
+          <!-- Quantity Selector -->
+          <div class="mb-6">
+            <label class="label text-base">Select Quantity</label>
+            <div class="flex items-center gap-4 mt-3">
+              <button 
+                @click="decreaseQuantity"
+                :disabled="quantity <= 1"
+                class="w-14 h-14 rounded-xl text-2xl font-bold transition-all duration-200 
+                       flex items-center justify-center
+                       bg-slate-100 text-slate-700 hover:bg-slate-200
+                       disabled:opacity-40 disabled:cursor-not-allowed"
+              >
+                <i class="fas fa-minus"></i>
+              </button>
+              
+              <input
+                v-model.number="quantity"
+                type="number"
+                :max="availableQuantity"
+                min="1"
+                @input="validateQuantity"
+                class="flex-1 h-14 text-center text-2xl font-bold border-2 border-slate-200 rounded-xl
+                       focus:border-primary-500 focus:ring-0 focus:outline-none"
+              />
+              
+              <button 
+                @click="increaseQuantity"
+                :disabled="quantity >= availableQuantity"
+                class="w-14 h-14 rounded-xl text-2xl font-bold transition-all duration-200 
+                       flex items-center justify-center
+                       bg-primary-100 text-primary-700 hover:bg-primary-200
+                       disabled:opacity-40 disabled:cursor-not-allowed"
+              >
+                <i class="fas fa-plus"></i>
+              </button>
+            </div>
+            
+            <!-- Quick Select Buttons -->
+            <div class="flex gap-2 mt-4">
+              <button 
+                v-for="preset in quickPresets"
+                :key="preset"
+                @click="quantity = Math.min(preset, availableQuantity)"
+                :disabled="preset > availableQuantity"
+                class="flex-1 py-2.5 rounded-lg text-sm font-semibold transition-all
+                       border-2 border-slate-200 text-slate-600 hover:border-primary-300 hover:text-primary-600
+                       disabled:opacity-40 disabled:cursor-not-allowed"
+                :class="{ 'border-primary-500 bg-primary-50 text-primary-700': quantity === preset }"
+              >
+                {{ preset }}
+              </button>
+              <button 
+                @click="quantity = availableQuantity"
+                :disabled="availableQuantity === 0"
+                class="flex-1 py-2.5 rounded-lg text-sm font-semibold transition-all
+                       border-2 border-amber-200 text-amber-600 hover:border-amber-400 hover:bg-amber-50
+                       disabled:opacity-40 disabled:cursor-not-allowed"
+              >
+                All
+              </button>
+            </div>
+          </div>
+
+          <!-- Summary -->
+          <div class="p-4 bg-emerald-50 rounded-xl border border-emerald-100 mb-6">
+            <div class="flex items-center justify-between">
+              <div class="flex items-center gap-3">
+                <div class="w-10 h-10 rounded-lg bg-emerald-100 flex items-center justify-center">
+                  <i class="fas fa-shopping-cart text-emerald-600"></i>
+                </div>
+                <span class="text-base font-medium text-emerald-800">Total to Sell</span>
+              </div>
+              <span class="text-2xl font-bold text-emerald-700">{{ quantity }}</span>
+            </div>
+          </div>
+        </div>
+
+        <!-- Footer -->
+        <div class="px-6 py-4 border-t border-slate-100 flex gap-3">
+          <button type="button" @click="$emit('close')" class="btn-secondary flex-1">
+            <i class="fas fa-times"></i>
+            Cancel
+          </button>
+          <button
+            @click="confirmSale"
+            :disabled="quantity === 0 || quantity > availableQuantity"
+            class="btn-success flex-1"
+          >
+            <i class="fas fa-check"></i>
+            Confirm Sale
+          </button>
+        </div>
       </div>
     </div>
-  </div>
+  </Transition>
 </template>
 
 <script>
-import { useBarStore } from '../../stores/barStore';
-
 export default {
   name: "SellStockModal",
   props: {
@@ -75,33 +159,75 @@ export default {
   data() {
     return {
       quantity: 1,
-      barStore: useBarStore(),
+      quickPresets: [1, 5, 10, 20],
     };
   },
 
+  computed: {
+    productName() {
+      return this.item?.name ?? this.item?.productName ?? 'Unknown Product';
+    },
+    availableQuantity() {
+      return this.item?.quantity ?? 0;
+    }
+  },
+
+  watch: {
+    isOpen(newVal) {
+      if (newVal) {
+        this.quantity = 1;
+      }
+    }
+  },
+
   methods: {
+    getProductBgClass(name) {
+      const lowerName = String(name ?? '').toLowerCase();
+      if (lowerName.includes('fanta')) return 'bg-gradient-to-br from-amber-400 to-amber-600';
+      if (lowerName.includes('coca') || lowerName.includes('zero')) return 'bg-gradient-to-br from-slate-700 to-slate-900';
+      if (lowerName.includes('red bull')) return 'bg-gradient-to-br from-red-400 to-red-600';
+      if (lowerName.includes('beer')) return 'bg-gradient-to-br from-yellow-400 to-yellow-600';
+      if (lowerName.includes('wine')) return 'bg-gradient-to-br from-purple-400 to-purple-600';
+      return 'bg-gradient-to-br from-bar-400 to-bar-600';
+    },
+
+    getProductTextClass(name) {
+      const lowerName = String(name ?? '').toLowerCase();
+      if (lowerName.includes('fanta')) return 'text-amber-600';
+      if (lowerName.includes('coca') || lowerName.includes('zero')) return 'text-slate-700';
+      if (lowerName.includes('red bull')) return 'text-red-600';
+      if (lowerName.includes('beer')) return 'text-yellow-600';
+      if (lowerName.includes('wine')) return 'text-purple-600';
+      return 'text-bar-600';
+    },
+
+    decreaseQuantity() {
+      if (this.quantity > 1) {
+        this.quantity--;
+      }
+    },
+
+    increaseQuantity() {
+      if (this.quantity < this.availableQuantity) {
+        this.quantity++;
+      }
+    },
+
     validateQuantity() {
       if (this.quantity < 1) {
-        this.quantity = 0;
-      } else if (this.quantity > this.item.quantity) {
-        alert("Cannot sell more than available stock!");
-        this.quantity = this.item.quantity;
+        this.quantity = 1;
+      } else if (this.quantity > this.availableQuantity) {
+        this.quantity = this.availableQuantity;
       }
     },
 
     async confirmSale() {
-      if (this.quantity === 0) {
-        return;
-      }
-      if (this.quantity > this.item.quantity) {
-        alert("Cannot sell more than available stock!");
+      if (this.quantity === 0 || this.quantity > this.availableQuantity) {
         return;
       }
       try {
-        await this.barStore.reduceStock(this.barId, this.item.productId, this.quantity);
-        await this.barStore.logDrink(this.barId, this.item.productId, this.quantity);
-        this.$emit("close");
         this.$emit("sale-confirmed", { quantity: this.quantity });
+        this.$emit("close");
         this.quantity = 1;
       } catch (error) {
         console.error("Error during sale:", error);
@@ -110,3 +236,31 @@ export default {
   },
 };
 </script>
+
+<style scoped>
+.modal-enter-active,
+.modal-leave-active {
+  transition: all 0.3s ease;
+}
+
+.modal-enter-from,
+.modal-leave-to {
+  opacity: 0;
+}
+
+.modal-enter-from .modal-content,
+.modal-leave-to .modal-content {
+  transform: scale(0.95);
+}
+
+/* Hide number input spinners */
+input[type="number"]::-webkit-inner-spin-button,
+input[type="number"]::-webkit-outer-spin-button {
+  -webkit-appearance: none;
+  margin: 0;
+}
+
+input[type="number"] {
+  -moz-appearance: textfield;
+}
+</style>

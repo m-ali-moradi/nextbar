@@ -1,73 +1,152 @@
-<!-- Add Stock Modal with beautiful input for product name and quantity -->
 <template>
-  <div
-    v-if="isOpen"
-    class="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50"
-  >
-    <div class="bg-white p-6 rounded shadow-lg w-full max-w-md">
-      <h2 class="text-xl font-bold mb-4">Add Stock</h2>
-      <form>
-        <div class="mb-4">
-          <label for="product" class="block text-sm font-medium text-gray-700"
-            >Product</label
-          >
-
-          <!--style this input with beautiful styles-->
-          <select
-            v-model="selectedProduct"
-            id="product"
-            required
-            class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-green-400 focus:border-green-400 text-lg"
-          >
-            <option
-              v-for="product in products"
-              :key="product.id"
-              :value="product.id"
-              required
+  <Transition name="modal">
+    <div
+      v-if="isOpen"
+      class="modal-overlay"
+      @click.self="$emit('close')"
+    >
+      <div class="modal-content max-w-md">
+        <!-- Header -->
+        <div class="px-6 py-5 border-b border-slate-100">
+          <div class="flex items-center gap-4">
+            <div class="w-14 h-14 rounded-2xl bg-gradient-to-br from-bar-400 to-bar-600 
+                        flex items-center justify-center">
+              <i class="fas fa-plus text-white text-2xl"></i>
+            </div>
+            <div class="flex-1">
+              <h2 class="text-xl font-bold text-slate-900">Add Stock</h2>
+              <p class="text-base text-slate-500">Add drinks to this bar's inventory</p>
+            </div>
+            <button 
+              @click="$emit('close')" 
+              class="p-3 rounded-xl text-slate-400 hover:text-slate-600 
+                     hover:bg-slate-100 transition-colors"
             >
-              {{ product.name }} - {{ product.unitType }}
-            </option>
-          </select>
-        </div>
-        <div class="mb-4">
-          <label for="quantity" class="block text-sm font-medium text-gray-700"
-            >Quantity</label
-          >
-          <input
-            :required="true"
-            type="number"
-            v-model="quantity"
-            id="quantity"
-            required
-            min="1"
-            class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-green-400 focus:border-green-400 text-lg"
-          />
+              <i class="fas fa-times text-xl"></i>
+            </button>
+          </div>
         </div>
 
-        <!--align close button left, open button right-->
-        <div class="flex justify-between">
-          <button
-            @click="$emit('close')"
-            class="bg-gray-300 px-4 py-2 rounded hover:bg-gray-400"
-          >
-            Close
-          </button>
-          <button
-            @click="handleSubmit"
-            class="bg-blue-500 text-white px-4 py-2 rounded hover:bg-blue-600"
-          >
-            Add
-          </button>
-        </div>
-      </form>
+        <!-- Body -->
+        <form @submit.prevent="handleSubmit" class="p-6">
+          <!-- Product Select -->
+          <div class="mb-6">
+            <label for="product" class="label text-base">Select Product</label>
+            <div class="relative mt-2">
+              <div class="absolute left-4 top-1/2 -translate-y-1/2">
+                <i class="fas fa-wine-bottle text-slate-400"></i>
+              </div>
+              <select
+                v-model="selectedProduct"
+                id="product"
+                required
+                class="input pl-12 text-base appearance-none cursor-pointer"
+              >
+                <option value="" disabled>Choose a product...</option>
+                <option
+                  v-for="product in products"
+                  :key="product.id"
+                  :value="product.id"
+                >
+                  {{ product.name }} ({{ product.unitType }})
+                </option>
+              </select>
+              <div class="absolute right-4 top-1/2 -translate-y-1/2 pointer-events-none">
+                <i class="fas fa-chevron-down text-slate-400"></i>
+              </div>
+            </div>
+          </div>
+
+          <!-- Quantity Input -->
+          <div class="mb-6">
+            <label class="label text-base">Quantity</label>
+            <div class="flex items-center gap-4 mt-2">
+              <button 
+                type="button"
+                @click="decreaseQuantity"
+                :disabled="quantity <= 1"
+                class="w-14 h-14 rounded-xl text-2xl font-bold transition-all duration-200 
+                       flex items-center justify-center
+                       bg-slate-100 text-slate-700 hover:bg-slate-200
+                       disabled:opacity-40 disabled:cursor-not-allowed"
+              >
+                <i class="fas fa-minus"></i>
+              </button>
+              
+              <input
+                type="number"
+                v-model.number="quantity"
+                id="quantity"
+                required
+                min="1"
+                class="flex-1 h-14 text-center text-2xl font-bold border-2 border-slate-200 rounded-xl
+                       focus:border-bar-500 focus:ring-0 focus:outline-none"
+              />
+              
+              <button 
+                type="button"
+                @click="increaseQuantity"
+                class="w-14 h-14 rounded-xl text-2xl font-bold transition-all duration-200 
+                       flex items-center justify-center
+                       bg-bar-100 text-bar-700 hover:bg-bar-200"
+              >
+                <i class="fas fa-plus"></i>
+              </button>
+            </div>
+            
+            <!-- Quick Select Buttons -->
+            <div class="flex gap-2 mt-4">
+              <button 
+                type="button"
+                v-for="preset in [5, 10, 25, 50, 100]"
+                :key="preset"
+                @click="quantity = preset"
+                class="flex-1 py-2.5 rounded-lg text-sm font-semibold transition-all
+                       border-2 border-slate-200 text-slate-600 hover:border-bar-300 hover:text-bar-600"
+                :class="{ 'border-bar-500 bg-bar-50 text-bar-700': quantity === preset }"
+              >
+                {{ preset }}
+              </button>
+            </div>
+          </div>
+
+          <!-- Summary -->
+          <div class="p-4 bg-bar-50 rounded-xl border border-bar-100 mb-6">
+            <div class="flex items-center justify-between">
+              <div class="flex items-center gap-3">
+                <div class="w-10 h-10 rounded-lg bg-bar-100 flex items-center justify-center">
+                  <i class="fas fa-boxes text-bar-600"></i>
+                </div>
+                <span class="text-base font-medium text-bar-800">Adding to Stock</span>
+              </div>
+              <span class="text-2xl font-bold text-bar-700">{{ quantity }}</span>
+            </div>
+          </div>
+
+          <!-- Actions -->
+          <div class="flex gap-3">
+            <button type="button" @click="$emit('close')" class="btn-secondary flex-1">
+              <i class="fas fa-times"></i>
+              Cancel
+            </button>
+            <button
+              type="submit"
+              :disabled="!selectedProduct || quantity < 1"
+              class="btn-primary flex-1"
+            >
+              <i class="fas fa-plus"></i>
+              Add Stock
+            </button>
+          </div>
+        </form>
+      </div>
     </div>
-  </div>
+  </Transition>
 </template>
 
 <script>
 import api from "../../api";
 
-// add all fetch Products and handleSubmit methods
 export default {
   name: "AddStockModal",
   props: {
@@ -76,33 +155,38 @@ export default {
   data() {
     return {
       products: [],
-      selectedProduct: null,
-      quantity: 1,
+      selectedProduct: "",
+      quantity: 10,
     };
   },
   watch: {
     isOpen(newVal) {
       if (newVal) {
         this.fetchProducts();
+        this.selectedProduct = "";
+        this.quantity = 10;
       }
     },
   },
   methods: {
+    decreaseQuantity() {
+      if (this.quantity > 1) {
+        this.quantity--;
+      }
+    },
+    increaseQuantity() {
+      this.quantity++;
+    },
     async handleSubmit() {
       if (this.selectedProduct && this.quantity > 0) {
         try {
-          console.log("Adding stock:", {
-            barId: this.$route.params.barId,
-            productId: this.selectedProduct,
-            quantity: this.quantity,
-          });
           await api.addStock(
             this.$route.params.barId,
             this.selectedProduct,
             this.quantity
           );
           this.$emit("close");
-          this.$emit("stockAdded", { productId: this.selectedProduct, quantity: this.quantity });
+          this.$emit("stock-added", { productId: this.selectedProduct, quantity: this.quantity });
         } catch (error) {
           console.error("Error adding stock:", error);
         }
@@ -119,3 +203,36 @@ export default {
   },
 };
 </script>
+
+<style scoped>
+.modal-enter-active,
+.modal-leave-active {
+  transition: all 0.3s ease;
+}
+
+.modal-enter-from,
+.modal-leave-to {
+  opacity: 0;
+}
+
+.modal-enter-from .modal-content,
+.modal-leave-to .modal-content {
+  transform: scale(0.95);
+}
+
+/* Hide number input spinners */
+input[type="number"]::-webkit-inner-spin-button,
+input[type="number"]::-webkit-outer-spin-button {
+  -webkit-appearance: none;
+  margin: 0;
+}
+
+input[type="number"] {
+  -moz-appearance: textfield;
+}
+
+/* Custom select styling */
+select {
+  background-image: none;
+}
+</style>

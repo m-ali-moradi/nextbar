@@ -1,48 +1,133 @@
 spring:
   config:
-    import: configserver:http://localhost:8888
+    import: optional:configserver:http://localhost:8888
   application:
     name: warehouse-service
+  
+  # MySQL Database Configuration
   datasource:
-    url: jdbc:h2:mem:warehouse;DB_CLOSE_DELAY=-1;DB_CLOSE_ON_EXIT=FALSE
-    driverClassName: org.h2.Driver
-    username: sa
-    password:
+    url: jdbc:mysql://localhost:3306/warehouse_db?useSSL=false&serverTimezone=UTC&allowPublicKeyRetrieval=true
+    username: root
+    password: root
+    driver-class-name: com.mysql.cj.jdbc.Driver
+  
   jpa:
     hibernate:
-      ddl-auto: none
-    show-sql: true
-    database-platform: org.hibernate.dialect.H2Dialect
+      ddl-auto: update
+    show-sql: false
+    database-platform: org.hibernate.dialect.MySQLDialect
+    properties:
+      hibernate:
+        format_sql: true
+  
   sql:
     init:
-      mode: embedded
+      mode: always
 
-  h2:
-    console:
-      enabled: true
-      path: /h2-console
+  # RabbitMQ Configuration
+  rabbitmq:
+    host: localhost
+    port: 5672
+    username: nextbar
+    password: nextbar123
 
-logging:
-  level:
-    org.hibernate.SQL: debug
-    org.hibernate.tool.hbm2ddl: debug
+  # Spring Cloud Stream Bindings
+  cloud:
+    stream:
+      bindings:
+        # Input binding for consuming supply request created events
+        supplyRequestCreated-in-0:
+          destination: supply.request.created
+          content-type: application/json
+          group: warehouse-service
+        # Output binding for publishing supply request updated events
+        supplyRequestUpdated-out-0:
+          destination: supply.request.updated
+          content-type: application/json
+      rabbit:
+        bindings:
+          supplyRequestCreated-in-0:
+            consumer:
+              exchange-type: topic
+          supplyRequestUpdated-out-0:
+            producer:
+              exchange-type: topic
 
+# Server Configuration
 server:
   port: 8085
 
+# JWT Configuration
 jwt:
   secret: ${JWT_SECRET:2YrmlATq8aGvu9r5OSwV2s3g6tZqYbhyZnMNsnU/wvO27lfYxbgm5foq7F2Vsmw1eZC4WbdKHx3IXW5J7PddEA==}
 
-management:
-  endpoints:
-    web:
-      exposure:
-        include: health,info,metrics,prometheus
-  endpoint:
-    health:
-      show-details: always
-
+# Eureka Client Configuration
 eureka:
   client:
     service-url:
       defaultZone: http://localhost:8761/eureka/
+  instance:
+    prefer-ip-address: true
+
+# Actuator Configuration
+management:
+  endpoints:
+    web:
+      exposure:
+        include: health,info,metrics,prometheus,circuitbreakers
+  endpoint:
+    health:
+      show-details: always
+  health:
+    circuitbreakers:
+      enabled: true
+
+# Logging Configuration
+logging:
+  level:
+    root: INFO
+    com.dmsa.warehouse: DEBUG
+    org.springframework.security: INFO
+    io.github.resilience4j: DEBUG
+  pattern:
+    console: "%d{yyyy-MM-dd HH:mm:ss} [%thread] %-5level %logger{36} - %msg%n"
+
+# Resilience4j Circuit Breaker Configuration
+resilience4j:
+  circuitbreaker:
+    instances:
+      barService:
+        registerHealthIndicator: true
+        slidingWindowSize: 10
+        minimumNumberOfCalls: 5
+        failureRateThreshold: 50
+        waitDurationInOpenState: 10s
+        permittedNumberOfCallsInHalfOpenState: 3
+        automaticTransitionFromOpenToHalfOpenEnabled: true
+      dropPointService:
+        registerHealthIndicator: true
+        slidingWindowSize: 10
+        minimumNumberOfCalls: 5
+        failureRateThreshold: 50
+        waitDurationInOpenState: 10s
+        permittedNumberOfCallsInHalfOpenState: 3
+        automaticTransitionFromOpenToHalfOpenEnabled: true
+
+# Feign Client Configuration
+spring.cloud.openfeign:
+  circuitbreaker:
+    enabled: true
+  client:
+    config:
+      default:
+        connectTimeout: 5000
+        readTimeout: 5000
+        loggerLevel: basic
+
+# OpenAPI Configuration
+springdoc:
+  api-docs:
+    path: /v3/api-docs
+  swagger-ui:
+    path: /swagger-ui.html
+    operationsSorter: method

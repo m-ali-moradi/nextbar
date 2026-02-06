@@ -17,6 +17,7 @@ import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
 
+import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.databind.SerializationFeature;
 
@@ -24,6 +25,7 @@ import de.fhdo.dropPointsSys.converters.DropPointConverter;
 import de.fhdo.dropPointsSys.domain.DropPointStatus;
 import de.fhdo.dropPointsSys.dto.DropPointDto;
 import de.fhdo.dropPointsSys.feign.WarehouseClient;
+import de.fhdo.dropPointsSys.security.RbacService;
 import de.fhdo.dropPointsSys.service.DropPointService;
 
 @CrossOrigin
@@ -34,16 +36,19 @@ public class DropPointRestController {
     private static final Logger logger = LoggerFactory.getLogger(DropPointRestController.class);
     private final DropPointService dropPointService;
     private final WarehouseClient warehouseClient;
+    private final RbacService rbacService;
 
 
-    public DropPointRestController(DropPointService dropPointService, WarehouseClient warehouseClient) {
+    public DropPointRestController(DropPointService dropPointService, WarehouseClient warehouseClient, RbacService rbacService) {
         this.dropPointService = dropPointService;
         this.warehouseClient = warehouseClient;
+        this.rbacService = rbacService;
     }
 
     // Get all DropPoint
     @GetMapping
     public ResponseEntity<List<DropPointDto>> getAllDropPoints() {
+        rbacService.requireReadAccess();
         List<DropPointDto> userDtos = dropPointService.get_all_drop_points()
                 .stream().map(DropPointConverter::toDto)
                 .collect(Collectors.toList());
@@ -54,6 +59,7 @@ public class DropPointRestController {
     // Get DropPoint by ID
     @GetMapping("/{id}")
     public ResponseEntity<DropPointDto> getIDropPointById(@PathVariable Long id) {
+        rbacService.requireReadAccess();
 
         return dropPointService.get_drop_point(id)
                 .map(DropPointConverter::toDto)
@@ -64,6 +70,7 @@ public class DropPointRestController {
 
     @PostMapping("/create")
     public ResponseEntity<DropPointDto> createDropPoint(@RequestBody DropPointDto dropPointDto) {
+        rbacService.requireCreateAccess();
         var dropPoint = DropPointConverter.toEntity(dropPointDto);
         var savedDropPoint = dropPointService.create_drop_point(dropPoint);
         return new ResponseEntity<>(DropPointConverter.toDto(savedDropPoint), HttpStatus.CREATED);
@@ -72,6 +79,7 @@ public class DropPointRestController {
     // Update DropPoint
     @PutMapping("/{id}")
     public ResponseEntity<DropPointDto> updateDropPoint(@PathVariable Long id, @RequestBody DropPointDto dropPointDto) {
+        rbacService.requireWriteAccess();
         var dropPoint = DropPointConverter.toEntity(dropPointDto);
         var updatedDropPoint = dropPointService.update_drop_point(id, dropPoint);
         return updatedDropPoint.map(value -> ResponseEntity.ok(DropPointConverter.toDto(value))).orElse(ResponseEntity.notFound().build());
@@ -80,6 +88,7 @@ public class DropPointRestController {
     // Delete DropPoint
     @DeleteMapping("/{id}")
     public ResponseEntity<DropPointDto> deleteDropPoint(@PathVariable Long id) {
+        rbacService.requireWriteAccess();
         if(dropPointService.delete_drop_point(id)){
             return ResponseEntity.noContent().build();
         }
@@ -91,6 +100,7 @@ public class DropPointRestController {
     // Get Levels and Status
     @GetMapping("/level_and_status/{id}")
     public ResponseEntity<DropPointDto> get_level_and_status(@PathVariable Long id) {
+        rbacService.requireReadAccess();
         return dropPointService.get_level_and_status(id)
                 .map(DropPointConverter::toDto)
                 .map(ResponseEntity::ok)
@@ -101,6 +111,7 @@ public class DropPointRestController {
     // remove empties from drop point
     @PutMapping("/remove_empties/{id}")
     public ResponseEntity<DropPointDto> remove_empties_from_droppoint(@PathVariable Long id) {
+        rbacService.requireWriteAccess();
         var dropPoint = dropPointService.remove_empties(id);
         return  dropPoint.map(value -> ResponseEntity.ok(DropPointConverter.toDto(value))).orElse(ResponseEntity.notFound().build());
     }
@@ -108,6 +119,7 @@ public class DropPointRestController {
     // add empties to a drop point
     @PutMapping("/add_empties/{id}")
     public ResponseEntity<DropPointDto> add_empties_to_droppoint(@PathVariable Long id) {
+        rbacService.requireWriteAccess();
         var added_empty = dropPointService.add_empties(id);
 
         return added_empty.map(value -> ResponseEntity.ok(DropPointConverter.toDto(value))).orElse(ResponseEntity.notFound().build());
@@ -116,6 +128,7 @@ public class DropPointRestController {
     // notify warehouse
     @PutMapping("/notify_warehouse/{id}")
     public ResponseEntity<DropPointDto> send_notification(@PathVariable Long id) {
+        rbacService.requireWriteAccess();
         var dropPoint = dropPointService.notify_warehouse(id);
         return  dropPoint.map(value -> ResponseEntity.ok(DropPointConverter.toDto(value))).orElse(ResponseEntity.notFound().build());
 
@@ -124,6 +137,7 @@ public class DropPointRestController {
     // Get verification of transfered empties
     @GetMapping("/verify_transferred_empties/{id}")
     public ResponseEntity<?> verify_transfer(@PathVariable Long id) {
+        rbacService.requireReadAccess();
         try {
             var verifiedDropPoint = warehouseClient.status(id);
             ObjectMapper objectMapper = new ObjectMapper();
@@ -146,7 +160,7 @@ public class DropPointRestController {
                         .body(message);
             }
 
-        } catch (Exception e) {
+        } catch (JsonProcessingException | RuntimeException e) {
             logger.error("Error emptying drop point: {}", e.getMessage(), e);
             return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR)
                     .body("Fallback triggered due to: " +e.getMessage());

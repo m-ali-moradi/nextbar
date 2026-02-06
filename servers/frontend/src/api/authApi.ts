@@ -9,12 +9,15 @@ export const authApi = {
     return ApiService.post('/api/auth/register', { username, password, email });
   },
   getUsers(): Promise<AxiosResponse> {
-    return ApiService.get('/api/auth/users');
+    return ApiService.get('/api/users');
+  },
+  createUser(data: any): Promise<AxiosResponse> {
+    return ApiService.post('/api/users', data);
   },
   updateUser(userId: string, data: any): Promise<AxiosResponse> {
-    return ApiService.put(`/api/auth/users/${userId}`, data);
+    return ApiService.put(`/api/users/${userId}`, data);
   },
   deleteUser(userId: string): Promise<AxiosResponse> {
-    return ApiService.delete(`/api/auth/users/${userId}`);
+    return ApiService.delete(`/api/users/${userId}`);
   },
 };

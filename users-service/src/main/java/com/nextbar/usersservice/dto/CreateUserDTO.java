@@ -1,4 +1,4 @@
-package com.coditects.usersservice.dto;
+package com.nextbar.usersservice.dto;
 
 import jakarta.validation.constraints.Email;
 import jakarta.validation.constraints.NotBlank;

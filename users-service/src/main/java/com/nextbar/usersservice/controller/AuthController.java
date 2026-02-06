@@ -1,13 +1,19 @@
-package com.coditects.usersservice.controller;
+package com.nextbar.usersservice.controller;
 
-import com.coditects.usersservice.dto.LoginResponseDTO;
-import com.coditects.usersservice.dto.LoginRequestDTO;
-import com.coditects.usersservice.service.UserService;
-import jakarta.validation.Valid;
-import lombok.RequiredArgsConstructor;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
-import org.springframework.web.bind.annotation.*;
+import org.springframework.web.bind.annotation.PostMapping;
+import org.springframework.web.bind.annotation.RequestBody;
+import org.springframework.web.bind.annotation.RequestMapping;
+import org.springframework.web.bind.annotation.RestController;
+
+import com.nextbar.usersservice.dto.CreateUserDTO;
+import com.nextbar.usersservice.dto.LoginRequestDTO;
+import com.nextbar.usersservice.dto.LoginResponseDTO;
+import com.nextbar.usersservice.service.UserService;
+
+import jakarta.validation.Valid;
+import lombok.RequiredArgsConstructor;
 
 @RestController
 @RequestMapping("/auth")
@@ -17,7 +23,7 @@ public class AuthController {
     private final UserService userService;
 
     @PostMapping("/register")
-    public ResponseEntity<?> register(@Valid @RequestBody RegisterRequest request) {
+    public ResponseEntity<?> register(@Valid @RequestBody CreateUserDTO request) {
         try {
             LoginResponseDTO response = userService.register(request);
             return ResponseEntity.ok(response);

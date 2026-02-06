@@ -1,152 +1,241 @@
 <template>
-  <div class="flex min-h-screen">
+  <div class="flex min-h-screen bg-slate-50">
     <Sidebar />
-    <div class="flex-1 ml-64">
+    
+    <div class="flex-1 ml-72">
       <Navbar />
-      <main class="p-6 bg-gray-100">
-        <h1 class="text-2xl font-bold text-bar-primary mb-4">{{ barStore.currentBar?.name || 'Bar Details' }}</h1>
-        <div class="flex justify-between mb-4">
-          <router-link
-            to="/bars"
-            class="text-blue-500 hover:underline flex items-center"
-          >
-            <i class="fas fa-arrow-left mr-2"></i> Back to Bars
-          </router-link>
-          <button
-            @click="showAddStockModal = true"
-            class="bg-blue-500 text-white px-4 py-2 rounded hover:bg-blue-600 shadow-md transition-transform transform hover:scale-105"
-          >
-            Add Drink
+      
+      <main class="p-6">
+        <!-- Page Header -->
+        <div class="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4 mb-8">
+          <div class="flex items-center gap-4">
+            <router-link
+              to="/bars"
+              class="p-2.5 rounded-xl text-slate-500 hover:text-slate-700 
+                     hover:bg-slate-100 transition-colors"
+              title="Back to Bars"
+            >
+              <i class="fas fa-arrow-left"></i>
+            </router-link>
+            <div>
+              <h1 class="text-2xl font-bold text-slate-900">
+                {{ barStore.currentBar?.name || 'Bar Details' }}
+              </h1>
+              <p class="text-slate-500 mt-1">
+                {{ barStore.currentBar?.location || 'Manage stock and sales' }}
+              </p>
+            </div>
+          </div>
+          <button @click="showAddStockModal = true" class="btn-primary">
+            <i class="fas fa-plus"></i>
+            <span>Add Drink</span>
           </button>
         </div>
-        <div v-if="barStore.loading" class="text-center">Loading...</div>
-        <div v-else-if="barStore.error" class="text-red-500 mb-4">{{ barStore.error }}</div>
-        <div v-else class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+
+        <!-- Loading State -->
+        <div v-if="barStore.loading" class="flex items-center justify-center py-20">
+          <div class="text-center">
+            <div class="w-12 h-12 border-4 border-bar-200 border-t-bar-600 rounded-full animate-spin mx-auto mb-4"></div>
+            <p class="text-slate-500">Loading bar details...</p>
+          </div>
+        </div>
+
+        <!-- Error State -->
+        <div v-else-if="barStore.error" class="card p-8 text-center">
+          <div class="w-16 h-16 rounded-full bg-red-100 flex items-center justify-center mx-auto mb-4">
+            <i class="fas fa-exclamation-triangle text-2xl text-red-600"></i>
+          </div>
+          <h3 class="text-lg font-semibold text-slate-900 mb-2">Error Loading Bar</h3>
+          <p class="text-slate-500 mb-4">{{ barStore.error }}</p>
+          <button @click="barStore.fetchBarDetails(route.params.barId)" class="btn-primary">
+            <i class="fas fa-redo"></i>
+            <span>Try Again</span>
+          </button>
+        </div>
+
+        <!-- Content -->
+        <div v-else class="space-y-6">
           <!-- Stock Section -->
-          <div class="bg-white p-6 rounded-lg shadow-lg col-span-1 md:col-span-2 lg:col-span-3">
-            <h2 class="text-xl text-bar-primary mb-4">Stock</h2>
+          <div class="card overflow-hidden">
+            <div class="px-6 py-4 border-b border-slate-100 flex items-center justify-between">
+              <div class="flex items-center gap-3">
+                <div class="w-10 h-10 rounded-xl bg-bar-100 flex items-center justify-center">
+                  <i class="fas fa-boxes text-bar-600"></i>
+                </div>
+                <div>
+                  <h2 class="font-semibold text-slate-900">Stock Inventory</h2>
+                  <p class="text-xs text-slate-500">{{ barStore.stock.length }} items</p>
+                </div>
+              </div>
+            </div>
+
             <div v-if="barStore.stock.length" class="overflow-x-auto">
-              <table class="w-full border-collapse table-auto">
+              <table class="table-modern">
                 <thead>
-                  <tr class="bg-gray-200">
-                    <th class="border p-2 text-center align-middle">Name</th>
-                    <th class="border p-2 text-center align-middle">Quantity</th>
-                    <th class="border p-2 text-center align-middle">Last Update</th>
-                    <th class="border p-2 text-center align-middle">Action</th>
+                  <tr>
+                    <th>Product</th>
+                    <th>Quantity</th>
+                    <th>Last Update</th>
+                    <th class="text-right">Actions</th>
                   </tr>
                 </thead>
                 <tbody>
                   <tr v-for="item in sortedStock" :key="item.id">
-                    <td class="border p-2 text-center align-middle">
-                      <span
-                        :class="[
-                          'inline-block px-6 py-2 rounded text-white text-md',
-                          getProductColor(item.name),
-                        ]"
+                    <td>
+                      <div class="flex items-center gap-3">
+                        <div 
+                          class="w-10 h-10 rounded-xl flex items-center justify-center"
+                          :class="getProductBgClass(item.name ?? item.productName)"
+                        >
+                          <i class="fas fa-wine-bottle text-white text-sm"></i>
+                        </div>
+                        <span class="font-medium text-slate-900">
+                          {{ item.name ?? item.productName ?? 'Unknown' }}
+                        </span>
+                      </div>
+                    </td>
+                    <td>
+                      <span 
+                        class="badge"
+                        :class="getQuantityBadgeClass(item.quantity)"
                       >
-                        {{ item.name }}
+                        {{ item.quantity === 0 ? 'Empty' : item.quantity }}
                       </span>
                     </td>
-                    <td class="border p-2 text-center align-middle">
-                      <span
-                        v-if="item.quantity === 0"
-                        class="bg-red-500 text-white rounded px-2 py-1"
-                      >
-                        Empty
-                      </span>
-                      <span
-                        v-else
-                        :class="{
-                          'bg-yellow-400 text-white rounded px-2 py-1': item.quantity < 10,
-                          'bg-green-500 text-white rounded px-2 py-1': item.quantity >= 10,
-                        }"
-                      >
-                        {{ item.quantity }}
-                      </span>
-                    </td>
-                    <td class="border p-2 text-center align-middle">
-                      {{ formatDate(item.updatedAt) }}
-                    </td>
-                    <td class="border p-2 text-center align-middle">
-                      <button
-                        v-if="item.quantity > 0"
-                        @click="openSellModal(item)"
-                        :disabled="item.quantity === 0"
-                        :class="[
-                          'px-6 py-2 rounded mr-2 text-white text-md',
-                          item.quantity === 0 ? 'bg-green-300 cursor-not-allowed' : 'bg-green-500 hover:bg-green-600 transition-transform transform hover:scale-105',
-                        ]"
-                      >
-                        Sell
-                      </button>
-                      <button
-                        v-if="item.quantity === 0 && !hasPendingRequest(item.productId)"
-                        @click="openRequestModal(item)"
-                        class="bg-yellow-500 text-white px-6 py-2 rounded hover:bg-yellow-600 transition-transform transform hover:scale-105"
-                      >
-                        Request Supply
-                      </button>
-                      <span
-                        v-if="hasPendingRequest(item.productId)"
-                        class="bg-yellow-300 text-white px-2 py-1 rounded cursor-not-allowed"
-                      >
-                        Pending Request
-                      </span>
+                    <td class="text-slate-500">{{ formatDate(item.updatedAt) }}</td>
+                    <td>
+                      <div class="flex items-center justify-end gap-2">
+                        <button
+                          v-if="item.quantity > 0"
+                          @click="openSellModal(item)"
+                          class="inline-flex items-center gap-1.5 px-3 py-1.5 bg-emerald-600 text-white 
+                                 rounded-lg text-sm font-medium hover:bg-emerald-700 transition-colors"
+                        >
+                          <i class="fas fa-shopping-cart"></i>
+                          Sell
+                        </button>
+                        <button
+                          v-if="item.quantity === 0 && !hasPendingRequest(item.productId)"
+                          @click="openRequestModal(item)"
+                          class="inline-flex items-center gap-1.5 px-3 py-1.5 bg-amber-500 text-white 
+                                 rounded-lg text-sm font-medium hover:bg-amber-600 transition-colors"
+                        >
+                          <i class="fas fa-truck"></i>
+                          Request
+                        </button>
+                        <span
+                          v-if="hasPendingRequest(item.productId)"
+                          class="badge badge-warning"
+                        >
+                          <i class="fas fa-clock mr-1.5"></i>
+                          Pending
+                        </span>
+                      </div>
                     </td>
                   </tr>
                 </tbody>
               </table>
             </div>
-            <p v-else class="text-gray-500">No stock available.</p>
+
+            <div v-else class="p-8 text-center">
+              <i class="fas fa-box-open text-4xl text-slate-300 mb-4"></i>
+              <p class="text-slate-500">No stock available</p>
+            </div>
           </div>
 
-          <!-- Usage Logs Section -->
-          <div class="bg-white p-6 rounded-lg shadow-lg">
-            <h2 class="text-xl text-bar-primary mb-4">Usage Logs</h2>
-            <ul v-if="barStore.usageLogs.length">
-              <li v-for="log in barStore.usageLogs" :key="log.id" class="text-bar-primary mb-2 border-b pb-2">
-                {{ log.productName }}: {{ log.quantity }} at {{ formatDate(log.timestamp) }}
-              </li>
-            </ul>
-            <p v-else class="text-gray-500">No usage logs available.</p>
-          </div>
-
-          <!-- Total Served Section -->
-          <div class="bg-white p-6 rounded-lg shadow-lg">
-            <h2 class="text-xl text-bar-primary mb-4">Total Served</h2>
-            <ul v-if="barStore.totalServed.length">
-              <li v-for="served in barStore.totalServed" :key="served.name" class="text-bar-primary mb-2 border-b pb-2">
-                {{ served.name }}: {{ served.total }}
-              </li>
-            </ul>
-            <p v-else class="text-gray-500">No total served data available.</p>
-          </div>
-
-          <!-- Supply Requests Section -->
-          <div class="bg-white p-6 rounded-lg shadow-lg">
-            <h2 class="text-xl text-bar-primary mb-4">Supply Requests</h2>
-            <ul v-if="barStore.supplyRequests.length">
-              <li v-for="request in barStore.supplyRequests" :key="request.id" class="text-bar-primary mb-2 border-b pb-2">
-                Status: {{ request.status }} (Created: {{ formatDate(request.createdAt) }})
-                <button
-                  v-if="request.status === 'REQUESTED'"
-                  @click="cancelRequest(request.id)"
-                  class="bg-red-500 text-white px-2 py-1 rounded ml-2 hover:bg-red-600"
+          <!-- Stats Cards -->
+          <div class="grid grid-cols-1 md:grid-cols-3 gap-6">
+            <!-- Usage Logs -->
+            <div class="card p-6">
+              <div class="flex items-center gap-3 mb-4">
+                <div class="w-10 h-10 rounded-xl bg-blue-100 flex items-center justify-center">
+                  <i class="fas fa-history text-blue-600"></i>
+                </div>
+                <h2 class="font-semibold text-slate-900">Usage Logs</h2>
+              </div>
+              <div v-if="barStore.usageLogs.length" class="space-y-3 max-h-64 overflow-y-auto scrollbar-thin">
+                <div
+                  v-for="log in barStore.usageLogs.slice(0, 10)"
+                  :key="log.id"
+                  class="flex items-center justify-between py-2 border-b border-slate-100 last:border-0"
                 >
-                  Cancel
-                </button>
-                <button
-                  v-if="request.status === 'DELIVERED'"
-                  @click="addToStock(request)"
-                  class="bg-green-500 text-white px-2 py-1 rounded ml-2 hover:bg-green-600"
+                  <div>
+                    <p class="font-medium text-slate-900 text-sm">{{ log.productName }}</p>
+                    <p class="text-xs text-slate-500">{{ formatDate(log.timestamp) }}</p>
+                  </div>
+                  <span class="text-sm font-semibold text-slate-700">-{{ log.quantity }}</span>
+                </div>
+              </div>
+              <p v-else class="text-slate-500 text-sm">No usage logs available</p>
+            </div>
+
+            <!-- Total Served -->
+            <div class="card p-6">
+              <div class="flex items-center gap-3 mb-4">
+                <div class="w-10 h-10 rounded-xl bg-emerald-100 flex items-center justify-center">
+                  <i class="fas fa-chart-line text-emerald-600"></i>
+                </div>
+                <h2 class="font-semibold text-slate-900">Total Served</h2>
+              </div>
+              <div v-if="barStore.totalServed.length" class="space-y-3 max-h-64 overflow-y-auto scrollbar-thin">
+                <div
+                  v-for="served in barStore.totalServed"
+                  :key="served.name"
+                  class="flex items-center justify-between py-2 border-b border-slate-100 last:border-0"
                 >
-                  Add to Stock
-                </button>
-              </li>
-            </ul>
-            <p v-else class="text-gray-500">No supply requests available.</p>
+                  <span class="font-medium text-slate-900 text-sm">{{ served.name }}</span>
+                  <span class="text-lg font-bold text-emerald-600">{{ served.total }}</span>
+                </div>
+              </div>
+              <p v-else class="text-slate-500 text-sm">No data available</p>
+            </div>
+
+            <!-- Supply Requests -->
+            <div class="card p-6">
+              <div class="flex items-center gap-3 mb-4">
+                <div class="w-10 h-10 rounded-xl bg-amber-100 flex items-center justify-center">
+                  <i class="fas fa-truck text-amber-600"></i>
+                </div>
+                <h2 class="font-semibold text-slate-900">Supply Requests</h2>
+              </div>
+              <div v-if="barStore.supplyRequests.length" class="space-y-3 max-h-64 overflow-y-auto scrollbar-thin">
+                <div
+                  v-for="request in barStore.supplyRequests"
+                  :key="request.id"
+                  class="p-3 bg-slate-50 rounded-lg"
+                >
+                  <div class="flex items-center justify-between mb-2">
+                    <span class="badge" :class="getRequestStatusBadgeClass(request.status)">
+                      {{ request.status }}
+                    </span>
+                    <span class="text-xs text-slate-500">{{ formatDate(request.createdAt) }}</span>
+                  </div>
+                  <div class="flex gap-2">
+                    <button
+                      v-if="request.status === 'REQUESTED'"
+                      @click="cancelRequest(request.id)"
+                      class="flex-1 py-1.5 bg-red-100 text-red-700 rounded text-xs font-medium
+                             hover:bg-red-200 transition-colors"
+                    >
+                      Cancel
+                    </button>
+                    <button
+                      v-if="request.status === 'DELIVERED'"
+                      @click="addToStock(request)"
+                      class="flex-1 py-1.5 bg-emerald-100 text-emerald-700 rounded text-xs font-medium
+                             hover:bg-emerald-200 transition-colors"
+                    >
+                      Add to Stock
+                    </button>
+                  </div>
+                </div>
+              </div>
+              <p v-else class="text-slate-500 text-sm">No supply requests</p>
+            </div>
           </div>
         </div>
+
+        <!-- Modals -->
         <SellStockModal
           :isOpen="showSellModal"
           :item="selectedItem"
@@ -179,7 +268,6 @@ import Sidebar from '../../components/common/Sidebar.vue';
 import Navbar from '../../components/common/Navbar.vue';
 import SellStockModal from '../../components/bars/SellStockModal.vue';
 import SupplyRequestModal from '../../components/bars/SupplyRequestModal.vue'; 
-import AutoSupplyRequestModal from '../../components/bars/AutoSupplyRequestModal.vue'; 
 import AddStockModal from '../../components/bars/AddStockModal.vue'; 
 
 const barStore = useBarStore();
@@ -195,34 +283,73 @@ onMounted(() => {
 });
 
 const sortedStock = computed(() => {
-  return [...barStore.stock].sort((a, b) => new Date(b.updatedAt) - new Date(a.updatedAt));
+  const stock = Array.isArray(barStore.stock) ? barStore.stock.filter(Boolean) : [];
+  const toTime = (value) => {
+    const t = new Date(value ?? 0).getTime();
+    return Number.isFinite(t) ? t : 0;
+  };
+  return [...stock].sort((a, b) => toTime(b?.updatedAt) - toTime(a?.updatedAt));
 });
 
-const getProductColor = (name) => {
-  const lowerName = name.toLowerCase();
-  if (lowerName === 'fanta') return 'bg-yellow-600';
-  if (lowerName === 'coca zero') return 'bg-black';
+const getProductBgClass = (name) => {
+  const lowerName = String(name ?? '').toLowerCase();
+  if (!lowerName) return 'bg-slate-500';
+  if (lowerName === 'fanta') return 'bg-amber-500';
+  if (lowerName === 'coca zero') return 'bg-slate-900';
   if (lowerName === 'red bull') return 'bg-red-500';
-  if (lowerName === 'beer') return 'bg-yellow-400';
+  if (lowerName === 'beer') return 'bg-yellow-500';
   if (lowerName === 'wine') return 'bg-purple-500';
-  return 'bg-gray-500';
+  return 'bg-bar-500';
+};
+
+const getQuantityBadgeClass = (quantity) => {
+  if (quantity === 0) return 'badge-danger';
+  if (quantity < 10) return 'badge-warning';
+  return 'badge-success';
+};
+
+const getRequestStatusBadgeClass = (status) => {
+  const classes = {
+    'REQUESTED': 'badge-info',
+    'IN_PROGRESS': 'badge-warning',
+    'DELIVERED': 'badge-success',
+    'CANCELLED': 'badge-danger',
+    'COMPLETED': 'badge-neutral',
+  };
+  return classes[status] || 'badge-neutral';
 };
 
 const formatDate = (date) => {
-  const now = new Date();
+  if (!date) return '—';
   const updated = new Date(date);
-  const diffInMinutes = Math.floor((now - updated) / (1000 * 60));
-  return diffInMinutes <= 1 ? 'Just now' : `${diffInMinutes} min ago`;
+  const updatedTime = updated.getTime();
+  if (!Number.isFinite(updatedTime)) return '—';
+
+  const nowTime = Date.now();
+  const diffMs = Math.max(0, nowTime - updatedTime);
+  const diffSeconds = Math.floor(diffMs / 1000);
+  if (diffSeconds < 60) return 'Just now';
+
+  const diffMinutes = Math.floor(diffSeconds / 60);
+  if (diffMinutes < 60) return `${diffMinutes} min ago`;
+
+  const diffHours = Math.floor(diffMinutes / 60);
+  if (diffHours < 24) return `${diffHours}h ago`;
+
+  const diffDays = Math.floor(diffHours / 24);
+  return `${diffDays}d ago`;
 };
 
 const hasPendingRequest = (productId) => {
-  return barStore.supplyRequests.some((req) =>
-    req.items.some(
+  const requests = Array.isArray(barStore.supplyRequests) ? barStore.supplyRequests : [];
+  return requests.some((req) => {
+    const items = Array.isArray(req?.items) ? req.items : [];
+    return items.some(
       (item) =>
-        item.productId === productId &&
-        (req.status === 'REQUESTED' || req.status === 'IN_PROGRESS' || req.status === 'DELIVERED')
-    )
-  );
+        item?.productId === productId &&
+        (req?.status === 'REQUESTED' || req?.status === 'IN_PROGRESS' || req?.status === 'DELIVERED')
+    );
+  });
 };
 
 const openSellModal = (item) => {
@@ -237,15 +364,28 @@ const openRequestModal = (item) => {
 
 const handleSell = async ({ quantity }) => {
   const barId = route.params.barId;
-  const productId = selectedItem.value.productId;
-  await barStore.reduceStock(barId, productId, quantity);
-  showSellModal.value = false;
+  const productId = selectedItem.value?.productId;
+  try {
+    if (!productId) throw new Error('Missing product id');
+    await barStore.reduceStock(barId, productId, quantity);
+  } catch (error) {
+    barStore.error = (error instanceof Error ? error.message : String(error));
+  } finally {
+    showSellModal.value = false;
+  }
 };
 
-const handleSupplyRequest = async ({ productId, quantity }) => {
+const handleSupplyRequest = async ({ quantity }) => {
   const barId = route.params.barId;
-  await barStore.createSupplyRequest(barId, [{ productId, quantity }]);
-  showRequestModal.value = false;
+  const productId = selectedItem.value?.productId;
+  try {
+    if (!productId) throw new Error('Missing product id');
+    await barStore.createSupplyRequest(barId, [{ productId, quantity }]);
+  } catch (error) {
+    barStore.error = (error instanceof Error ? error.message : String(error));
+  } finally {
+    showRequestModal.value = false;
+  }
 };
 
 const cancelRequest = async (requestId) => {
@@ -257,8 +397,13 @@ const cancelRequest = async (requestId) => {
 
 const addToStock = async (request) => {
   const barId = route.params.barId;
-  const productId = request.items[0].productId;
-  const quantity = request.items[0].quantity;
+  const firstItem = Array.isArray(request?.items) ? request.items[0] : null;
+  const productId = firstItem?.productId;
+  const quantity = firstItem?.quantity;
+  if (!productId || !quantity) {
+    barStore.error = 'Supply request has no items to add to stock.';
+    return;
+  }
   await barStore.addStock(barId, productId, quantity);
   await barStore.updateSupplyRequest(barId, request.id, 'COMPLETED');
 };
@@ -271,5 +416,5 @@ const handleAddStock = async ({ productId, quantity }) => {
 </script>
 
 <style scoped>
-/* Tailwind handles styling */
+/* Minimal scoped styles - using Tailwind utilities */
 </style>

@@ -57,3 +57,32 @@ logging:
     root: INFO
     com.coditects.bar: DEBUG
     org.springframework.security: DEBUG
+
+# =====================================================
+# RabbitMQ Configuration (Spring Cloud Stream)
+# =====================================================
+spring.rabbitmq:
+  host: localhost
+  port: 5672
+  username: nextbar
+  password: nextbar123
+
+spring.cloud.stream:
+  bindings:
+    # Output binding for publishing supply request created events
+    supplyRequestCreated-out-0:
+      destination: supply.request.created
+      content-type: application/json
+    # Input binding for consuming supply request updated events
+    supplyRequestUpdated-in-0:
+      destination: supply.request.updated
+      content-type: application/json
+      group: bar-service
+  rabbit:
+    bindings:
+      supplyRequestCreated-out-0:
+        producer:
+          exchange-type: topic
+      supplyRequestUpdated-in-0:
+        consumer:
+          exchange-type: topic

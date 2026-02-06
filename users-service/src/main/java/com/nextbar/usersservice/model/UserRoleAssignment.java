@@ -1,10 +1,20 @@
-package com.coditects.usersservice.model;
-
-import jakarta.persistence.*;
+package com.nextbar.usersservice.model;
 
 import java.util.UUID;
 
+import jakarta.persistence.Entity;
+import jakarta.persistence.GeneratedValue;
+import jakarta.persistence.Id;
+import jakarta.persistence.ManyToOne;
+import jakarta.persistence.Table;
+import lombok.AllArgsConstructor;
+import lombok.Data;
+import lombok.NoArgsConstructor;
+
 @Entity
+@Data
+@NoArgsConstructor
+@AllArgsConstructor
 @Table(name = "user_role_assignments")
 public class UserRoleAssignment {
 
