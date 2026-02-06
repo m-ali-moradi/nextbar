@@ -1,6 +1,5 @@
 package com.coditects.usersservice.controller;
 
-import com.coditects.usersservice.dto.UserDTO;
 import com.coditects.usersservice.service.UserService;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.HttpStatus;

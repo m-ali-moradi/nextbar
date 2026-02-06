@@ -1,8 +1,7 @@
 package com.coditects.usersservice.controller;
 
-import com.coditects.usersservice.dto.AuthResponse;
-import com.coditects.usersservice.dto.LoginRequest;
-import com.coditects.usersservice.dto.RegisterRequest;
+import com.coditects.usersservice.dto.LoginResponseDTO;
+import com.coditects.usersservice.dto.LoginRequestDTO;
 import com.coditects.usersservice.service.UserService;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
@@ -20,7 +19,7 @@ public class AuthController {
     @PostMapping("/register")
     public ResponseEntity<?> register(@Valid @RequestBody RegisterRequest request) {
         try {
-            AuthResponse response = userService.register(request);
+            LoginResponseDTO response = userService.register(request);
             return ResponseEntity.ok(response);
         } catch (RuntimeException e) {
             return ResponseEntity.status(HttpStatus.BAD_REQUEST)
@@ -29,9 +28,9 @@ public class AuthController {
     }
 
     @PostMapping("/login")
-    public ResponseEntity<?> login(@Valid @RequestBody LoginRequest request) {
+    public ResponseEntity<?> login(@Valid @RequestBody LoginRequestDTO request) {
         try {
-            AuthResponse response = userService.login(request);
+            LoginResponseDTO response = userService.login(request);
             System.out.println("Login successful for user: ");
             return ResponseEntity.ok(response);
         } catch (RuntimeException e) {
