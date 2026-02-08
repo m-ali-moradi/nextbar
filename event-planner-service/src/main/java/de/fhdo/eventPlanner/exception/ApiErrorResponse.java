@@ -1,62 +1,46 @@
 package de.fhdo.eventPlanner.exception;
 
+import lombok.AllArgsConstructor;
+import lombok.Builder;
+import lombok.Data;
+import lombok.NoArgsConstructor;
+
 import java.time.LocalDateTime;
+import java.util.List;
 
 /**
- * Standardized API error response structure.
+ * Standard API error response structure.
  */
+@Data
+@NoArgsConstructor
+@AllArgsConstructor
+@Builder
 public class ApiErrorResponse {
+
+    private LocalDateTime timestamp;
     private int status;
     private String error;
     private String message;
     private String path;
-    private LocalDateTime timestamp;
+    private List<FieldError> fieldErrors;
 
-    public ApiErrorResponse(int status, String error, String message, String path, LocalDateTime timestamp) {
-        this.status = status;
-        this.error = error;
-        this.message = message;
-        this.path = path;
-        this.timestamp = timestamp;
+    @Data
+    @NoArgsConstructor
+    @AllArgsConstructor
+    @Builder
+    public static class FieldError {
+        private String field;
+        private String message;
+        private Object rejectedValue;
     }
 
-    public int getStatus() {
-        return status;
-    }
-
-    public void setStatus(int status) {
-        this.status = status;
-    }
-
-    public String getError() {
-        return error;
-    }
-
-    public void setError(String error) {
-        this.error = error;
-    }
-
-    public String getMessage() {
-        return message;
-    }
-
-    public void setMessage(String message) {
-        this.message = message;
-    }
-
-    public String getPath() {
-        return path;
-    }
-
-    public void setPath(String path) {
-        this.path = path;
-    }
-
-    public LocalDateTime getTimestamp() {
-        return timestamp;
-    }
-
-    public void setTimestamp(LocalDateTime timestamp) {
-        this.timestamp = timestamp;
+    public static ApiErrorResponse of(int status, String error, String message, String path) {
+        return ApiErrorResponse.builder()
+                .timestamp(LocalDateTime.now())
+                .status(status)
+                .error(error)
+                .message(message)
+                .path(path)
+                .build();
     }
 }

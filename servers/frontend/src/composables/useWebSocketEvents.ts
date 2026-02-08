@@ -17,6 +17,7 @@ import { ref, reactive, onMounted, onUnmounted, watch } from 'vue';
 // ============================================================
 
 export type EventType =
+    | 'SUPPLY_REQUEST_CREATED'
     | 'SUPPLY_REQUEST_UPDATED'
     | 'BAR_STOCK_UPDATED'
     | 'WAREHOUSE_STOCK_UPDATED'
@@ -52,6 +53,7 @@ const eventCounter = ref(0);
 
 /** Events by type - reactive object that stores the last event per type */
 const eventsByType = reactive<Record<EventType, NextBarEvent | null>>({
+    'SUPPLY_REQUEST_CREATED': null,
     'SUPPLY_REQUEST_UPDATED': null,
     'BAR_STOCK_UPDATED': null,
     'WAREHOUSE_STOCK_UPDATED': null,

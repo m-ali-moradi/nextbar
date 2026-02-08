@@ -37,7 +37,7 @@
                 <i class="fas fa-wine-bottle text-slate-400"></i>
               </div>
               <select
-                v-model="selectedProduct"
+                v-model="formData.productId"
                 id="product"
                 required
                 class="input pl-12 text-base appearance-none cursor-pointer"
@@ -64,7 +64,7 @@
               <button 
                 type="button"
                 @click="decreaseQuantity"
-                :disabled="quantity <= 1"
+                :disabled="formData.quantity <= 1"
                 class="w-14 h-14 rounded-xl text-2xl font-bold transition-all duration-200 
                        flex items-center justify-center
                        bg-slate-100 text-slate-700 hover:bg-slate-200
@@ -75,7 +75,7 @@
               
               <input
                 type="number"
-                v-model.number="quantity"
+                v-model.number="formData.quantity"
                 id="quantity"
                 required
                 min="1"
@@ -100,10 +100,10 @@
                 type="button"
                 v-for="preset in [5, 10, 25, 50, 100]"
                 :key="preset"
-                @click="quantity = preset"
+                @click="formData.quantity = preset"
                 class="flex-1 py-2.5 rounded-lg text-sm font-semibold transition-all
                        border-2 border-slate-200 text-slate-600 hover:border-bar-300 hover:text-bar-600"
-                :class="{ 'border-bar-500 bg-bar-50 text-bar-700': quantity === preset }"
+                :class="{ 'border-bar-500 bg-bar-50 text-bar-700': formData.quantity === preset }"
               >
                 {{ preset }}
               </button>
@@ -119,7 +119,7 @@
                 </div>
                 <span class="text-base font-medium text-bar-800">Adding to Stock</span>
               </div>
-              <span class="text-2xl font-bold text-bar-700">{{ quantity }}</span>
+              <span class="text-2xl font-bold text-bar-700">{{ formData.quantity }}</span>
             </div>
           </div>
 
@@ -131,7 +131,7 @@
             </button>
             <button
               type="submit"
-              :disabled="!selectedProduct || quantity < 1"
+              :disabled="!formData.productId || formData.quantity < 1"
               class="btn-primary flex-1"
             >
               <i class="fas fa-plus"></i>
@@ -144,64 +144,72 @@
   </Transition>
 </template>
 
-<script>
-import api from "../../api";
+<script setup lang="ts">
+import { reactive, ref, watch } from 'vue';
+import { useRoute } from 'vue-router';
+import { barApi } from '../../api';
+import type { Product, StockOperationPayload } from '../../api/types';
 
-export default {
-  name: "AddStockModal",
-  props: {
-    isOpen: Boolean,
-  },
-  data() {
-    return {
-      products: [],
-      selectedProduct: "",
-      quantity: 10,
-    };
-  },
-  watch: {
-    isOpen(newVal) {
-      if (newVal) {
-        this.fetchProducts();
-        this.selectedProduct = "";
-        this.quantity = 10;
-      }
-    },
-  },
-  methods: {
-    decreaseQuantity() {
-      if (this.quantity > 1) {
-        this.quantity--;
-      }
-    },
-    increaseQuantity() {
-      this.quantity++;
-    },
-    async handleSubmit() {
-      if (this.selectedProduct && this.quantity > 0) {
-        try {
-          await api.addStock(
-            this.$route.params.barId,
-            this.selectedProduct,
-            this.quantity
-          );
-          this.$emit("close");
-          this.$emit("stock-added", { productId: this.selectedProduct, quantity: this.quantity });
-        } catch (error) {
-          console.error("Error adding stock:", error);
-        }
-      }
-    },
-    async fetchProducts() {
-      try {
-        const products = await api.getProducts();
-        this.products = products;
-      } catch (error) {
-        console.error("Error fetching products:", error);
-      }
-    },
-  },
-};
+const props = defineProps<{
+  isOpen: boolean;
+}>();
+
+const emit = defineEmits<{
+  (e: 'close'): void;
+  (e: 'stock-added', payload: StockOperationPayload): void;
+}>();
+
+const route = useRoute();
+const products = ref<Product[]>([]);
+
+const formData = reactive<StockOperationPayload>({
+  productId: '',
+  quantity: 10,
+});
+
+// Fetch products and reset form when modal opens
+watch(() => props.isOpen, async (newVal) => {
+  if (newVal) {
+    formData.productId = '';
+    formData.quantity = 10;
+    await fetchProducts();
+  }
+});
+
+async function fetchProducts() {
+  try {
+    const response = await barApi.getProducts();
+    products.value = response.data;
+  } catch (error) {
+    console.error('Error fetching products:', error);
+  }
+}
+
+function decreaseQuantity() {
+  if (formData.quantity > 1) {
+    formData.quantity--;
+  }
+}
+
+function increaseQuantity() {
+  formData.quantity++;
+}
+
+async function handleSubmit() {
+  if (formData.productId && formData.quantity > 0) {
+    const barId = route.params.barId as string;
+    try {
+      await barApi.addStock(barId, {
+        productId: formData.productId,
+        quantity: formData.quantity,
+      });
+      emit('close');
+      emit('stock-added', { ...formData });
+    } catch (error) {
+      console.error('Error adding stock:', error);
+    }
+  }
+}
 </script>
 
 <style scoped>
@@ -229,6 +237,7 @@ input[type="number"]::-webkit-outer-spin-button {
 
 input[type="number"] {
   -moz-appearance: textfield;
+  appearance: textfield;
 }
 
 /* Custom select styling */

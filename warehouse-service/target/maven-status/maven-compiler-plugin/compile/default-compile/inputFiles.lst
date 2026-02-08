@@ -1,4 +1,3 @@
-D:\FH-Dortmund\SecondSemester\SoftwareIntensiveSolution\Project\nextBar\warehouse-service\src\main\java\com\dmsa\warehouse\client\BarServiceClient.java
 D:\FH-Dortmund\SecondSemester\SoftwareIntensiveSolution\Project\nextBar\warehouse-service\src\main\java\com\dmsa\warehouse\controller\CollectionController.java
 D:\FH-Dortmund\SecondSemester\SoftwareIntensiveSolution\Project\nextBar\warehouse-service\src\main\java\com\dmsa\warehouse\dto\response\SupplyFulfillmentResponse.java
 D:\FH-Dortmund\SecondSemester\SoftwareIntensiveSolution\Project\nextBar\warehouse-service\src\main\java\com\dmsa\warehouse\dto\response\EmptyBottleInventoryResponse.java
@@ -9,7 +8,6 @@ D:\FH-Dortmund\SecondSemester\SoftwareIntensiveSolution\Project\nextBar\warehous
 D:\FH-Dortmund\SecondSemester\SoftwareIntensiveSolution\Project\nextBar\warehouse-service\src\main\java\com\dmsa\warehouse\security\JwtTokenValidator.java
 D:\FH-Dortmund\SecondSemester\SoftwareIntensiveSolution\Project\nextBar\warehouse-service\src\main\java\com\dmsa\warehouse\dto\external\SupplyRequestDto.java
 D:\FH-Dortmund\SecondSemester\SoftwareIntensiveSolution\Project\nextBar\warehouse-service\src\main\java\com\dmsa\warehouse\service\StockService.java
-D:\FH-Dortmund\SecondSemester\SoftwareIntensiveSolution\Project\nextBar\warehouse-service\src\main\java\com\dmsa\warehouse\client\DropPointServiceClientFallbackFactory.java
 D:\FH-Dortmund\SecondSemester\SoftwareIntensiveSolution\Project\nextBar\warehouse-service\src\main\java\com\dmsa\warehouse\exception\ServiceUnavailableException.java
 D:\FH-Dortmund\SecondSemester\SoftwareIntensiveSolution\Project\nextBar\warehouse-service\src\main\java\com\dmsa\warehouse\model\entity\DropPointCollection.java
 D:\FH-Dortmund\SecondSemester\SoftwareIntensiveSolution\Project\nextBar\warehouse-service\src\main\java\com\dmsa\warehouse\model\entity\BeverageStock.java
@@ -20,17 +18,14 @@ D:\FH-Dortmund\SecondSemester\SoftwareIntensiveSolution\Project\nextBar\warehous
 D:\FH-Dortmund\SecondSemester\SoftwareIntensiveSolution\Project\nextBar\warehouse-service\src\main\java\com\dmsa\warehouse\model\enums\CollectionStatus.java
 D:\FH-Dortmund\SecondSemester\SoftwareIntensiveSolution\Project\nextBar\warehouse-service\src\main\java\com\dmsa\warehouse\exception\InvalidStateTransitionException.java
 D:\FH-Dortmund\SecondSemester\SoftwareIntensiveSolution\Project\nextBar\warehouse-service\src\main\java\com\dmsa\warehouse\model\entity\SupplyRequest.java
-D:\FH-Dortmund\SecondSemester\SoftwareIntensiveSolution\Project\nextBar\warehouse-service\src\main\java\com\dmsa\warehouse\config\FeignConfig.java
-D:\FH-Dortmund\SecondSemester\SoftwareIntensiveSolution\Project\nextBar\warehouse-service\src\main\java\com\dmsa\warehouse\client\BarServiceClientFallbackFactory.java
 D:\FH-Dortmund\SecondSemester\SoftwareIntensiveSolution\Project\nextBar\warehouse-service\src\main\java\com\dmsa\warehouse\config\SecurityConfig.java
 D:\FH-Dortmund\SecondSemester\SoftwareIntensiveSolution\Project\nextBar\warehouse-service\src\main\java\com\dmsa\warehouse\dto\external\SupplyItemDto.java
-D:\FH-Dortmund\SecondSemester\SoftwareIntensiveSolution\Project\nextBar\warehouse-service\src\main\java\com\dmsa\warehouse\client\DropPointServiceClient.java
 D:\FH-Dortmund\SecondSemester\SoftwareIntensiveSolution\Project\nextBar\warehouse-service\src\main\java\com\dmsa\warehouse\event\SupplyEventPublisher.java
+D:\FH-Dortmund\SecondSemester\SoftwareIntensiveSolution\Project\nextBar\warehouse-service\src\main\java\com\dmsa\warehouse\config\RabbitMQConfig.java
 D:\FH-Dortmund\SecondSemester\SoftwareIntensiveSolution\Project\nextBar\warehouse-service\src\main\java\com\dmsa\warehouse\WarehouseServiceApplication.java
 D:\FH-Dortmund\SecondSemester\SoftwareIntensiveSolution\Project\nextBar\warehouse-service\src\main\java\com\dmsa\warehouse\exception\GlobalExceptionHandler.java
 D:\FH-Dortmund\SecondSemester\SoftwareIntensiveSolution\Project\nextBar\warehouse-service\src\main\java\com\dmsa\warehouse\repository\BeverageStockRepository.java
 D:\FH-Dortmund\SecondSemester\SoftwareIntensiveSolution\Project\nextBar\warehouse-service\src\main\java\com\dmsa\warehouse\repository\DropPointCollectionRepository.java
-D:\FH-Dortmund\SecondSemester\SoftwareIntensiveSolution\Project\nextBar\warehouse-service\src\main\java\com\dmsa\warehouse\config\OpenApiConfig.java
 D:\FH-Dortmund\SecondSemester\SoftwareIntensiveSolution\Project\nextBar\warehouse-service\src\main\java\com\dmsa\warehouse\model\entity\SupplyRequestItem.java
 D:\FH-Dortmund\SecondSemester\SoftwareIntensiveSolution\Project\nextBar\warehouse-service\src\main\java\com\dmsa\warehouse\dto\response\CollectionResponse.java
 D:\FH-Dortmund\SecondSemester\SoftwareIntensiveSolution\Project\nextBar\warehouse-service\src\main\java\com\dmsa\warehouse\dto\external\BarDto.java

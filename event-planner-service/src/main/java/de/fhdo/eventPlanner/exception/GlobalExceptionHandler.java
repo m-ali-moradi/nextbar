@@ -1,114 +1,108 @@
 package de.fhdo.eventPlanner.exception;
 
-import jakarta.validation.ConstraintViolation;
-import jakarta.validation.ConstraintViolationException;
-import jakarta.validation.ValidationException;
+import jakarta.servlet.http.HttpServletRequest;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
-import org.springframework.validation.FieldError;
+import org.springframework.validation.BindingResult;
 import org.springframework.web.bind.MethodArgumentNotValidException;
 import org.springframework.web.bind.annotation.ExceptionHandler;
 import org.springframework.web.bind.annotation.RestControllerAdvice;
-import org.springframework.web.context.request.WebRequest;
 
-import java.time.LocalDateTime;
-import java.util.HashMap;
-import java.util.Map;
+import java.util.List;
 import java.util.stream.Collectors;
 
 /**
- * Global exception handler for the event-planner-service.
- * Provides centralized exception handling across all REST controllers.
+ * Global exception handler for REST API errors.
  */
 @RestControllerAdvice
 public class GlobalExceptionHandler {
 
-    @ExceptionHandler(ResourceNotFoundException.class)
-    public ResponseEntity<ApiErrorResponse> handleResourceNotFoundException(
-            ResourceNotFoundException ex, WebRequest request) {
-        ApiErrorResponse errorResponse = new ApiErrorResponse(
-                HttpStatus.NOT_FOUND.value(),
-                "Not Found",
-                ex.getMessage(),
-                request.getDescription(false).replace("uri=", ""),
-                LocalDateTime.now()
-        );
-        return new ResponseEntity<>(errorResponse, HttpStatus.NOT_FOUND);
-    }
+        private static final Logger log = LoggerFactory.getLogger(GlobalExceptionHandler.class);
 
-    @ExceptionHandler(ApiException.class)
-    public ResponseEntity<ApiErrorResponse> handleApiException(
-            ApiException ex, WebRequest request) {
-        ApiErrorResponse errorResponse = new ApiErrorResponse(
-                ex.getStatusCode(),
-                HttpStatus.valueOf(ex.getStatusCode()).getReasonPhrase(),
-                ex.getMessage(),
-                request.getDescription(false).replace("uri=", ""),
-                LocalDateTime.now()
-        );
-        return new ResponseEntity<>(errorResponse, HttpStatus.valueOf(ex.getStatusCode()));
-    }
+        /**
+         * Handle custom API exceptions.
+         */
+        @ExceptionHandler(ApiException.class)
+        public ResponseEntity<ApiErrorResponse> handleApiException(ApiException ex, HttpServletRequest request) {
+                log.warn("API Exception: {} - {}", ex.getStatus(), ex.getMessage());
 
-    @ExceptionHandler(ValidationException.class)
-    public ResponseEntity<ApiErrorResponse> handleValidationException(
-            ValidationException ex, WebRequest request) {
-        ApiErrorResponse errorResponse = new ApiErrorResponse(
-                HttpStatus.BAD_REQUEST.value(),
-                "Validation Error",
-                ex.getMessage(),
-                request.getDescription(false).replace("uri=", ""),
-                LocalDateTime.now()
-        );
-        return new ResponseEntity<>(errorResponse, HttpStatus.BAD_REQUEST);
-    }
+                ApiErrorResponse response = ApiErrorResponse.of(
+                                ex.getStatus().value(),
+                                ex.getStatus().getReasonPhrase(),
+                                ex.getMessage(),
+                                request.getRequestURI());
 
-    @ExceptionHandler(MethodArgumentNotValidException.class)
-    public ResponseEntity<Map<String, Object>> handleMethodArgumentNotValidException(
-            MethodArgumentNotValidException ex, WebRequest request) {
-        Map<String, String> fieldErrors = new HashMap<>();
-        for (FieldError error : ex.getBindingResult().getFieldErrors()) {
-            fieldErrors.put(error.getField(), error.getDefaultMessage());
+                return ResponseEntity.status(ex.getStatus()).body(response);
         }
 
-        Map<String, Object> errorResponse = new HashMap<>();
-        errorResponse.put("status", HttpStatus.BAD_REQUEST.value());
-        errorResponse.put("error", "Validation Failed");
-        errorResponse.put("fieldErrors", fieldErrors);
-        errorResponse.put("path", request.getDescription(false).replace("uri=", ""));
-        errorResponse.put("timestamp", LocalDateTime.now());
+        /**
+         * Handle validation errors.
+         */
+        @ExceptionHandler(MethodArgumentNotValidException.class)
+        public ResponseEntity<ApiErrorResponse> handleValidationException(
+                        MethodArgumentNotValidException ex, HttpServletRequest request) {
 
-        return new ResponseEntity<>(errorResponse, HttpStatus.BAD_REQUEST);
-    }
+                BindingResult bindingResult = ex.getBindingResult();
 
-    @ExceptionHandler(ConstraintViolationException.class)
-    public ResponseEntity<Map<String, Object>> handleConstraintViolationException(
-            ConstraintViolationException ex, WebRequest request) {
-        Map<String, String> violations = ex.getConstraintViolations().stream()
-                .collect(Collectors.toMap(
-                        violation -> violation.getPropertyPath().toString(),
-                        ConstraintViolation::getMessage
-                ));
+                List<ApiErrorResponse.FieldError> fieldErrors = bindingResult.getFieldErrors().stream()
+                                .map(error -> ApiErrorResponse.FieldError.builder()
+                                                .field(error.getField())
+                                                .message(error.getDefaultMessage())
+                                                .rejectedValue(error.getRejectedValue())
+                                                .build())
+                                .collect(Collectors.toList());
 
-        Map<String, Object> errorResponse = new HashMap<>();
-        errorResponse.put("status", HttpStatus.BAD_REQUEST.value());
-        errorResponse.put("error", "Constraint Violation");
-        errorResponse.put("violations", violations);
-        errorResponse.put("path", request.getDescription(false).replace("uri=", ""));
-        errorResponse.put("timestamp", LocalDateTime.now());
+                ApiErrorResponse response = ApiErrorResponse.builder()
+                                .timestamp(java.time.LocalDateTime.now())
+                                .status(HttpStatus.BAD_REQUEST.value())
+                                .error("Validation Failed")
+                                .message("One or more fields have validation errors")
+                                .path(request.getRequestURI())
+                                .fieldErrors(fieldErrors)
+                                .build();
 
-        return new ResponseEntity<>(errorResponse, HttpStatus.BAD_REQUEST);
-    }
+                log.warn("Validation failed for request to {}: {}",
+                                request.getRequestURI(), fieldErrors);
 
-    @ExceptionHandler(Exception.class)
-    public ResponseEntity<ApiErrorResponse> handleGlobalException(
-            Exception ex, WebRequest request) {
-        ApiErrorResponse errorResponse = new ApiErrorResponse(
-                HttpStatus.INTERNAL_SERVER_ERROR.value(),
-                "Internal Server Error",
-                "An unexpected error occurred: " + ex.getMessage(),
-                request.getDescription(false).replace("uri=", ""),
-                LocalDateTime.now()
-        );
-        return new ResponseEntity<>(errorResponse, HttpStatus.INTERNAL_SERVER_ERROR);
-    }
+                return ResponseEntity.badRequest().body(response);
+        }
+
+        /**
+         * Handle illegal argument exceptions.
+         */
+        @ExceptionHandler(IllegalArgumentException.class)
+        public ResponseEntity<ApiErrorResponse> handleIllegalArgumentException(
+                        IllegalArgumentException ex, HttpServletRequest request) {
+
+                log.warn("Illegal argument: {}", ex.getMessage());
+
+                ApiErrorResponse response = ApiErrorResponse.of(
+                                HttpStatus.BAD_REQUEST.value(),
+                                "Bad Request",
+                                ex.getMessage(),
+                                request.getRequestURI());
+
+                return ResponseEntity.badRequest().body(response);
+        }
+
+        /**
+         * Handle all other exceptions.
+         */
+        @ExceptionHandler(Exception.class)
+        public ResponseEntity<ApiErrorResponse> handleGenericException(
+                        Exception ex, HttpServletRequest request) {
+
+                log.error("Unexpected error processing request to {}: {}",
+                                request.getRequestURI(), ex.getMessage(), ex);
+
+                ApiErrorResponse response = ApiErrorResponse.of(
+                                HttpStatus.INTERNAL_SERVER_ERROR.value(),
+                                "Internal Server Error",
+                                "An unexpected error occurred. Please try again later.",
+                                request.getRequestURI());
+
+                return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body(response);
+        }
 }

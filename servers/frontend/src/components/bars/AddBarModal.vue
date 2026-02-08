@@ -25,7 +25,7 @@
           <div>
             <label for="barName" class="label">Bar Name</label>
             <input
-              v-model="barName"
+              v-model="formData.name"
               id="barName"
               type="text"
               class="input"
@@ -37,7 +37,7 @@
           <div>
             <label for="barLocation" class="label">Location</label>
             <input
-              v-model="barLocation"
+              v-model="formData.location"
               id="barLocation"
               type="text"
               class="input"
@@ -49,7 +49,7 @@
           <div>
             <label for="barStockCapacity" class="label">Stock Capacity</label>
             <input
-              v-model="barStockCapacity"
+              v-model.number="formData.maxCapacity"
               id="barStockCapacity"
               type="number"
               class="input"
@@ -79,34 +79,50 @@
   </Transition>
 </template>
 
-<script>
-import api from "../../api";
+<script setup lang="ts">
+import { reactive, watch } from 'vue';
+import { barApi } from '../../api';
+import type { CreateBarPayload } from '../../api/types';
 
-export default {
-  name: "AddBarModal",
-  props: {
-    isOpen: Boolean,
-  },
-  data() {
-    return {
-      barName: "",
-      barLocation: "",
-      barStockCapacity: "",
-    };
-  },
-  methods: {
-    async addBar() {
-      if (this.barName) {
-        await api.addBar(this.barName, this.barLocation, this.barStockCapacity);
-        this.$emit("close");
-        this.$emit("bar-added");
-        this.barName = "";
-        this.barLocation = "";
-        this.barStockCapacity = "";
-      }
-    },
-  },
-};
+const props = defineProps<{
+  isOpen: boolean;
+}>();
+
+const emit = defineEmits<{
+  (e: 'close'): void;
+  (e: 'bar-added'): void;
+}>();
+
+const formData = reactive<CreateBarPayload>({
+  name: '',
+  location: '',
+  maxCapacity: 100,
+});
+
+// Reset form when modal opens
+watch(() => props.isOpen, (newVal) => {
+  if (newVal) {
+    formData.name = '';
+    formData.location = '';
+    formData.maxCapacity = 100;
+  }
+});
+
+async function addBar() {
+  if (formData.name && formData.location && formData.maxCapacity > 0) {
+    try {
+      await barApi.addBar({
+        name: formData.name,
+        location: formData.location,
+        maxCapacity: formData.maxCapacity,
+      });
+      emit('close');
+      emit('bar-added');
+    } catch (error) {
+      console.error('Error adding bar:', error);
+    }
+  }
+}
 </script>
 
 <style scoped>

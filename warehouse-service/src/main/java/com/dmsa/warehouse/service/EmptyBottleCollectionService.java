@@ -1,7 +1,14 @@
 package com.dmsa.warehouse.service;
 
-import com.dmsa.warehouse.client.DropPointServiceClient;
-import com.dmsa.warehouse.dto.external.DropPointDto;
+import java.util.ArrayList;
+import java.util.List;
+import java.util.stream.Collectors;
+
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
+
 import com.dmsa.warehouse.dto.response.CollectionResponse;
 import com.dmsa.warehouse.dto.response.EmptyBottleInventoryResponse;
 import com.dmsa.warehouse.exception.InvalidStateTransitionException;
@@ -11,15 +18,6 @@ import com.dmsa.warehouse.model.entity.EmptyBottleInventory;
 import com.dmsa.warehouse.model.enums.CollectionStatus;
 import com.dmsa.warehouse.repository.DropPointCollectionRepository;
 import com.dmsa.warehouse.repository.EmptyBottleInventoryRepository;
-import io.github.resilience4j.circuitbreaker.annotation.CircuitBreaker;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
-import org.springframework.stereotype.Service;
-import org.springframework.transaction.annotation.Transactional;
-
-import java.util.ArrayList;
-import java.util.List;
-import java.util.stream.Collectors;
 
 /**
  * Service for managing empty bottle collection from drop points.
@@ -31,14 +29,11 @@ public class EmptyBottleCollectionService {
 
     private static final Logger log = LoggerFactory.getLogger(EmptyBottleCollectionService.class);
 
-    private final DropPointServiceClient dropPointClient;
     private final DropPointCollectionRepository collectionRepository;
     private final EmptyBottleInventoryRepository inventoryRepository;
 
-    public EmptyBottleCollectionService(DropPointServiceClient dropPointClient,
-            DropPointCollectionRepository collectionRepository,
+    public EmptyBottleCollectionService(DropPointCollectionRepository collectionRepository,
             EmptyBottleInventoryRepository inventoryRepository) {
-        this.dropPointClient = dropPointClient;
         this.collectionRepository = collectionRepository;
         this.inventoryRepository = inventoryRepository;
     }
@@ -48,62 +43,9 @@ public class EmptyBottleCollectionService {
      * Creates or updates local collection records for notified drop points.
      */
     @Transactional
-    @CircuitBreaker(name = "dropPointService")
     public List<CollectionResponse> syncDropPointNotifications() {
-        log.info("Syncing drop point notifications");
-
-        List<DropPointDto> allDropPoints = dropPointClient.getAllDropPoints();
-        List<CollectionResponse> result = new ArrayList<>();
-
-        for (DropPointDto dropPoint : allDropPoints) {
-            try {
-                CollectionResponse response = processDropPoint(dropPoint);
-                if (response != null) {
-                    result.add(response);
-                }
-            } catch (Exception e) {
-                log.error("Error processing drop point {}: {}", dropPoint.getId(), e.getMessage());
-            }
-        }
-
-        log.info("Synced {} drop point notifications", result.size());
-        return result;
-    }
-
-    private CollectionResponse processDropPoint(DropPointDto dropPoint) {
-        if (dropPoint.isNotifiedToWarehouse()) {
-            // Check if we already have a collection record
-            if (collectionRepository.hasActiveCollection(dropPoint.getId())) {
-                log.debug("Active collection already exists for drop point {}", dropPoint.getId());
-                return null;
-            }
-
-            // Create new collection record
-            DropPointCollection collection = new DropPointCollection(
-                    dropPoint.getId(),
-                    dropPoint.getLocation(),
-                    dropPoint.getCurrentEmpties());
-            collection = collectionRepository.save(collection);
-            log.info("Created collection record for drop point {}", dropPoint.getId());
-            return CollectionResponse.fromEntity(collection);
-
-        } else if (dropPoint.isEmpty()) {
-            // Handle reset scenario - mark any ACCEPTED collections as needs reset
-            List<CollectionStatus> activeStatuses = List.of(
-                    CollectionStatus.PENDING,
-                    CollectionStatus.ACCEPTED);
-            collectionRepository.findActiveByDropPointId(dropPoint.getId(), activeStatuses)
-                    .ifPresent(collection -> {
-                        if (collection.getStatus() == CollectionStatus.ACCEPTED) {
-                            log.info("Drop point {} was emptied externally, resetting collection",
-                                    dropPoint.getId());
-                            collection.reset();
-                            collectionRepository.save(collection);
-                        }
-                    });
-        }
-
-        return null;
+        log.warn("Drop point sync disabled: Feign removed from warehouse-service");
+        return new ArrayList<>();
     }
 
     /**

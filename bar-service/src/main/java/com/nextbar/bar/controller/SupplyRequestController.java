@@ -12,12 +12,12 @@ import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
-import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
 
 import com.nextbar.bar.model.SupplyStatus;
-import com.nextbar.bar.model.dto.SupplyItemDto;
+import com.nextbar.bar.model.dto.CreateSupplyRequestDto;
 import com.nextbar.bar.model.dto.SupplyRequestDto;
+import com.nextbar.bar.model.dto.UpdateSupplyRequestStatusDto;
 import com.nextbar.bar.security.RbacService;
 import com.nextbar.bar.service.SupplyRequestService;
 
@@ -40,21 +40,22 @@ public class SupplyRequestController {
      * Create a new supply request.
      *
      * @param barId the bar UUID
-     * @param items list of items to request
+     * @param dto   the create request payload containing items
      * @return the created supply request with HTTP 201
      */
     @PostMapping
     public ResponseEntity<SupplyRequestDto> createRequest(
             @PathVariable UUID barId,
-            @Valid @RequestBody List<SupplyItemDto> items) {
+            @Valid @RequestBody CreateSupplyRequestDto dto) {
         rbacService.requireBarAccess(barId);
-        SupplyRequestDto created = requestService.createRequest(barId, items);
+        SupplyRequestDto created = requestService.createRequest(barId, dto.items());
         return ResponseEntity.status(HttpStatus.CREATED).body(created);
     }
 
     /**
      * View all supply requests for a bar.
-     * This endpoint can be shared with warehouse personnel to view all requests for a bar.
+     * This endpoint can be shared with warehouse personnel to view all requests for
+     * a bar.
      *
      * @param barId the bar UUID
      * @return list of supply requests
@@ -96,17 +97,17 @@ public class SupplyRequestController {
      * This endpoint can be used by warehouse personnel.
      *
      * @param requestId the request UUID
-     * @param status    the new status
+     * @param dto       the status update payload
      * @return the updated supply request
      */
     @PatchMapping("/{requestId}/status")
     public ResponseEntity<SupplyRequestDto> updateRequestStatus(
             @PathVariable UUID barId,
             @PathVariable UUID requestId,
-            @RequestParam String status) {
+            @Valid @RequestBody UpdateSupplyRequestStatusDto dto) {
         rbacService.requireBarAccess(barId);
         // Parse status from string to enum
-        SupplyStatus supplyStatus = SupplyStatus.valueOf(status.toUpperCase());
+        SupplyStatus supplyStatus = SupplyStatus.valueOf(dto.status().toUpperCase());
         requestService.updateRequestStatus(requestId, null, supplyStatus);
         SupplyRequestDto updated = requestService.getRequest(requestId);
         return ResponseEntity.ok(updated);

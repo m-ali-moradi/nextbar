@@ -10,17 +10,18 @@ import org.springframework.validation.annotation.Validated;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.PostMapping;
+import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
 
+import com.nextbar.bar.model.dto.StockOperationDto;
 import com.nextbar.bar.model.dto.TotalServedDto;
 import com.nextbar.bar.model.dto.UsageLogDto;
 import com.nextbar.bar.security.RbacService;
 import com.nextbar.bar.service.UsageLogService;
 
-import jakarta.validation.constraints.Min;
-import jakarta.validation.constraints.NotNull;
+import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
 
 /**
@@ -39,18 +40,16 @@ public class UsageLogController {
     /**
      * Record usage (consumption) of a product.
      *
-     * @param barId     the bar UUID
-     * @param productId the product UUID
-     * @param quantity  the quantity consumed
+     * @param barId the bar UUID
+     * @param dto   the stock operation details (productId, quantity)
      * @return empty response with HTTP 200
      */
     @PostMapping
     public ResponseEntity<Void> recordUsage(
             @PathVariable UUID barId,
-            @RequestParam @NotNull(message = "Product ID is required") UUID productId,
-            @RequestParam @Min(value = 1, message = "Quantity must be at least 1") int quantity) {
+            @Valid @RequestBody StockOperationDto dto) {
         rbacService.requireBarAccess(barId);
-        usageLogService.logDrinkServed(barId, productId, quantity);
+        usageLogService.logDrinkServed(barId, dto.productId(), dto.quantity());
         return ResponseEntity.ok().build();
     }
 

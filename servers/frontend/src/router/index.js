@@ -8,6 +8,7 @@ import DroppointsView from '../views/droppoints/DroppointsView.vue';
 import WarehouseView from '../views/warehouse/WarehouseView.vue';
 import EventsListView from '../views/eventplanner/EventsListView.vue';
 import EventFormView from '../views/eventplanner/EventFormView.vue';
+import EventDetailsView from '../views/eventplanner/EventDetailsView.vue';
 import { useAuthStore } from '../stores/authStore';
 
 function isAdmin(user) {
@@ -89,7 +90,7 @@ const routes = [
   {
     path: '/events/:id',
     name: 'EventDetails',
-    component: EventFormView,
+    component: EventDetailsView,
     meta: { requiresAuth: true, requiresService: 'EVENT' },
   },
   {
@@ -134,29 +135,3 @@ router.beforeEach((to, from, next) => {
 });
 
 export default router;
-
-
-
-// import { createRouter, createWebHistory } from 'vue-router';
-// import BarList from '../views/BarList.vue';
-// import BarDetails from '../views/BarDetails.vue';
-//
-// const routes = [
-//   {
-//     path: '/',
-//     name: 'BarList',
-//     component: BarList
-//   },
-//   {
-//     path: '/bar/:barId',
-//     name: 'BarDetails',
-//     component: BarDetails
-//   }
-// ];
-//
-// const router = createRouter({
-//   history: createWebHistory(),
-//   routes
-// });
-//
-// export default router;

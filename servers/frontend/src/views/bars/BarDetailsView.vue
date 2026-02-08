@@ -46,8 +46,8 @@
             <i class="fas fa-exclamation-triangle text-2xl text-red-600"></i>
           </div>
           <h3 class="text-lg font-semibold text-slate-900 mb-2">Error Loading Bar</h3>
-          <p class="text-slate-500 mb-4">{{ barStore.error }}</p>
-          <button @click="barStore.fetchBarDetails(route.params.barId)" class="btn-primary">
+          <p class="text-slate-500 mb-4">{{ barStore.error?.message || barStore.error }}</p>
+          <button @click="barStore.fetchBarDetails(String(route.params.barId))" class="btn-primary">
             <i class="fas fa-redo"></i>
             <span>Try Again</span>
           </button>
@@ -85,12 +85,12 @@
                       <div class="flex items-center gap-3">
                         <div 
                           class="w-10 h-10 rounded-xl flex items-center justify-center"
-                          :class="getProductBgClass(item.name ?? item.productName)"
+                          :class="getProductBgClass(item.productName)"
                         >
                           <i class="fas fa-wine-bottle text-white text-sm"></i>
                         </div>
                         <span class="font-medium text-slate-900">
-                          {{ item.name ?? item.productName ?? 'Unknown' }}
+                          {{ item.productName ?? 'Unknown' }}
                         </span>
                       </div>
                     </td>
@@ -102,7 +102,7 @@
                         {{ item.quantity === 0 ? 'Empty' : item.quantity }}
                       </span>
                     </td>
-                    <td class="text-slate-500">{{ formatDate(item.updatedAt) }}</td>
+                    <td class="text-slate-500">{{ formatDate(item.updatedAt || item.createdAt) }}</td>
                     <td>
                       <div class="flex items-center justify-end gap-2">
                         <button
@@ -180,11 +180,11 @@
               <div v-if="barStore.totalServed.length" class="space-y-3 max-h-64 overflow-y-auto scrollbar-thin">
                 <div
                   v-for="served in barStore.totalServed"
-                  :key="served.name"
+                  :key="served.productId"
                   class="flex items-center justify-between py-2 border-b border-slate-100 last:border-0"
                 >
-                  <span class="font-medium text-slate-900 text-sm">{{ served.name }}</span>
-                  <span class="text-lg font-bold text-emerald-600">{{ served.total }}</span>
+                  <span class="font-medium text-slate-900 text-sm">{{ served.productName }}</span>
+                  <span class="text-lg font-bold text-emerald-600">{{ served.totalQuantity }}</span>
                 </div>
               </div>
               <p v-else class="text-slate-500 text-sm">No data available</p>
@@ -239,14 +239,14 @@
         <SellStockModal
           :isOpen="showSellModal"
           :item="selectedItem"
-          :barId="route.params.barId"
+          :barId="String(route.params.barId)"
           @close="showSellModal = false"
           @sale-confirmed="handleSell"
         />
         <SupplyRequestModal
           :isOpen="showRequestModal"
           :item="selectedItem"
-          :barId="route.params.barId"
+          :barId="String(route.params.barId)"
           @close="showRequestModal = false"
           @supply-requested="handleSupplyRequest"
         />
@@ -260,10 +260,11 @@
   </div>
 </template>
 
-<script setup>
-import { ref, onMounted, computed } from 'vue';
+<script setup lang="ts">
+import { ref, onMounted, computed, watch } from 'vue';
 import { useRoute } from 'vue-router';
-import { useBarStore } from '../../stores/barStore.ts';
+import { useBarStore } from '../../stores/barStore';
+import { useWebSocketEvents } from '@/composables/useWebSocketEvents';
 import Sidebar from '../../components/common/Sidebar.vue';
 import Navbar from '../../components/common/Navbar.vue';
 import SellStockModal from '../../components/bars/SellStockModal.vue';
@@ -272,15 +273,27 @@ import AddStockModal from '../../components/bars/AddStockModal.vue';
 
 const barStore = useBarStore();
 const route = useRoute();
+const { eventsByType } = useWebSocketEvents();
 const showSellModal = ref(false);
 const showRequestModal = ref(false);
 const showAddStockModal = ref(false);
 const selectedItem = ref(null);
 
 onMounted(() => {
-  const barId = route.params.barId;
+  const barId = String(route.params.barId);
   barStore.fetchBarDetails(barId);
 });
+
+// Refresh bar data when warehouse updates supply status for this bar
+watch(
+  () => eventsByType['SUPPLY_REQUEST_UPDATED'],
+  async (newEvent) => {
+    const barId = String(route.params.barId ?? '');
+    if (newEvent && newEvent.resourceId === barId) {
+      await barStore.fetchBarDetails(barId, { silent: true });
+    }
+  }
+);
 
 const sortedStock = computed(() => {
   const stock = Array.isArray(barStore.stock) ? barStore.stock.filter(Boolean) : [];
@@ -363,26 +376,26 @@ const openRequestModal = (item) => {
 };
 
 const handleSell = async ({ quantity }) => {
-  const barId = route.params.barId;
+  const barId = route.params.barId as string;
   const productId = selectedItem.value?.productId;
   try {
     if (!productId) throw new Error('Missing product id');
-    await barStore.reduceStock(barId, productId, quantity);
+    await barStore.reduceStock(barId, { productId, quantity });
   } catch (error) {
-    barStore.error = (error instanceof Error ? error.message : String(error));
+    // Error is handled by the store
   } finally {
     showSellModal.value = false;
   }
 };
 
 const handleSupplyRequest = async ({ quantity }) => {
-  const barId = route.params.barId;
+  const barId = route.params.barId as string;
   const productId = selectedItem.value?.productId;
   try {
     if (!productId) throw new Error('Missing product id');
-    await barStore.createSupplyRequest(barId, [{ productId, quantity }]);
+    await barStore.createSupplyRequest(barId, { items: [{ productId, quantity }] });
   } catch (error) {
-    barStore.error = (error instanceof Error ? error.message : String(error));
+    // Error is handled by the store
   } finally {
     showRequestModal.value = false;
   }
@@ -390,27 +403,27 @@ const handleSupplyRequest = async ({ quantity }) => {
 
 const cancelRequest = async (requestId) => {
   if (confirm('Are you sure you want to cancel this supply request?')) {
-    const barId = route.params.barId;
+    const barId = route.params.barId as string;
     await barStore.cancelSupplyRequest(barId, requestId);
   }
 };
 
 const addToStock = async (request) => {
-  const barId = route.params.barId;
+  const barId = route.params.barId as string;
   const firstItem = Array.isArray(request?.items) ? request.items[0] : null;
   const productId = firstItem?.productId;
   const quantity = firstItem?.quantity;
   if (!productId || !quantity) {
-    barStore.error = 'Supply request has no items to add to stock.';
+    barStore.error = { message: 'Supply request has no items to add to stock.' };
     return;
   }
-  await barStore.addStock(barId, productId, quantity);
-  await barStore.updateSupplyRequest(barId, request.id, 'COMPLETED');
+  await barStore.addStock(barId, { productId, quantity });
+  await barStore.updateSupplyRequest(barId, request.id, { status: 'COMPLETED' });
 };
 
 const handleAddStock = async ({ productId, quantity }) => {
-  const barId = route.params.barId;
-  await barStore.addStock(barId, productId, quantity);
+  const barId = route.params.barId as string;
+  await barStore.addStock(barId, { productId, quantity });
   showAddStockModal.value = false;
 };
 </script>

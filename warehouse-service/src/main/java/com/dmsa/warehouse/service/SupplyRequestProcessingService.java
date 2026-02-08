@@ -9,8 +9,6 @@ import org.slf4j.LoggerFactory;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
-import com.dmsa.warehouse.client.BarServiceClient;
-import com.dmsa.warehouse.dto.external.BarDto;
 import com.dmsa.warehouse.dto.external.SupplyItemDto;
 import com.dmsa.warehouse.dto.external.SupplyRequestDto;
 import com.dmsa.warehouse.dto.request.SupplyFulfillmentRequest;
@@ -23,7 +21,6 @@ import com.dmsa.warehouse.model.entity.SupplyRequest;
 import com.dmsa.warehouse.model.enums.SupplyRequestStatus;
 import com.dmsa.warehouse.repository.SupplyRequestRepository;
 
-import io.github.resilience4j.circuitbreaker.annotation.CircuitBreaker;
 
 /**
  * Service for processing supply requests from bars.
@@ -35,28 +32,16 @@ public class SupplyRequestProcessingService {
 
     private static final Logger log = LoggerFactory.getLogger(SupplyRequestProcessingService.class);
 
-    private final BarServiceClient barServiceClient;
     private final StockService stockService;
     private final SupplyRequestRepository supplyRequestRepository;
     private final SupplyEventPublisher eventPublisher;
 
-    public SupplyRequestProcessingService(BarServiceClient barServiceClient,
-            StockService stockService,
+    public SupplyRequestProcessingService(StockService stockService,
             SupplyRequestRepository supplyRequestRepository,
             SupplyEventPublisher eventPublisher) {
-        this.barServiceClient = barServiceClient;
         this.stockService = stockService;
         this.supplyRequestRepository = supplyRequestRepository;
         this.eventPublisher = eventPublisher;
-    }
-
-    /**
-     * Get all bars from bar-service.
-     */
-    @CircuitBreaker(name = "barService")
-    public List<BarDto> getAllBars() {
-        log.debug("Fetching all bars from bar-service");
-        return barServiceClient.getAllBars();
     }
 
     /**

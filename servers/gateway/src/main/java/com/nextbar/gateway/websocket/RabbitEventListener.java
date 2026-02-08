@@ -41,7 +41,7 @@ public class RabbitEventListener {
     }
 
     /**
-     * Listen for events on the gateway events queue
+    * Listen for events on the gateway events queue
      * 
      * @RabbitListener automatically:
      *                 - Connects to RabbitMQ
@@ -51,7 +51,7 @@ public class RabbitEventListener {
      * 
      * @param event The event received from RabbitMQ
      */
-    @RabbitListener(queues = RabbitMQConfig.GATEWAY_EVENTS_QUEUE)
+    @RabbitListener(queues = "#{@gatewayEventsQueue.name}")
     public void handleEvent(NextBarEvent event) {
         logger.info("📨 Received event from RabbitMQ: type={}, source={}, resourceId={}",
                 event.getType(),

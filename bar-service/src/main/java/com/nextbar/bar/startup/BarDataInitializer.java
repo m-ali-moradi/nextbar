@@ -2,15 +2,12 @@ package com.nextbar.bar.startup;
 
 import java.nio.charset.StandardCharsets;
 import java.util.List;
-import java.util.Map;
 import java.util.UUID;
 
 import org.springframework.boot.ApplicationArguments;
 import org.springframework.boot.ApplicationRunner;
 import org.springframework.stereotype.Component;
 
-import com.nextbar.bar.exception.ValidationException;
-import com.nextbar.bar.feign.EventPlannerClient;
 import com.nextbar.bar.model.Product;
 import com.nextbar.bar.model.dto.EventPlannerBarDto;
 import com.nextbar.bar.repository.ProductRepository;
@@ -24,7 +21,6 @@ import lombok.extern.slf4j.Slf4j;
 @Component
 public class BarDataInitializer implements ApplicationRunner {
 
-    private final EventPlannerClient eventPlannerClient;
     private final BarService barService;
     private final ProductRepository productRepository;
     private final BarStockService barStockService;
@@ -35,7 +31,7 @@ public class BarDataInitializer implements ApplicationRunner {
         List<EventPlannerBarDto> bars = null;
 
         try {
-            bars = eventPlannerClient.fetchBarPlans();
+            bars = null;
         } catch (Exception e) {
             log.error("fetch bar plans failed", e);
         }
@@ -68,46 +64,10 @@ public class BarDataInitializer implements ApplicationRunner {
             barStockService.addStock(fallbackBarId2, UUID.fromString("dddddddd-dddd-dddd-dddd-dddddddddddd"), 40);  
             barStockService.addStock(fallbackBarId2, UUID.fromString("eeeeeeee-eeee-eeee-eeee-eeeeeeeeeeee"), 25);  
 
-            log.info("fallback bar and stock data created successfully.");
-            return;
+            log.info("stock data created successfully.");
 
         }
 
-
-        // If data from remote serivce is fetched, process them
-
-        for (EventPlannerBarDto remoteBar : bars) {
-
-            // Convert remote bar ID from Int to UUID
-            UUID barId = int2UUID(remoteBar.getBarId());
-
-            // Create from remote (Enventplanner service) bar data
-            barService.registerBar(
-                    barId,
-                    remoteBar.getBarName(),
-                    remoteBar.getLocation(),
-                    remoteBar.getTotalCapacity()
-            );
-            log.info("bar {} created successfully.", remoteBar.getBarName());
-
-            // Extract stock items from remote and save them to local stock
-            if (remoteBar.getBeverageStock() != null) {
-                for (Map.Entry<String, Integer> entry : remoteBar.getBeverageStock().entrySet()) {
-                    String name = entry.getKey().split("\\s*\\(")[0]; // e.g. "Coke"
-                    String idStr = entry.getKey().replaceAll(".*\\((\\d+)\\)", "$1"); // e.g. "1"
-                    UUID productId = int2UUID(Integer.parseInt(idStr));
-                    int quantity = entry.getValue();
-                    productRepository.save(new Product(productId,name));
-                    try {
-                        barStockService.addStock(barId, productId, quantity);
-                    } catch (ValidationException e) {
-                        System.err.printf("Could not add stock for bar %s and product %s: %s%n",
-                                remoteBar.getBarName(), name, e.getMessage());
-                    }
-                }
-                log.info("stock items for bar {} created successfully.", remoteBar.getBarName());
-            }
-        }
     }
 
 

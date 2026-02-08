@@ -1,37 +1,83 @@
 -- EVENTS
-INSERT INTO EVENTS (EVENT_ID, DATE, DURATION, LOCATION, NAME, STATUS) VALUES
-  (1, '2025-06-27', 1, 'Oberhausen', 'Event1', 'PLANNED');
+INSERT INTO events (
+  id,
+  name,
+  date,
+  location,
+  description,
+  created_at,
+  updated_at,
+  organizer_name,
+  organizer_email,
+  organizer_phone,
+  attendees_count,
+  max_attendees,
+  is_public,
+  status
+) VALUES (
+  1,
+  'Event1',
+  '2025-06-27',
+  'Oberhausen',
+  'Sample kickoff event',
+  CURRENT_TIMESTAMP,
+  CURRENT_TIMESTAMP,
+  'Default Organizer',
+  'organizer@example.com',
+  NULL,
+  0,
+  500,
+  true,
+  'SCHEDULED'
+);
 
--- EVENT_BEVERAGES
-INSERT INTO EVENT_BEVERAGES (EVENT_ID, ID, NAME, PRICE) VALUES
-  (1, 1, 'Fanta',   25),
-  (1, 2, 'Red Bull', 25),
-  (1, 3, 'Beer',  10);
+-- BARS (2 bars)
+INSERT INTO bars (
+  id,
+  name,
+  location,
+  capacity,
+  created_at,
+  updated_at,
+  event_id,
+  event_occupancy,
+  assigned_staff
+) VALUES
+  (1, 'Main Bar', 'East Wing', 300, CURRENT_TIMESTAMP, CURRENT_TIMESTAMP, 1, false, NULL),
+  (2, 'VIP Bar',  'West Hall', 200, CURRENT_TIMESTAMP, CURRENT_TIMESTAMP, 1, false, NULL);
 
--- BAR_PLANS (2 bars)
-INSERT INTO BAR_PLANS (BAR_ID, BAR_NAME, LOCATION, TOTAL_CAPACITY, EVENT_ID) VALUES
-  (2, 'Main Bar', 'East Wing', 300, 1),
-  (3, 'VIP Bar',  'West Hall', 200, 1);
+-- DROP POINTS (2 drop points)
+INSERT INTO drop_points (
+  id,
+  name,
+  location,
+  event_id,
+  event_occupancy,
+  assigned_staff,
+  created_at,
+  updated_at
+) VALUES
+  (1, 'North Gate', 'North Gate', 1, false, NULL, CURRENT_TIMESTAMP, CURRENT_TIMESTAMP),
+  (2, 'South Exit', 'South Exit', 1, false, NULL, CURRENT_TIMESTAMP, CURRENT_TIMESTAMP);
 
--- DROP_POINT_PLANS (2 drop points)
-INSERT INTO DROP_POINT_PLANS (DROP_POINT_ID, CAPACITY, LOCATION, EVENT_ID) VALUES
-  (2, 100, 'North Gate', 1),
-  (3,  80, 'South Exit', 1);
+-- BAR STOCKS (for both bars)
+INSERT INTO bar_stocks (
+  id,
+  bar_id,
+  item_name,
+  quantity,
+  created_at,
+  updated_at
+) VALUES
+  (1, 1, 'Fanta', 60, CURRENT_TIMESTAMP, CURRENT_TIMESTAMP),
+  (2, 1, 'Red Bull', 40, CURRENT_TIMESTAMP, CURRENT_TIMESTAMP),
+  (3, 1, 'Beer', 50, CURRENT_TIMESTAMP, CURRENT_TIMESTAMP),
+  (4, 2, 'Fanta', 40, CURRENT_TIMESTAMP, CURRENT_TIMESTAMP),
+  (5, 2, 'Red Bull', 30, CURRENT_TIMESTAMP, CURRENT_TIMESTAMP),
+  (6, 2, 'Beer', 25, CURRENT_TIMESTAMP, CURRENT_TIMESTAMP);
 
--- BAR_BEVERAGE_STOCK (for both bars)
-INSERT INTO BAR_BEVERAGE_STOCK (BAR_ID, QUANTITY, BEVERAGE_ID) VALUES
-  (2, 60, 1),
-  (2, 40, 2),
-  (2, 50, 3),
-  (3, 40, 1),
-  (3, 30, 2),
-  (3, 25, 3);
-
--- ─────────────────────────────────────────────────────────────────────────
--- Reseed identity columns so new inserts don’t collide with hard-coded IDs
--- ─────────────────────────────────────────────────────────────────────────
-
-ALTER TABLE EVENTS            ALTER COLUMN EVENT_ID            RESTART WITH 2;
-ALTER TABLE EVENT_BEVERAGES  ALTER COLUMN ID                  RESTART WITH 4;
-ALTER TABLE BAR_PLANS        ALTER COLUMN BAR_ID              RESTART WITH 4;
-ALTER TABLE DROP_POINT_PLANS ALTER COLUMN DROP_POINT_ID       RESTART WITH 4;
+-- Reseed identity columns so new inserts don't collide with hard-coded IDs
+ALTER TABLE events AUTO_INCREMENT = 2;
+ALTER TABLE bars AUTO_INCREMENT = 3;
+ALTER TABLE drop_points AUTO_INCREMENT = 3;
+ALTER TABLE bar_stocks AUTO_INCREMENT = 7;

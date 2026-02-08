@@ -12,7 +12,6 @@ import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
 
-import com.dmsa.warehouse.dto.external.BarDto;
 import com.dmsa.warehouse.dto.external.SupplyRequestDto;
 import com.dmsa.warehouse.dto.request.SupplyFulfillmentRequest;
 import com.dmsa.warehouse.dto.response.SupplyFulfillmentResponse;
@@ -35,16 +34,6 @@ public class SupplyController {
 
     public SupplyController(SupplyRequestProcessingService supplyService) {
         this.supplyService = supplyService;
-    }
-
-    /**
-     * Get all bars.
-     */
-    @GetMapping("/bars")
-    @Operation(summary = "List all bars", description = "Retrieves all bars from the bar service")
-    public ResponseEntity<List<BarDto>> listBars() {
-        List<BarDto> bars = supplyService.getAllBars();
-        return ResponseEntity.ok(bars);
     }
 
     /**

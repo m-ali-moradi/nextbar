@@ -1,22 +1,25 @@
 package de.fhdo.eventPlanner.exception;
 
+import org.springframework.http.HttpStatus;
+
 /**
- * Base exception class for API-related errors.
+ * Custom API exception with HTTP status.
  */
 public class ApiException extends RuntimeException {
-    private final int statusCode;
 
-    public ApiException(String message, int statusCode) {
+    private final HttpStatus status;
+
+    public ApiException(String message, HttpStatus status) {
         super(message);
-        this.statusCode = statusCode;
+        this.status = status;
     }
 
-    public ApiException(String message, int statusCode, Throwable cause) {
+    public ApiException(String message, HttpStatus status, Throwable cause) {
         super(message, cause);
-        this.statusCode = statusCode;
+        this.status = status;
     }
 
-    public int getStatusCode() {
-        return statusCode;
+    public HttpStatus getStatus() {
+        return status;
     }
 }

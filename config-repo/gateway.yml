@@ -19,22 +19,23 @@ spring:
               - GET
               - POST
               - PUT
+              - PATCH
               - DELETE
               - OPTIONS
             allowedHeaders: "*"
             allowCredentials: true
       routes:
 
-      # Event-Planner route
+      # Event-Planner: All event-related routes (events, bars, drop-points)
         - id: eventplanner-service
           uri: lb://eventplanner-service
           predicates:
-            - Path=/api/events/**
+            - Path=/api/events, /api/events/**
           filters:
             - StripPrefix=0
             - JwtAuthentication
 
-      # Bar route
+      # Bar route (for standalone bar operations)
         - id: bar-service
           uri: lb://bar-service
           predicates:
@@ -42,7 +43,8 @@ spring:
           filters:
             - StripPrefix=1
             - JwtAuthentication
-      # Droppoints route
+            
+      # Droppoints route (for standalone droppoint operations)
         - id: droppoint-service
           uri: lb://droppoint-service
           predicates:

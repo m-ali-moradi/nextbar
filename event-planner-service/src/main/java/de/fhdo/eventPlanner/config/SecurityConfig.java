@@ -1,5 +1,8 @@
 package de.fhdo.eventPlanner.config;
 
+import java.util.Arrays;
+import java.util.List;
+
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.security.config.annotation.method.configuration.EnableMethodSecurity;
@@ -15,12 +18,10 @@ import org.springframework.web.cors.UrlBasedCorsConfigurationSource;
 
 import de.fhdo.eventPlanner.security.JwtAuthenticationFilter;
 
-import java.util.Arrays;
-import java.util.List;
-
 /**
  * Security configuration for event-planner-service.
- * Validates JWT tokens from the API Gateway.
+ * Configures JWT validation, CORS, and endpoint security with role-based
+ * access.
  */
 @Configuration
 @EnableWebSecurity
@@ -28,6 +29,11 @@ import java.util.List;
 public class SecurityConfig {
 
     private final JwtAuthenticationFilter jwtAuthenticationFilter;
+        private static final String[] EVENT_SERVICE_ROLES = {
+                        "ADMIN",
+                        "EVENTPLANNER_MANAGER",
+                        "EVENT_PLANNER_MANAGER"
+        };
 
     public SecurityConfig(JwtAuthenticationFilter jwtAuthenticationFilter) {
         this.jwtAuthenticationFilter = jwtAuthenticationFilter;
@@ -38,36 +44,38 @@ public class SecurityConfig {
         http
                 .cors(cors -> cors.configurationSource(corsConfigurationSource()))
                 .csrf(AbstractHttpConfigurer::disable)
-                .sessionManagement(session -> session.sessionCreationPolicy(SessionCreationPolicy.STATELESS))
+                .sessionManagement(session -> session
+                        .sessionCreationPolicy(SessionCreationPolicy.STATELESS))
                 .authorizeHttpRequests(auth -> auth
                         // Public endpoints
-                        .requestMatchers("/actuator/**", "/h2-console/**", "/swagger-ui/**", "/v3/api-docs/**").permitAll()
-                        // All other endpoints require authentication
-                        .anyRequest().authenticated()
-                )
-                .addFilterBefore(jwtAuthenticationFilter, UsernamePasswordAuthenticationFilter.class);
+                        .requestMatchers(
+                                "/actuator/**",
+                                "/swagger-ui/**",
+                                "/swagger-ui.html",
+                                "/v3/api-docs/**",
+                                "/api-docs/**")
+                        .permitAll()
 
-        // Allow H2 console frames
-        http.headers(headers -> headers.frameOptions(frameOptions -> frameOptions.disable()));
+                        // Event service endpoints - only admins and event planner managers
+                        .requestMatchers("/api/**").hasAnyRole(EVENT_SERVICE_ROLES)
+
+                        // All other endpoints require authentication
+                        .anyRequest().authenticated())
+                .addFilterBefore(jwtAuthenticationFilter, UsernamePasswordAuthenticationFilter.class);
 
         return http.build();
     }
 
-    /**
-     * Configure CORS to allow frontend applications to access the API.
-     *
-     * @return CORS configuration source
-     */
     @Bean
     public CorsConfigurationSource corsConfigurationSource() {
         CorsConfiguration configuration = new CorsConfiguration();
-        configuration.setAllowedOrigins(Arrays.asList(
+        configuration.setAllowedOrigins(List.of(
                 "http://localhost:5173",
                 "http://localhost:5174",
                 "http://localhost:5175",
-                "http://localhost:3000"
-        ));
-        configuration.setAllowedMethods(Arrays.asList("GET", "POST", "PUT", "DELETE", "OPTIONS", "PATCH"));
+                "http://localhost:3000",
+                "http://localhost:8080"));
+        configuration.setAllowedMethods(Arrays.asList("GET", "POST", "PUT", "PATCH", "DELETE", "OPTIONS"));
         configuration.setAllowedHeaders(List.of("*"));
         configuration.setAllowCredentials(true);
         configuration.setMaxAge(3600L);

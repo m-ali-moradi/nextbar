@@ -584,15 +584,29 @@ const warehouseStore = useWarehouseStore();
 // ============================================================
 const { connected, eventsByType, onEvent } = useWebSocketEvents();
 
+const refreshOnEvent = async (eventType, newEvent) => {
+  console.log(`[WarehouseView] 📡 ${eventType} event detected!`, newEvent);
+  toast.info('Supply request changed - refreshing...');
+  await refreshAllRequests({ silent: true });
+  toast.success('Data refreshed!');
+};
+
+// Watch for SUPPLY_REQUEST_CREATED events and auto-refresh
+watch(
+  () => eventsByType['SUPPLY_REQUEST_CREATED'],
+  async (newEvent) => {
+    if (newEvent) {
+      await refreshOnEvent('SUPPLY_REQUEST_CREATED', newEvent);
+    }
+  }
+);
+
 // Watch for SUPPLY_REQUEST_UPDATED events and auto-refresh
 watch(
   () => eventsByType['SUPPLY_REQUEST_UPDATED'],
   async (newEvent) => {
     if (newEvent) {
-      console.log('[WarehouseView] 📡 SUPPLY_REQUEST_UPDATED event detected!', newEvent);
-      toast.info('Supply request updated - refreshing...');
-      await refreshAllRequests();
-      toast.success('Data refreshed!');
+      await refreshOnEvent('SUPPLY_REQUEST_UPDATED', newEvent);
     }
   }
 );
@@ -699,15 +713,18 @@ const processRequest = async (request: SupplyRequest) => {
   }
 
   try {
-    await warehouseStore.processSupplyRequest(request.barId, request.id, beverageType, quantity, request.status);
+    await warehouseStore.fulfillSupplyRequest(request.barId, request.id, {
+      beverageType,
+      quantity,
+      currentStatus: request.status,
+    });
     toast.success('Request moved to In Progress');
     await refreshAllRequests();
     if (selectedBarId.value) {
       await warehouseStore.fetchBarSupplyRequests(request.barId);
     }
   } catch (err) {
-    const errorMessage = err instanceof Error ? err.message : 'Failed to process request';
-    toast.error(errorMessage);
+    toast.error(toErrorMessage(err, 'Failed to process request'));
   }
 };
 
@@ -741,8 +758,7 @@ const confirmReject = async () => {
       await warehouseStore.fetchBarSupplyRequests(rejectForm.value.request.barId);
     }
   } catch (err) {
-    const errorMessage = err instanceof Error ? err.message : 'Failed to reject request';
-    toast.error(errorMessage);
+    toast.error(toErrorMessage(err, 'Failed to reject request'));
   }
 };
 
@@ -758,24 +774,29 @@ const deliverRequest = async (request: SupplyRequest) => {
   }
 
   try {
-    await warehouseStore.processSupplyRequest(request.barId, request.id, beverageType, quantity, request.status);
+    await warehouseStore.fulfillSupplyRequest(request.barId, request.id, {
+      beverageType,
+      quantity,
+      currentStatus: request.status,
+    });
     toast.success('Request delivered successfully');
     await refreshAllRequests();
     if (selectedBarId.value) {
       await warehouseStore.fetchBarSupplyRequests(request.barId);
     }
   } catch (err) {
-    const errorMessage = err instanceof Error ? err.message : 'Failed to deliver request';
-    toast.error(errorMessage);
+    toast.error(toErrorMessage(err, 'Failed to deliver request'));
   }
 };
 
-const refreshAllRequests = async () => {
+const toErrorMessage = (err: unknown, fallback: string) =>
+  err instanceof Error ? err.message : fallback;
+
+const refreshAllRequests = async (options: { silent?: boolean } = {}) => {
   try {
-    await warehouseStore.fetchAllSupplyRequests();
+    await warehouseStore.fetchAllSupplyRequests(options);
   } catch (err) {
-    const errorMessage = err instanceof Error ? err.message : 'Failed to fetch supply requests';
-    toast.error(errorMessage);
+    toast.error(toErrorMessage(err, 'Failed to fetch supply requests'));
   }
 };
 
@@ -821,12 +842,14 @@ const closeReplenishModal = () => {
 
 const handleReplenish = async () => {
   try {
-    await warehouseStore.replenishStock(replenishForm.value);
+    await warehouseStore.createStock({
+      beverageType: replenishForm.value.productName,
+      quantity: replenishForm.value.quantity,
+    });
     toast.success(`Stock replenished: ${replenishForm.value.productName}`);
     closeReplenishModal();
   } catch (err) {
-    const errorMessage = err instanceof Error ? err.message : 'Failed to replenish stock';
-    toast.error(errorMessage);
+    toast.error(toErrorMessage(err, 'Failed to replenish stock'));
   }
 };
 
@@ -835,8 +858,7 @@ const fetchEmptiesData = async () => {
     await warehouseStore.fetchEmptiesCollected();
     toast.success('Empties data refreshed');
   } catch (err) {
-    const errorMessage = err instanceof Error ? err.message : 'Failed to fetch empties';
-    toast.error(errorMessage);
+    toast.error(toErrorMessage(err, 'Failed to fetch empties'));
   }
 };
 

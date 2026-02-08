@@ -40,6 +40,11 @@ spring:
           destination: supply.request.created
           content-type: application/json
           group: warehouse-service
+          consumer:
+            max-attempts: 5
+            backoff-initial-interval: 1000
+            backoff-multiplier: 2.0
+            backoff-max-interval: 10000
         # Output binding for publishing supply request updated events
         supplyRequestUpdated-out-0:
           destination: supply.request.updated
@@ -49,9 +54,14 @@ spring:
           supplyRequestCreated-in-0:
             consumer:
               exchange-type: topic
+              auto-bind-dlq: true
+              republish-to-dlq: true
+              requeue-rejected: false
           supplyRequestUpdated-out-0:
             producer:
               exchange-type: topic
+              exchange-durable: true
+              delivery-mode: PERSISTENT
 
 # Server Configuration
 server:
@@ -74,13 +84,10 @@ management:
   endpoints:
     web:
       exposure:
-        include: health,info,metrics,prometheus,circuitbreakers
+        include: health,info,metrics,prometheus
   endpoint:
     health:
       show-details: always
-  health:
-    circuitbreakers:
-      enabled: true
 
 # Logging Configuration
 logging:
@@ -88,41 +95,8 @@ logging:
     root: INFO
     com.dmsa.warehouse: DEBUG
     org.springframework.security: INFO
-    io.github.resilience4j: DEBUG
   pattern:
     console: "%d{yyyy-MM-dd HH:mm:ss} [%thread] %-5level %logger{36} - %msg%n"
-
-# Resilience4j Circuit Breaker Configuration
-resilience4j:
-  circuitbreaker:
-    instances:
-      barService:
-        registerHealthIndicator: true
-        slidingWindowSize: 10
-        minimumNumberOfCalls: 5
-        failureRateThreshold: 50
-        waitDurationInOpenState: 10s
-        permittedNumberOfCallsInHalfOpenState: 3
-        automaticTransitionFromOpenToHalfOpenEnabled: true
-      dropPointService:
-        registerHealthIndicator: true
-        slidingWindowSize: 10
-        minimumNumberOfCalls: 5
-        failureRateThreshold: 50
-        waitDurationInOpenState: 10s
-        permittedNumberOfCallsInHalfOpenState: 3
-        automaticTransitionFromOpenToHalfOpenEnabled: true
-
-# Feign Client Configuration
-spring.cloud.openfeign:
-  circuitbreaker:
-    enabled: true
-  client:
-    config:
-      default:
-        connectTimeout: 5000
-        readTimeout: 5000
-        loggerLevel: basic
 
 # OpenAPI Configuration
 springdoc:

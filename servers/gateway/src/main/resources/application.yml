@@ -18,12 +18,29 @@ spring:
     port: 5672
     username: nextbar
     password: nextbar123
+    listener:
+      simple:
+        retry:
+          enabled: true
+          max-attempts: 5
+          initial-interval: 1000
+          multiplier: 2.0
+          max-interval: 10000
+        default-requeue-rejected: false
 
 security:
   jwt:
     secret: yourSecretKeyForJWTTokenGenerationMustBeLongEnoughForHS256Algorithm
     expiration: 3600000
     issuer: users-service
+
+gateway:
+  websocket:
+    allow-anonymous: true
+
+management:
+  tracing:
+    enabled: false
 
 # ============================================
 # Logging Configuration

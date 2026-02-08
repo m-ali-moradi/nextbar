@@ -1,6 +1,9 @@
 package com.nextbar.bar.exception;
 
-import jakarta.servlet.http.HttpServletRequest;
+import java.time.Instant;
+import java.util.Map;
+import java.util.stream.Collectors;
+
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.http.HttpStatus;
@@ -11,9 +14,7 @@ import org.springframework.web.bind.MethodArgumentNotValidException;
 import org.springframework.web.bind.annotation.ControllerAdvice;
 import org.springframework.web.bind.annotation.ExceptionHandler;
 
-import java.time.Instant;
-import java.util.Map;
-import java.util.stream.Collectors;
+import jakarta.servlet.http.HttpServletRequest;
 
 /**
  * Global exception handler for the bar-service.
@@ -93,6 +94,19 @@ public class GlobalExceptionHandler {
                 .path(req.getRequestURI())
                 .build();
         log.debug("Illegal state: {}", ex.getMessage());
+        return ResponseEntity.badRequest().body(body);
+    }
+
+    @ExceptionHandler(ValidationException.class)
+    public ResponseEntity<ApiErrorResponse> handleValidationException(ValidationException ex, HttpServletRequest req) {
+        ApiErrorResponse body = ApiErrorResponse.builder()
+                .timestamp(Instant.now().toEpochMilli())
+                .status(HttpStatus.BAD_REQUEST.value())
+                .error(HttpStatus.BAD_REQUEST.getReasonPhrase())
+                .message(ex.getMessage())
+                .path(req.getRequestURI())
+                .build();
+        log.debug("Validation error: {}", ex.getMessage());
         return ResponseEntity.badRequest().body(body);
     }
 

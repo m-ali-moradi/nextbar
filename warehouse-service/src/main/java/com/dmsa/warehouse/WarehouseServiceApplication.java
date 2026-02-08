@@ -2,7 +2,6 @@ package com.dmsa.warehouse;
 
 import org.springframework.boot.SpringApplication;
 import org.springframework.boot.autoconfigure.SpringBootApplication;
-import org.springframework.cloud.openfeign.EnableFeignClients;
 
 /**
  * Warehouse Service Application.
@@ -13,7 +12,6 @@ import org.springframework.cloud.openfeign.EnableFeignClients;
  * 3. Collect empty bottles from drop points
  */
 @SpringBootApplication
-@EnableFeignClients(basePackages = "com.dmsa.warehouse.client")
 public class WarehouseServiceApplication {
 
     public static void main(String[] args) {

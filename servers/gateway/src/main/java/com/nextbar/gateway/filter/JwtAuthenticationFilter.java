@@ -63,10 +63,12 @@ public class JwtAuthenticationFilter implements GatewayFilter {
         }
 
         ServerHttpRequest mutatedRequest = exchange.getRequest().mutate()
-                .header("X-User-Id", claims.getSubject())
+            // Preserve Authorization for downstream services that validate JWTs
+            .header(HttpHeaders.AUTHORIZATION, authHeader)
+            .header("X-User-Id", claims.getSubject())
             .header("X-Roles", String.join(",", roles))
-                .header("X-Assignments", String.join(",", assignments))
-                .build();
+            .header("X-Assignments", String.join(",", assignments))
+            .build();
 
         return chain.filter(exchange.mutate().request(mutatedRequest).build());
     }

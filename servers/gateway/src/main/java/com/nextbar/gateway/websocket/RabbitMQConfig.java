@@ -1,6 +1,10 @@
 package com.nextbar.gateway.websocket;
 
-import org.springframework.amqp.core.*;
+import org.springframework.amqp.core.AnonymousQueue;
+import org.springframework.amqp.core.Binding;
+import org.springframework.amqp.core.BindingBuilder;
+import org.springframework.amqp.core.FanoutExchange;
+import org.springframework.amqp.core.Queue;
 import org.springframework.amqp.rabbit.connection.ConnectionFactory;
 import org.springframework.amqp.rabbit.core.RabbitTemplate;
 import org.springframework.amqp.support.converter.Jackson2JsonMessageConverter;
@@ -22,7 +26,7 @@ import org.springframework.context.annotation.Configuration;
  * 3. RabbitEventListener processes events and broadcasts via WebSocket
  * 
  * Exchange: nextbar.events (fanout - broadcasts to all bound queues)
- * Queue: gateway.events.queue (receives all events for WebSocket broadcast)
+ * Queue: per-instance auto-delete queue (receives all events for WebSocket broadcast)
  */
 @Configuration
 public class RabbitMQConfig {
@@ -35,10 +39,6 @@ public class RabbitMQConfig {
      */
     public static final String EVENTS_EXCHANGE = "nextbar.events";
 
-    /**
-     * Gateway's dedicated queue for receiving events
-     */
-    public static final String GATEWAY_EVENTS_QUEUE = "gateway.events.queue";
 
     // ==================== Exchange Definitions ====================
 
@@ -58,16 +58,14 @@ public class RabbitMQConfig {
     // ==================== Queue Definitions ====================
 
     /**
-     * Queue for the gateway to receive events
-     * 
-     * Durable=true: Queue survives broker restart
-     * This ensures events aren't lost if gateway restarts
+      * Queue for the gateway to receive events
+      * 
+      * Uses an auto-delete, exclusive queue per instance so each
+      * gateway replica gets its own copy of fanout events.
      */
     @Bean
     public Queue gatewayEventsQueue() {
-        return QueueBuilder
-                .durable(GATEWAY_EVENTS_QUEUE)
-                .build();
+          return new AnonymousQueue();
     }
 
     // ==================== Bindings ====================
