@@ -72,6 +72,14 @@ spring:
             - StripPrefix=1
             - JwtAuthentication
 
+      # Public auth route (login/register/refresh/logout/token-status)
+        - id: users-auth-service
+          uri: lb://users-service
+          predicates:
+            - Path=/api/auth/**
+          filters:
+            - StripPrefix=1
+
 security:
   jwt:
     secret: ${JWT_SECRET}
