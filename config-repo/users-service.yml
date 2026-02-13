@@ -9,8 +9,13 @@ server:
 
 security:
   jwt:
-    secret: 2YrmlATq8aGvu9r5OSwV2s3g6tZqYbhyZnMNsnU/wvO27lfYxbgm5foq7F2Vsmw1eZC4WbdKHx3IXW5J7PddEA==
+    secret: ${JWT_SECRET}
     expiration: 3600000
+    refresh-expiration: 1209600000
+  mfa:
+    # Dev/CI default: MFA disabled unless explicitly enabled
+    enabled: false
+    issuer: nextbar-users
 
 eureka:
   client:

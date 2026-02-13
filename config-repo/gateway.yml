@@ -63,14 +63,6 @@ spring:
             - StripPrefix=1
             - JwtAuthentication
 
-      # Auth route (login, register)
-        - id: auth-service
-          uri: lb://users-service
-          predicates:
-            - Path=/api/auth/**
-          filters:
-            - StripPrefix=1
-
       # Users route
         - id: users-service
           uri: lb://users-service
@@ -78,11 +70,16 @@ spring:
             - Path=/api/users/**
           filters:
             - StripPrefix=1
+            - JwtAuthentication
 
 security:
   jwt:
-    secret: 2YrmlATq8aGvu9r5OSwV2s3g6tZqYbhyZnMNsnU/wvO27lfYxbgm5foq7F2Vsmw1eZC4WbdKHx3IXW5J7PddEA==
+    secret: ${JWT_SECRET}
     expiration: 3600000
+  internal:
+    # Dev/CI default: disabled unless explicitly turned on
+    enabled: false
+    secret: ${INTERNAL_SERVICE_SECRET:}
 
 eureka:
   client:

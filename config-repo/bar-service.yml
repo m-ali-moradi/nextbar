@@ -4,6 +4,30 @@ spring:
   cloud:
     config:
       uri: http://localhost:8888
+    function:
+      definition: supplyRequestUpdated;consumeBarCreatedEvent
+    stream:
+      bindings:
+        supplyRequestUpdated-in-0:
+          destination: supply.request.updated
+          group: bar-service
+          content-type: application/json
+        consumeBarCreatedEvent-in-0:
+          destination: event.bar.created
+          group: bar-service
+          content-type: application/json
+      rabbit:
+        bindings:
+          supplyRequestUpdated-in-0:
+            consumer:
+              exchange-type: topic
+              auto-bind-dlq: true
+              republish-to-dlq: true
+              requeue-rejected: false
+          consumeBarCreatedEvent-in-0:
+            consumer:
+              exchange-type: fanout
+              auto-bind-dlq: true
 
 server:
   port: 8081
@@ -43,5 +67,10 @@ logging:
     root: INFO
     io.github.resilience4j: DEBUG
     org.springframework.cloud.openfeign: DEBUG
+
+security:
+  internal:
+    enabled: false
+    secret: ${INTERNAL_SERVICE_SECRET:}
 
 

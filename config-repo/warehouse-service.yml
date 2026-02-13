@@ -4,6 +4,39 @@ spring:
   cloud:
     config:
       uri: http://localhost:8888
+    function:
+      definition: supplyRequestCreated;consumeDropPointCollectionEvent
+    stream:
+      bindings:
+        supplyRequestCreated-in-0:
+          destination: supply.request.created
+          group: warehouse-service
+          content-type: application/json
+        consumeDropPointCollectionEvent-in-0:
+          destination: drop-point.collection.events
+          group: warehouse-service
+          content-type: application/json
+        supplyRequestUpdated-out-0:
+          destination: supply.request.updated
+          content-type: application/json
+      rabbit:
+        bindings:
+          supplyRequestCreated-in-0:
+            consumer:
+              exchange-type: topic
+              auto-bind-dlq: true
+              republish-to-dlq: true
+              requeue-rejected: false
+          consumeDropPointCollectionEvent-in-0:
+            consumer:
+              exchange-type: topic
+              auto-bind-dlq: true
+              republish-to-dlq: true
+              requeue-rejected: false
+          supplyRequestUpdated-out-0:
+            producer:
+              exchange-type: topic
+              exchange-durable: true
 
 server:
   port: 8085
@@ -44,3 +77,8 @@ logging:
     com.dmsa.warehouse: DEBUG
     io.github.resilience4j: DEBUG
     org.springframework.cloud.openfeign: DEBUG
+
+security:
+  internal:
+    enabled: false
+    secret: ${INTERNAL_SERVICE_SECRET:}
