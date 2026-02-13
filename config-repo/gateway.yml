@@ -48,7 +48,7 @@ spring:
         - id: droppoint-service
           uri: lb://droppoint-service
           predicates:
-            - Path=/api/droppoints/**
+            - Path=/api/droppoints, /api/droppoints/**
           filters:
             - StripPrefix=1
             - JwtAuthentication
@@ -58,7 +58,7 @@ spring:
         - id: warehouse-service
           uri: lb://warehouse-service
           predicates:
-            - Path=/api/warehouse/**
+            - Path=/api/warehouse, /api/warehouse/**
           filters:
             - StripPrefix=1
             - JwtAuthentication
@@ -67,7 +67,7 @@ spring:
         - id: users-service
           uri: lb://users-service
           predicates:
-            - Path=/api/users/**
+            - Path=/api/users, /api/users/**
           filters:
             - StripPrefix=1
             - JwtAuthentication
@@ -82,7 +82,7 @@ spring:
 
 security:
   jwt:
-    secret: ${JWT_SECRET}
+    secret: ${JWT_SECRET:change-me-dev-jwt-secret-key-256-bit-minimum}
     expiration: 3600000
   internal:
     # Dev/CI default: disabled unless explicitly turned on

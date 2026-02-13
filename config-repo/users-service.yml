@@ -9,7 +9,7 @@ server:
 
 security:
   jwt:
-    secret: ${JWT_SECRET}
+    secret: ${JWT_SECRET:change-me-dev-jwt-secret-key-256-bit-minimum}
     expiration: 3600000
     refresh-expiration: 1209600000
   mfa:

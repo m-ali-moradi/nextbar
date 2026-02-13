@@ -40,8 +40,8 @@ spring:
   rabbitmq:
     host: localhost
     port: 5672
-    username: ${RABBITMQ_USERNAME}
-    password: ${RABBITMQ_PASSWORD}
+    username: ${RABBITMQ_USERNAME:nextbar}
+    password: ${RABBITMQ_PASSWORD:nextbar123}
 server:
   port: 8083
 
