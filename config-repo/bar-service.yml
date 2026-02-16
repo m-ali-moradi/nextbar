@@ -5,7 +5,7 @@ spring:
     config:
       uri: http://localhost:8888
     function:
-      definition: supplyRequestUpdated;consumeBarCreatedEvent
+      definition: supplyRequestUpdated;consumeBarCreatedEvent;consumeBarBootstrapEvent;consumeEventCompletedEvent
     stream:
       bindings:
         supplyRequestUpdated-in-0:
@@ -14,6 +14,14 @@ spring:
           content-type: application/json
         consumeBarCreatedEvent-in-0:
           destination: event.bar.created
+          group: bar-service
+          content-type: application/json
+        consumeBarBootstrapEvent-in-0:
+          destination: event.bar.bootstrap
+          group: bar-service
+          content-type: application/json
+        consumeEventCompletedEvent-in-0:
+          destination: event.completed
           group: bar-service
           content-type: application/json
       rabbit:
@@ -28,6 +36,21 @@ spring:
             consumer:
               exchange-type: fanout
               auto-bind-dlq: true
+          consumeBarBootstrapEvent-in-0:
+            consumer:
+              exchange-type: fanout
+              auto-bind-dlq: true
+          consumeEventCompletedEvent-in-0:
+            consumer:
+              exchange-type: fanout
+              auto-bind-dlq: true
+
+bar:
+  supply:
+    warehouse-base-url: ${WAREHOUSE_SERVICE_BASE_URL:http://localhost:8085}
+
+features:
+  event-completed-enabled: ${FEATURE_EVENT_COMPLETED_ENABLED:false}
 
 server:
   port: 8081

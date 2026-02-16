@@ -47,7 +47,8 @@ eureka:
       defaultZone: http://localhost:8761/eureka/
   instance:
     preferIpAddress: true
-    hostname: localhost
+    ip-address: 127.0.0.1
+    hostname: 127.0.0.1
 
 # Circuit Breaker Configuration
 resilience4j:

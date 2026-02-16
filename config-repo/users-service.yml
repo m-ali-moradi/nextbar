@@ -12,10 +12,6 @@ security:
     secret: ${JWT_SECRET:change-me-dev-jwt-secret-key-256-bit-minimum}
     expiration: 3600000
     refresh-expiration: 1209600000
-  mfa:
-    # Dev/CI default: MFA disabled unless explicitly enabled
-    enabled: false
-    issuer: nextbar-users
 
 eureka:
   client:

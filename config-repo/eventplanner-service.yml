@@ -1,9 +1,90 @@
 spring:
   application:
     name: eventplanner-service
+  rabbitmq:
+    host: localhost
+    port: 5672
+    username: ${RABBITMQ_USERNAME:nextbar}
+    password: ${RABBITMQ_PASSWORD:nextbar123}
   cloud:
     config:
       uri: http://localhost:8888
+    stream:
+      bindings:
+        barCreated-out-0:
+          destination: event.bar.created
+          content-type: application/json
+        dropPointCreated-out-0:
+          destination: event.droppoint.created
+          content-type: application/json
+        staffAssigned-out-0:
+          destination: event.staff.assigned
+          content-type: application/json
+        eventStarted-out-0:
+          destination: event.started
+          content-type: application/json
+        barBootstrap-out-0:
+          destination: event.bar.bootstrap
+          content-type: application/json
+        dropPointBootstrap-out-0:
+          destination: event.drop-point.bootstrap
+          content-type: application/json
+        dropPointRemoved-out-0:
+          destination: event.drop-point.removed
+          content-type: application/json
+        eventCompleted-out-0:
+          destination: event.completed
+          content-type: application/json
+        stockReservedConsumed-out-0:
+          destination: stock.reserved.consumed
+          content-type: application/json
+      rabbit:
+        bindings:
+          barCreated-out-0:
+            producer:
+              exchange-type: fanout
+              exchange-durable: true
+              delivery-mode: PERSISTENT
+          dropPointCreated-out-0:
+            producer:
+              exchange-type: fanout
+              exchange-durable: true
+              delivery-mode: PERSISTENT
+          staffAssigned-out-0:
+            producer:
+              exchange-type: topic
+              exchange-durable: true
+              delivery-mode: PERSISTENT
+          eventStarted-out-0:
+            producer:
+              exchange-type: fanout
+              exchange-durable: true
+              delivery-mode: PERSISTENT
+          barBootstrap-out-0:
+            producer:
+              exchange-type: fanout
+              exchange-durable: true
+              delivery-mode: PERSISTENT
+          dropPointBootstrap-out-0:
+            producer:
+              exchange-type: fanout
+              exchange-durable: true
+              delivery-mode: PERSISTENT
+          dropPointRemoved-out-0:
+            producer:
+              exchange-type: fanout
+              exchange-durable: true
+              delivery-mode: PERSISTENT
+          eventCompleted-out-0:
+            producer:
+              exchange-type: fanout
+              exchange-durable: true
+              delivery-mode: PERSISTENT
+          stockReservedConsumed-out-0:
+            producer:
+              exchange-type: topic
+              exchange-durable: true
+              delivery-mode: PERSISTENT
 server:
   port: 8082
 eureka:
@@ -15,3 +96,7 @@ security:
   internal:
     enabled: false
     secret: ${INTERNAL_SERVICE_SECRET:}
+
+features:
+  event-completed-enabled: false
+  stock-consume-audit-enabled: false
