@@ -7,50 +7,30 @@ spring:
     gateway:
       default-filters:
         - DedupeResponseHeader=Access-Control-Allow-Origin Access-Control-Allow-Credentials
-      globalcors:
-        add-to-simple-url-handler-mapping: true
-        corsConfigurations:
-          '[/**]':
-            allowedOrigins:
-              - "http://localhost:5173"
-              - "http://localhost:5174"
-              - "http://localhost:5175"
-            allowedMethods:
-              - GET
-              - POST
-              - PUT
-              - PATCH
-              - DELETE
-              - OPTIONS
-            allowedHeaders: "*"
-            allowCredentials: true
       routes:
 
       # Event-Planner: All event-related routes (events, bars, drop-points)
         - id: eventplanner-service
           uri: lb://eventplanner-service
           predicates:
-            - Path=/api/events, /api/events/**
+            - Path=/api/v1/events, /api/v1/events/**
           filters:
-            - StripPrefix=0
             - JwtAuthentication
 
       # Bar route (for standalone bar operations)
         - id: bar-service
           uri: lb://bar-service
           predicates:
-            - Path=/api/bars/**
+            - Path=/api/v1/bars/**
           filters:
-            - StripPrefix=1
             - JwtAuthentication
             
       # Droppoints route (for standalone droppoint operations)
         - id: droppoint-service
           uri: lb://droppoint-service
           predicates:
-            - Path=/api/droppoints, /api/droppoints/**
+            - Path=/api/v1/droppoints, /api/v1/droppoints/**
           filters:
-            - StripPrefix=1
             - JwtAuthentication
 
 
@@ -58,28 +38,39 @@ spring:
         - id: warehouse-service
           uri: lb://warehouse-service
           predicates:
-            - Path=/api/warehouse, /api/warehouse/**
+            - Path=/api/v1/warehouse, /api/v1/warehouse/**
           filters:
-            - StripPrefix=1
             - JwtAuthentication
 
       # Users route (authenticated user/admin endpoints)
         - id: users-service
           uri: lb://users-service
           predicates:
-            - Path=/api/users, /api/users/**
+            - Path=/api/v1/users, /api/v1/users/**
           filters:
-            - StripPrefix=1
             - JwtAuthentication
 
 security:
   jwt:
     secret: ${JWT_SECRET:change-me-dev-jwt-secret-key-256-bit-minimum}
     expiration: 3600000
+  rate-limit:
+    login:
+      max-requests: ${LOGIN_RATE_LIMIT_MAX_REQUESTS:10}
+      window-seconds: ${LOGIN_RATE_LIMIT_WINDOW_SECONDS:60}
+      block-seconds: ${LOGIN_RATE_LIMIT_BLOCK_SECONDS:300}
   internal:
     # Dev/CI default: disabled unless explicitly turned on
     enabled: false
-    secret: ${INTERNAL_SERVICE_SECRET:}
+    secret: ${INTERNAL_SERVICE_SECRET:nextbar-internal-dev-secret}
+  headers:
+    content-security-policy: ${SECURITY_CSP:default-src 'self'; frame-ancestors 'none'; object-src 'none'; base-uri 'self'}
+    referrer-policy: ${SECURITY_REFERRER_POLICY:no-referrer}
+    permissions-policy: ${SECURITY_PERMISSIONS_POLICY:geolocation=(), microphone=(), camera=()}
+    hsts:
+      max-age: ${SECURITY_HSTS_MAX_AGE:31536000}
+      include-subdomains: ${SECURITY_HSTS_INCLUDE_SUBDOMAINS:true}
+      preload: ${SECURITY_HSTS_PRELOAD:false}
 
 eureka:
   client:

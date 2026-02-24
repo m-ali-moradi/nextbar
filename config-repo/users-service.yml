@@ -1,19 +1,101 @@
-spring:
-  application:
-    name: users-service
-  cloud:
-    config:
-      uri: http://localhost:8888
+# =============================================================================
+# users-service — Centralised Configuration (Config Server)
+# =============================================================================
+#
+# This file is served by Spring Cloud Config Server and contains ALL business
+# configuration for users-service. The local application.yml only bootstraps
+# the Config Server connection; every other property lives here.
+# =============================================================================
+
+# ── Server ───────────────────────────────────────────────────────────────────
 server:
   port: 8090
 
+# ── Datasource & JPA ────────────────────────────────────────────────────────
+spring:
+  datasource:
+    url: jdbc:mysql://localhost:3306/user_db?createDatabaseIfNotExist=true
+    username: ${DB_USERNAME:root}
+    password: ${DB_PASSWORD:root}
+    driver-class-name: com.mysql.cj.jdbc.Driver
+  jpa:
+    hibernate:
+      ddl-auto: ${JPA_DDL_AUTO:validate}
+    properties:
+      hibernate:
+        dialect: org.hibernate.dialect.MySQLDialect
+        format_sql: true
+
+# ── RabbitMQ Connection ──────────────────────────────────────────────────────
+  rabbitmq:
+    host: ${RABBITMQ_HOST:localhost}
+    port: ${RABBITMQ_AMQP_PORT:5672}
+    username: ${RABBITMQ_USERNAME:guest}
+    password: ${RABBITMQ_PASSWORD:guest}
+
+# ── Spring Cloud Stream (Messaging) ─────────────────────────────────────────
+  cloud:
+    function:
+      definition: consumeStaffResourceSync
+    stream:
+      bindings:
+        consumeStaffResourceSync-in-0:
+          destination: event.staff.resource.sync
+          content-type: application/json
+          group: users-service
+          consumer:
+            max-attempts: 3
+      rabbit:
+        bindings:
+          consumeStaffResourceSync-in-0:
+            consumer:
+              exchange-type: fanout
+              auto-bind-dlq: true
+
+# ── Security (JWT, Internal, Cookies, Login Protection) ──────────────────────
 security:
   jwt:
-    secret: ${JWT_SECRET:change-me-dev-jwt-secret-key-256-bit-minimum}
+    secret: ${JWT_SECRET:nextbar-jwt-secret-key-256-bit-minimum}
     expiration: 3600000
     refresh-expiration: 1209600000
+    ws-ticket-expiration: ${JWT_WS_TICKET_EXPIRATION:60000}
+    issuer: users-service
+  internal:
+    secret: ${INTERNAL_SERVICE_SECRET:nextbar-internal-dev-secret}
+  refresh-cookie:
+    secure: ${REFRESH_COOKIE_SECURE:false}
+    same-site: ${REFRESH_COOKIE_SAME_SITE:Lax}
+  login-protection:
+    max-attempts: ${LOGIN_PROTECTION_MAX_ATTEMPTS:5}
+    base-lock-seconds: ${LOGIN_PROTECTION_BASE_LOCK_SECONDS:30}
+    max-lock-seconds: ${LOGIN_PROTECTION_MAX_LOCK_SECONDS:900}
 
+# ── Eureka ───────────────────────────────────────────────────────────────────
 eureka:
   client:
-    serviceUrl:
-      defaultZone: http://localhost:8761/eureka/
+    service-url:
+      defaultZone: ${EUREKA_SERVER_URL:http://localhost:8761/eureka/}
+    fetch-registry: true
+    register-with-eureka: true
+  instance:
+    prefer-ip-address: true
+    hostname: localhost
+
+# ── Actuator & Observability ─────────────────────────────────────────────────
+management:
+  endpoints:
+    web:
+      exposure:
+        include: health,info,metrics,prometheus
+  endpoint:
+    health:
+      show-details: always
+
+# ── Logging ──────────────────────────────────────────────────────────────────
+logging:
+  level:
+    root: INFO
+    com.nextbar.usersservice: DEBUG
+    org.springframework.security: INFO
+  pattern:
+    console: "%d{yyyy-MM-dd HH:mm:ss} [%thread] %-5level %logger{36} - %msg%n"

@@ -1,31 +1,86 @@
+# =============================================================================
+# bar-service — Centralised Configuration (Config Server)
+# =============================================================================
+#
+# This file is served by Spring Cloud Config Server and contains ALL business
+# configuration for bar-service. The local application.yml only bootstraps the
+# Config Server connection; every other property lives here.
+# =============================================================================
+
+# ── Server ───────────────────────────────────────────────────────────────────
+server:
+  port: 8081
+
+# ── Datasource & JPA ────────────────────────────────────────────────────────
 spring:
-  application:
-    name: bar-service
+  datasource:
+    url: jdbc:mysql://localhost:3306/bar_db?createDatabaseIfNotExist=true
+    username: ${DB_USERNAME:root}
+    password: ${DB_PASSWORD:root}
+    driver-class-name: com.mysql.cj.jdbc.Driver
+  jpa:
+    hibernate:
+      ddl-auto: ${JPA_DDL_AUTO:validate}
+    properties:
+      hibernate:
+        dialect: org.hibernate.dialect.MySQLDialect
+        format_sql: true
+
+# ── RabbitMQ Connection ──────────────────────────────────────────────────────
+  rabbitmq:
+    host: ${RABBITMQ_HOST:localhost}
+    port: ${RABBITMQ_AMQP_PORT:5672}
+    username: ${RABBITMQ_USERNAME:guest}
+    password: ${RABBITMQ_PASSWORD:guest}
+
+# ── Spring Cloud Stream (Messaging) ─────────────────────────────────────────
   cloud:
-    config:
-      uri: http://localhost:8888
     function:
       definition: supplyRequestUpdated;consumeBarCreatedEvent;consumeBarBootstrapEvent;consumeEventCompletedEvent
     stream:
       bindings:
+        # Output — supply request created
+        supplyRequestCreated-out-0:
+          destination: supply.request.created
+          content-type: application/json
+        # Input — supply request updated
         supplyRequestUpdated-in-0:
           destination: supply.request.updated
-          group: bar-service
           content-type: application/json
+          group: bar-service
+          consumer:
+            max-attempts: 5
+            back-off-initial-interval: 1000
+            back-off-multiplier: 2.0
+            back-off-max-interval: 10000
+        # Input — bar created by event planner
         consumeBarCreatedEvent-in-0:
           destination: event.bar.created
-          group: bar-service
           content-type: application/json
+          group: bar-service
+          consumer:
+            max-attempts: 3
+        # Input — bar bootstrap
         consumeBarBootstrapEvent-in-0:
           destination: event.bar.bootstrap
-          group: bar-service
           content-type: application/json
+          group: bar-service
+          consumer:
+            max-attempts: 3
+        # Input — event completed
         consumeEventCompletedEvent-in-0:
           destination: event.completed
-          group: bar-service
           content-type: application/json
+          group: bar-service
+          consumer:
+            max-attempts: 3
       rabbit:
         bindings:
+          supplyRequestCreated-out-0:
+            producer:
+              exchange-type: topic
+              exchange-durable: true
+              delivery-mode: PERSISTENT
           supplyRequestUpdated-in-0:
             consumer:
               exchange-type: topic
@@ -45,51 +100,9 @@ spring:
               exchange-type: fanout
               auto-bind-dlq: true
 
-bar:
-  supply:
-    warehouse-base-url: ${WAREHOUSE_SERVICE_BASE_URL:http://localhost:8085}
-
-features:
-  event-completed-enabled: ${FEATURE_EVENT_COMPLETED_ENABLED:false}
-
-server:
-  port: 8081
-
-eureka:
-  client:
-    serviceUrl:
-      defaultZone: http://localhost:8761/eureka/
-  instance:
-    preferIpAddress: true
-    hostname: localhost
-
-management:
-  endpoints:
-    web:
-      exposure:
-        include: '*'
-  health:
-    circuitbreakers:
-      enabled: true
-  metrics:
-    enable:
-      resilience4j.circuitbreaker.calls: true
-
-resilience4j:
-  circuitbreaker:
-    instances:
-      eventplanner-service:
-        registerHealthIndicator: true
-        slidingWindowSize: 10
-        minimumNumberOfCalls: 5
-        failureRateThreshold: 50
-        waitDurationInOpenState: 10s
-
-logging:
-  level:
-    root: INFO
-    io.github.resilience4j: DEBUG
-    org.springframework.cloud.openfeign: DEBUG
+# ── JWT & Internal Security ──────────────────────────────────────────────────
+jwt:
+  secret: ${JWT_SECRET}
 
 security:
   internal:
@@ -97,3 +110,51 @@ security:
     secret: ${INTERNAL_SERVICE_SECRET:}
 
 
+# ── Eureka ───────────────────────────────────────────────────────────────────
+eureka:
+  client:
+    service-url:
+      defaultZone: ${EUREKA_SERVER_URL:http://localhost:8761/eureka/}
+    fetch-registry: true
+    register-with-eureka: true
+  instance:
+    prefer-ip-address: true
+    hostname: localhost
+
+# ── Actuator & Observability ─────────────────────────────────────────────────
+management:
+  endpoints:
+    web:
+      exposure:
+        include: health,info,metrics,prometheus
+  endpoint:
+    health:
+      show-details: always
+  health:
+    circuitbreakers:
+      enabled: true
+  metrics:
+    enable:
+      resilience4j.circuitbreaker.calls: true
+  tracing:
+    sampling:
+      probability: 1.0
+  zipkin:
+    tracing:
+      endpoint: ${ZIPKIN_BASE_URL:http://localhost:9411/api/v2/spans}
+
+# ── Swagger / SpringDoc ─────────────────────────────────────────────────────
+springdoc:
+  api-docs:
+    path: /v3/api-docs
+  swagger-ui:
+    path: /swagger-ui.html
+
+# ── Logging ──────────────────────────────────────────────────────────────────
+logging:
+  level:
+    root: INFO
+    com.nextbar.bar: DEBUG
+    org.springframework.security: DEBUG
+    io.github.resilience4j: DEBUG
+    org.springframework.cloud.openfeign: DEBUG

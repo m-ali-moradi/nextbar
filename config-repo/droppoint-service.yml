@@ -1,25 +1,76 @@
+# =============================================================================
+# droppoint-service — Centralised Configuration (Config Server)
+# =============================================================================
+#
+# This file is served by Spring Cloud Config Server and contains ALL business
+# configuration for droppoint-service. The local application.yml only bootstraps
+# the Config Server connection; every other property lives here.
+# =============================================================================
+
+# ── Server ───────────────────────────────────────────────────────────────────
+server:
+  port: 8083
+
+# ── Datasource & JPA ────────────────────────────────────────────────────────
 spring:
-  application:
-    name: droppoint-service
+  datasource:
+    url: "jdbc:mysql://localhost:3306/drop_points_db?createDatabaseIfNotExist=true&useSSL=false&serverTimezone=UTC&allowPublicKeyRetrieval=true"
+    username: ${DB_USERNAME:root}
+    password: ${DB_PASSWORD:root}
+    driver-class-name: com.mysql.cj.jdbc.Driver
+  jpa:
+    hibernate:
+      ddl-auto: ${JPA_DDL_AUTO:validate}
+    database-platform: org.hibernate.dialect.MySQLDialect
+    properties:
+      hibernate:
+        format_sql: true
+  sql:
+    init:
+      mode: always
+
+# ── RabbitMQ Connection ──────────────────────────────────────────────────────
+  rabbitmq:
+    host: ${RABBITMQ_HOST:localhost}
+    port: ${RABBITMQ_AMQP_PORT:5672}
+    username: ${RABBITMQ_USERNAME:guest}
+    password: ${RABBITMQ_PASSWORD:guest}
+
+# ── Spring Cloud Stream (Messaging) ─────────────────────────────────────────
   cloud:
-    config:
-      uri: http://localhost:8888
     function:
-      definition: consumeDropPointBootstrap;consumeDropPointRemoved
+      definition: consumeDropPointBootstrap;consumeDropPointCreatedEvent;consumeWarehouseCollectionStatusEvent;consumeEventCompletedEvent
     stream:
       bindings:
+        # Input — drop-point bootstrap from event planner
         consumeDropPointBootstrap-in-0:
           destination: event.drop-point.bootstrap
-          group: droppoint-service
           content-type: application/json
+          group: droppoint-service
           consumer:
             max-attempts: 3
-        consumeDropPointRemoved-in-0:
-          destination: event.drop-point.removed
-          group: droppoint-service
+        # Input — drop-point created by event planner
+        consumeDropPointCreatedEvent-in-0:
+          destination: event.droppoint.created
           content-type: application/json
+          group: droppoint-service
           consumer:
             max-attempts: 3
+        # Input — warehouse collection status updates
+        consumeWarehouseCollectionStatusEvent-in-0:
+          destination: drop-point.collection.lifecycle
+          content-type: application/json
+          group: droppoint-service
+          consumer:
+            max-attempts: 3
+        # Input — event completed
+        consumeEventCompletedEvent-in-0:
+          destination: event.completed
+          content-type: application/json
+          group: droppoint-service
+          consumer:
+            max-attempts: 3
+        # Output — drop-point collection events
         dropPointCollectionEvent-out-0:
           destination: drop-point.collection.events
           content-type: application/json
@@ -29,7 +80,15 @@ spring:
             consumer:
               exchange-type: fanout
               auto-bind-dlq: true
-          consumeDropPointRemoved-in-0:
+          consumeDropPointCreatedEvent-in-0:
+            consumer:
+              exchange-type: fanout
+              auto-bind-dlq: true
+          consumeWarehouseCollectionStatusEvent-in-0:
+            consumer:
+              exchange-type: topic
+              auto-bind-dlq: true
+          consumeEventCompletedEvent-in-0:
             consumer:
               exchange-type: fanout
               auto-bind-dlq: true
@@ -37,28 +96,36 @@ spring:
             producer:
               exchange-type: topic
               exchange-durable: true
-  rabbitmq:
-    host: localhost
-    port: 5672
-    username: ${RABBITMQ_USERNAME:nextbar}
-    password: ${RABBITMQ_PASSWORD:nextbar123}
-  jpa:
-    hibernate:
-      ddl-auto: update
-    show-sql: false
-server:
-  port: 8083
 
-eureka:
-  client:
-    serviceUrl:
-      defaultZone: http://localhost:8761/eureka/
-  instance:
-    prefer-ip-address: true
-    ip-address: 127.0.0.1
-    hostname: 127.0.0.1
-
+# ── Security ─────────────────────────────────────────────────────────────────
 security:
   internal:
     enabled: false
     secret: ${INTERNAL_SERVICE_SECRET:}
+
+# ── Eureka ───────────────────────────────────────────────────────────────────
+eureka:
+  client:
+    service-url:
+      defaultZone: ${EUREKA_SERVER_URL:http://localhost:8761/eureka/}
+    fetch-registry: true
+    register-with-eureka: true
+  instance:
+    prefer-ip-address: true
+    hostname: localhost
+
+# ── Actuator & Observability ─────────────────────────────────────────────────
+management:
+  endpoints:
+    web:
+      exposure:
+        include: health,info,metrics,prometheus
+  endpoint:
+    health:
+      show-details: always
+
+# ── Logging ──────────────────────────────────────────────────────────────────
+logging:
+  level:
+    root: INFO
+    org.springframework.jdbc.datasource.init.ScriptUtils: DEBUG

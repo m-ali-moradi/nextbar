@@ -1,42 +1,88 @@
+# =============================================================================
+# eventplanner-service — Centralised Configuration (Config Server)
+# =============================================================================
+#
+# This file is served by Spring Cloud Config Server and contains ALL business
+# configuration for eventplanner-service. The local application.yml only
+# bootstraps the Config Server connection; every other property lives here.
+# =============================================================================
+
+# ── Server ───────────────────────────────────────────────────────────────────
+server:
+  port: 8082
+
+# ── Datasource & JPA ────────────────────────────────────────────────────────
 spring:
-  application:
-    name: eventplanner-service
+  datasource:
+    url: jdbc:mysql://localhost:3306/event_db?useSSL=false&serverTimezone=UTC&allowPublicKeyRetrieval=true&createDatabaseIfNotExist=true
+    username: ${DB_USERNAME:root}
+    password: ${DB_PASSWORD:root}
+    driver-class-name: com.mysql.cj.jdbc.Driver
+  jpa:
+    hibernate:
+      ddl-auto: update
+    show-sql: false
+    database-platform: org.hibernate.dialect.MySQLDialect
+    properties:
+      hibernate:
+        format_sql: true
+  sql:
+    init:
+      mode: never
+
+# ── RabbitMQ Connection ──────────────────────────────────────────────────────
   rabbitmq:
-    host: localhost
-    port: 5672
-    username: ${RABBITMQ_USERNAME:nextbar}
-    password: ${RABBITMQ_PASSWORD:nextbar123}
+    host: ${RABBITMQ_HOST:localhost}
+    port: ${RABBITMQ_AMQP_PORT:5672}
+    username: ${RABBITMQ_USERNAME:guest}
+    password: ${RABBITMQ_PASSWORD:guest}
+
+# ── Spring Cloud (OpenFeign, Stream) ─────────────────────────────────────────
   cloud:
-    config:
-      uri: http://localhost:8888
+    openfeign:
+      circuitbreaker:
+        enabled: true
     stream:
       bindings:
+        # Output — bar created
         barCreated-out-0:
           destination: event.bar.created
           content-type: application/json
+        # Output — drop-point created
         dropPointCreated-out-0:
           destination: event.droppoint.created
           content-type: application/json
+        # Output — staff assigned
         staffAssigned-out-0:
           destination: event.staff.assigned
           content-type: application/json
+        # Output — event started
         eventStarted-out-0:
           destination: event.started
           content-type: application/json
+        # Output — bar bootstrap
         barBootstrap-out-0:
           destination: event.bar.bootstrap
           content-type: application/json
+        # Output — drop-point bootstrap
         dropPointBootstrap-out-0:
           destination: event.drop-point.bootstrap
           content-type: application/json
+        # Output — drop-point removed
         dropPointRemoved-out-0:
           destination: event.drop-point.removed
           content-type: application/json
+        # Output — event completed
         eventCompleted-out-0:
           destination: event.completed
           content-type: application/json
+        # Output — stock reserved consumed
         stockReservedConsumed-out-0:
           destination: stock.reserved.consumed
+          content-type: application/json
+        # Output — staff resource sync
+        staffResourceSync-out-0:
+          destination: event.staff.resource.sync
           content-type: application/json
       rabbit:
         bindings:
@@ -85,18 +131,73 @@ spring:
               exchange-type: topic
               exchange-durable: true
               delivery-mode: PERSISTENT
-server:
-  port: 8082
-eureka:
-  client:
-    serviceUrl:
-      defaultZone: http://localhost:8761/eureka/
+          staffResourceSync-out-0:
+            producer:
+              exchange-type: fanout
+              exchange-durable: true
+              delivery-mode: PERSISTENT
 
+# ── Security ─────────────────────────────────────────────────────────────────
 security:
   internal:
     enabled: false
     secret: ${INTERNAL_SERVICE_SECRET:}
 
-features:
-  event-completed-enabled: false
-  stock-consume-audit-enabled: false
+
+# ── Eureka ───────────────────────────────────────────────────────────────────
+eureka:
+  client:
+    service-url:
+      defaultZone: ${EUREKA_SERVER_URL:http://localhost:8761/eureka/}
+    register-with-eureka: true
+    fetch-registry: true
+  instance:
+    prefer-ip-address: true
+    hostname: localhost
+    lease-renewal-interval-in-seconds: 30
+    lease-expiration-duration-in-seconds: 90
+
+# ── Actuator & Observability ─────────────────────────────────────────────────
+management:
+  endpoints:
+    web:
+      exposure:
+        include: health,info,metrics,prometheus
+  endpoint:
+    health:
+      show-details: always
+
+# ── Swagger / SpringDoc ─────────────────────────────────────────────────────
+springdoc:
+  api-docs:
+    path: /v3/api-docs
+  swagger-ui:
+    path: /swagger-ui.html
+    enabled: true
+    tags-sorter: alpha
+    operations-sorter: alpha
+  show-actuator: true
+
+# ── Resilience4j ─────────────────────────────────────────────────────────────
+resilience4j:
+  circuitbreaker:
+    instances:
+      userService:
+        slidingWindowSize: 10
+        failureRateThreshold: 50
+        waitDurationInOpenState: 10000
+        permittedNumberOfCallsInHalfOpenState: 3
+      warehouseService:
+        slidingWindowSize: 10
+        failureRateThreshold: 50
+        waitDurationInOpenState: 10000
+        permittedNumberOfCallsInHalfOpenState: 3
+
+# ── Logging ──────────────────────────────────────────────────────────────────
+logging:
+  level:
+    root: INFO
+    de.fhdo.eventPlanner: DEBUG
+    io.github.resilience4j: DEBUG
+    org.springframework.cloud.openfeign: DEBUG
+    org.springframework.security: DEBUG
