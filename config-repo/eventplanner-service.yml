@@ -10,9 +10,12 @@
 # ── Server ───────────────────────────────────────────────────────────────────
 server:
   port: 8082
+  shutdown: graceful
 
 # ── Datasource & JPA ────────────────────────────────────────────────────────
 spring:
+  lifecycle:
+    timeout-per-shutdown-phase: 30s
   datasource:
     url: jdbc:mysql://localhost:3306/event_db?useSSL=false&serverTimezone=UTC&allowPublicKeyRetrieval=true&createDatabaseIfNotExist=true
     username: ${DB_USERNAME:root}
@@ -20,7 +23,7 @@ spring:
     driver-class-name: com.mysql.cj.jdbc.Driver
   jpa:
     hibernate:
-      ddl-auto: update
+      ddl-auto: ${JPA_DDL_AUTO:validate}
     show-sql: false
     database-platform: org.hibernate.dialect.MySQLDialect
     properties:
@@ -34,8 +37,8 @@ spring:
   rabbitmq:
     host: ${RABBITMQ_HOST:localhost}
     port: ${RABBITMQ_AMQP_PORT:5672}
-    username: ${RABBITMQ_USERNAME:guest}
-    password: ${RABBITMQ_PASSWORD:guest}
+    username: ${RABBITMQ_USERNAME:nextbar}
+    password: ${RABBITMQ_PASSWORD:nextbar123}
 
 # ── Spring Cloud (OpenFeign, Stream) ─────────────────────────────────────────
   cloud:
@@ -68,10 +71,6 @@ spring:
         dropPointBootstrap-out-0:
           destination: event.drop-point.bootstrap
           content-type: application/json
-        # Output — drop-point removed
-        dropPointRemoved-out-0:
-          destination: event.drop-point.removed
-          content-type: application/json
         # Output — event completed
         eventCompleted-out-0:
           destination: event.completed
@@ -88,14 +87,14 @@ spring:
         bindings:
           barCreated-out-0:
             producer:
-              exchange-type: fanout
-              exchange-durable: true
-              delivery-mode: PERSISTENT
+                exchange-type: topic
+                exchange-durable: true
+                delivery-mode: PERSISTENT
           dropPointCreated-out-0:
             producer:
-              exchange-type: fanout
-              exchange-durable: true
-              delivery-mode: PERSISTENT
+                exchange-type: topic
+                exchange-durable: true
+                delivery-mode: PERSISTENT
           staffAssigned-out-0:
             producer:
               exchange-type: topic
@@ -108,19 +107,14 @@ spring:
               delivery-mode: PERSISTENT
           barBootstrap-out-0:
             producer:
-              exchange-type: fanout
-              exchange-durable: true
-              delivery-mode: PERSISTENT
+                exchange-type: topic
+                exchange-durable: true
+                delivery-mode: PERSISTENT
           dropPointBootstrap-out-0:
             producer:
-              exchange-type: fanout
-              exchange-durable: true
-              delivery-mode: PERSISTENT
-          dropPointRemoved-out-0:
-            producer:
-              exchange-type: fanout
-              exchange-durable: true
-              delivery-mode: PERSISTENT
+                exchange-type: topic
+                exchange-durable: true
+                delivery-mode: PERSISTENT
           eventCompleted-out-0:
             producer:
               exchange-type: fanout
@@ -133,15 +127,15 @@ spring:
               delivery-mode: PERSISTENT
           staffResourceSync-out-0:
             producer:
-              exchange-type: fanout
-              exchange-durable: true
-              delivery-mode: PERSISTENT
+                exchange-type: topic
+                exchange-durable: true
+                delivery-mode: PERSISTENT
 
 # ── Security ─────────────────────────────────────────────────────────────────
 security:
   internal:
     enabled: false
-    secret: ${INTERNAL_SERVICE_SECRET:}
+    secret: ${INTERNAL_SERVICE_SECRET}
 
 
 # ── Eureka ───────────────────────────────────────────────────────────────────
@@ -166,6 +160,12 @@ management:
   endpoint:
     health:
       show-details: always
+  tracing:
+    sampling:
+      probability: 1.0
+  zipkin:
+    tracing:
+      endpoint: ${ZIPKIN_BASE_URL:http://localhost:9411}/api/v2/spans
 
 # ── Swagger / SpringDoc ─────────────────────────────────────────────────────
 springdoc:

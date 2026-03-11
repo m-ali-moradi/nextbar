@@ -1,23 +1,78 @@
+# =============================================================================
+# warehouse-service — Centralised Configuration (Config Server)
+# =============================================================================
+#
+# This file is served by Spring Cloud Config Server and contains ALL business
+# configuration for warehouse-service. The local application.yml only bootstraps
+# the Config Server connection; every other property lives here.
+# =============================================================================
+
+# ── Server ───────────────────────────────────────────────────────────────────
+server:
+  port: 8085
+  shutdown: graceful
+
+# ── Datasource & JPA ────────────────────────────────────────────────────────
 spring:
-  application:
-    name: warehouse-service
+  lifecycle:
+    timeout-per-shutdown-phase: 30s
+  datasource:
+    url: jdbc:mysql://localhost:3306/warehouse_db?createDatabaseIfNotExist=true&useSSL=false&serverTimezone=UTC&allowPublicKeyRetrieval=true
+    username: ${DB_USERNAME:root}
+    password: ${DB_PASSWORD:root}
+    driver-class-name: com.mysql.cj.jdbc.Driver
+  jpa:
+    hibernate:
+      ddl-auto: ${JPA_DDL_AUTO:validate}
+    show-sql: false
+    database-platform: org.hibernate.dialect.MySQLDialect
+    properties:
+      hibernate:
+        format_sql: true
+  sql:
+    init:
+      mode: always
+
+# ── RabbitMQ Connection ──────────────────────────────────────────────────────
+  rabbitmq:
+    host: ${RABBITMQ_HOST:localhost}
+    port: ${RABBITMQ_AMQP_PORT:5672}
+    username: ${RABBITMQ_USERNAME:nextbar}
+    password: ${RABBITMQ_PASSWORD:nextbar123}
+
+# ── Spring Cloud Stream (Messaging) ─────────────────────────────────────────
   cloud:
-    config:
-      uri: http://localhost:8888
     function:
       definition: supplyRequestCreated;consumeDropPointCollectionEvent
     stream:
       bindings:
+        # Input — supply request created by bar-service
         supplyRequestCreated-in-0:
           destination: supply.request.created
-          group: warehouse-service
           content-type: application/json
+          group: warehouse-service
+          consumer:
+            max-attempts: 5
+            back-off-initial-interval: 1000
+            back-off-multiplier: 2.0
+            back-off-max-interval: 10000
+        # Input — drop-point collection events
         consumeDropPointCollectionEvent-in-0:
           destination: drop-point.collection.events
-          group: warehouse-service
           content-type: application/json
+          group: warehouse-service
+          consumer:
+            max-attempts: 5
+            back-off-initial-interval: 1000
+            back-off-multiplier: 2.0
+            back-off-max-interval: 10000
+        # Output — supply request updated
         supplyRequestUpdated-out-0:
           destination: supply.request.updated
+          content-type: application/json
+        # Output — drop-point collection lifecycle status
+        dropPointCollectionLifecycle-out-0:
+          destination: drop-point.collection.lifecycle
           content-type: application/json
       rabbit:
         bindings:
@@ -37,20 +92,58 @@ spring:
             producer:
               exchange-type: topic
               exchange-durable: true
+              delivery-mode: PERSISTENT
+          dropPointCollectionLifecycle-out-0:
+            producer:
+              exchange-type: topic
+              exchange-durable: true
+              delivery-mode: PERSISTENT
 
-server:
-  port: 8085
+# ── Security ─────────────────────────────────────────────────────────────────
+security:
+  internal:
+    enabled: false
+    secret: ${INTERNAL_SERVICE_SECRET}
 
+# ── Eureka ───────────────────────────────────────────────────────────────────
 eureka:
   client:
-    serviceUrl:
-      defaultZone: http://localhost:8761/eureka/
+    service-url:
+      defaultZone: ${EUREKA_SERVER_URL:http://localhost:8761/eureka/}
+    fetch-registry: true
+    register-with-eureka: true
   instance:
-    preferIpAddress: true
-    ip-address: 127.0.0.1
-    hostname: 127.0.0.1
+    prefer-ip-address: true
+    hostname: localhost
 
-# Circuit Breaker Configuration
+# ── Actuator & Observability ─────────────────────────────────────────────────
+management:
+  endpoints:
+    web:
+      exposure:
+        include: health,info,metrics,prometheus
+  endpoint:
+    health:
+      show-details: always
+  health:
+    circuitbreakers:
+      enabled: true
+  tracing:
+    sampling:
+      probability: 1.0
+  zipkin:
+    tracing:
+      endpoint: ${ZIPKIN_BASE_URL:http://localhost:9411}/api/v2/spans
+
+# ── Swagger / SpringDoc ─────────────────────────────────────────────────────
+springdoc:
+  api-docs:
+    path: /v3/api-docs
+  swagger-ui:
+    path: /swagger-ui.html
+    operationsSorter: method
+
+# ── Resilience4j ─────────────────────────────────────────────────────────────
 resilience4j:
   circuitbreaker:
     instances:
@@ -71,15 +164,13 @@ resilience4j:
         permittedNumberOfCallsInHalfOpenState: 3
         automaticTransitionFromOpenToHalfOpenEnabled: true
 
-# Logging
+# ── Logging ──────────────────────────────────────────────────────────────────
 logging:
   level:
     root: INFO
     com.dmsa.warehouse: DEBUG
+    org.springframework.security: INFO
     io.github.resilience4j: DEBUG
     org.springframework.cloud.openfeign: DEBUG
-
-security:
-  internal:
-    enabled: false
-    secret: ${INTERNAL_SERVICE_SECRET:}
+  pattern:
+    console: "%d{yyyy-MM-dd HH:mm:ss} [%thread] %-5level %logger{36} - %msg%n"

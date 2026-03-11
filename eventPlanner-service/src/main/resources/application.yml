@@ -1,0 +1,30 @@
+# =============================================================================
+# eventplanner-service — Local Bootstrap Configuration
+# =============================================================================
+#
+# This file contains ONLY the minimal configuration required to connect to
+# Spring Cloud Config Server. All business configuration (datasource, JPA,
+# security, messaging, eureka, logging, etc.) lives in the config-repo under:
+#
+#   config-repo/eventplanner-service.yml          (default profile)
+#   config-repo/eventplanner-service-{profile}.yml (profile-specific overrides)
+#
+# WHY MINIMAL?
+#   Centralising config in Config Server provides a single source of truth,
+#   environment-specific overrides without rebuilding, and runtime refresh
+#   via Spring Cloud Bus or /actuator/refresh.
+#
+# WHY FAIL-FAST?
+#   In production the service MUST NOT start with stale or missing config.
+#   fail-fast=true ensures the application exits immediately if Config Server
+#   is unreachable, preventing silent misconfiguration.
+# =============================================================================
+
+spring:
+  application:
+    name: eventplanner-service
+  config:
+    import: configserver:${CONFIG_SERVER_URL:http://localhost:8888}
+  cloud:
+    config:
+      fail-fast: true

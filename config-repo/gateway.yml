@@ -1,6 +1,9 @@
 server:
   port: 8080
+  shutdown: graceful
 spring:
+  lifecycle:
+    timeout-per-shutdown-phase: 30s
   application:
     name: gateway
   cloud:
@@ -52,7 +55,7 @@ spring:
 
 security:
   jwt:
-    secret: ${JWT_SECRET:change-me-dev-jwt-secret-key-256-bit-minimum}
+    secret: ${JWT_SECRET}
     expiration: 3600000
   rate-limit:
     login:
@@ -62,7 +65,7 @@ security:
   internal:
     # Dev/CI default: disabled unless explicitly turned on
     enabled: false
-    secret: ${INTERNAL_SERVICE_SECRET:nextbar-internal-dev-secret}
+    secret: ${INTERNAL_SERVICE_SECRET}
   headers:
     content-security-policy: ${SECURITY_CSP:default-src 'self'; frame-ancestors 'none'; object-src 'none'; base-uri 'self'}
     referrer-policy: ${SECURITY_REFERRER_POLICY:no-referrer}

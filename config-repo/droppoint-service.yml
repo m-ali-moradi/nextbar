@@ -10,9 +10,12 @@
 # ── Server ───────────────────────────────────────────────────────────────────
 server:
   port: 8083
+  shutdown: graceful
 
 # ── Datasource & JPA ────────────────────────────────────────────────────────
 spring:
+  lifecycle:
+    timeout-per-shutdown-phase: 30s
   datasource:
     url: "jdbc:mysql://localhost:3306/drop_points_db?createDatabaseIfNotExist=true&useSSL=false&serverTimezone=UTC&allowPublicKeyRetrieval=true"
     username: ${DB_USERNAME:root}
@@ -33,8 +36,8 @@ spring:
   rabbitmq:
     host: ${RABBITMQ_HOST:localhost}
     port: ${RABBITMQ_AMQP_PORT:5672}
-    username: ${RABBITMQ_USERNAME:guest}
-    password: ${RABBITMQ_PASSWORD:guest}
+    username: ${RABBITMQ_USERNAME:nextbar}
+    password: ${RABBITMQ_PASSWORD:nextbar123}
 
 # ── Spring Cloud Stream (Messaging) ─────────────────────────────────────────
   cloud:
@@ -78,12 +81,12 @@ spring:
         bindings:
           consumeDropPointBootstrap-in-0:
             consumer:
-              exchange-type: fanout
-              auto-bind-dlq: true
+                exchange-type: topic
+                auto-bind-dlq: true
           consumeDropPointCreatedEvent-in-0:
             consumer:
-              exchange-type: fanout
-              auto-bind-dlq: true
+                exchange-type: topic
+                auto-bind-dlq: true
           consumeWarehouseCollectionStatusEvent-in-0:
             consumer:
               exchange-type: topic
@@ -101,7 +104,7 @@ spring:
 security:
   internal:
     enabled: false
-    secret: ${INTERNAL_SERVICE_SECRET:}
+    secret: ${INTERNAL_SERVICE_SECRET}
 
 # ── Eureka ───────────────────────────────────────────────────────────────────
 eureka:
@@ -123,6 +126,12 @@ management:
   endpoint:
     health:
       show-details: always
+  tracing:
+    sampling:
+      probability: 1.0
+  zipkin:
+    tracing:
+      endpoint: ${ZIPKIN_BASE_URL:http://localhost:9411}/api/v2/spans
 
 # ── Logging ──────────────────────────────────────────────────────────────────
 logging:
