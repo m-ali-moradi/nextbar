@@ -4,6 +4,7 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.boot.ApplicationArguments;
 import org.springframework.boot.ApplicationRunner;
+import org.springframework.boot.autoconfigure.condition.ConditionalOnProperty;
 import org.springframework.jdbc.core.JdbcTemplate;
 import org.springframework.stereotype.Component;
 
@@ -12,6 +13,7 @@ import org.springframework.stereotype.Component;
  * upgrades on existing databases.
  */
 @Component
+@ConditionalOnProperty(value = "app.schema.drop-point-initializer.enabled", havingValue = "true", matchIfMissing = true)
 public class DropPointSchemaInitializer implements ApplicationRunner {
 
     private static final Logger log = LoggerFactory.getLogger(DropPointSchemaInitializer.class);
