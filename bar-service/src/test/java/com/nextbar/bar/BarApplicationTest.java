@@ -8,13 +8,15 @@ import org.springframework.boot.test.context.SpringBootTest;
  *
  * This test ensures that the Spring application context can start successfully
  * without any configuration issues. It does not verify any specific beans or
- *  functionality but serves as a sanity check for the overall application setup.
+ * functionality but serves as a sanity check for the overall application setup.
  */
-@SpringBootTest
+@SpringBootTest(properties = {
+		"spring.cloud.config.enabled=false",
+		"spring.config.import="
+})
 public class BarApplicationTest {
-    	@Test
+	@Test
 	void contextLoads() {
 	}
 
 }
-
