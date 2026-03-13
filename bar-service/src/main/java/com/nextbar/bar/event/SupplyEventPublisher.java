@@ -1,18 +1,20 @@
 package com.nextbar.bar.event;
 
+import java.nio.charset.StandardCharsets;
 import java.time.Instant;
 import java.util.HashMap;
 import java.util.Map;
+import java.util.UUID;
 import java.util.stream.Collectors;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import org.springframework.amqp.AmqpException;
 import org.springframework.amqp.rabbit.core.RabbitTemplate;
 import org.springframework.cloud.stream.function.StreamBridge;
 import org.springframework.stereotype.Component;
 
-import com.nextbar.bar.model.dto.SupplyRequestDto;
-import com.nextbar.events.SupplyRequestCreatedEvent;
+import com.nextbar.bar.dto.response.SupplyRequestDto;
 
 /**
  * Publishes supply request events to RabbitMQ.
@@ -43,7 +45,7 @@ public class SupplyEventPublisher {
     public void publishSupplyRequestCreated(SupplyRequestDto request, String barName) {
         var items = request.items().stream()
                 .map(item -> new SupplyRequestCreatedEvent.SupplyItem(
-                        item.productId(),
+                productUuidFromName(item.productName()),
                         item.productName(),
                         item.quantity()))
                 .collect(Collectors.toList());
@@ -66,6 +68,12 @@ public class SupplyEventPublisher {
         publishToWebSocket(request, barName);
     }
 
+    /**
+     * Publishes a WebSocket event to notify frontend clients about the new supply request.
+     * This allows the warehouse dashboard to update in real-time when a new request is created.
+     * @param request the created supply request DTO
+     * @param barName the name of the bar (for display in warehouse)
+     */
     private void publishToWebSocket(SupplyRequestDto request, String barName) {
         try {
             Map<String, Object> payload = new HashMap<>();
@@ -85,8 +93,14 @@ public class SupplyEventPublisher {
             rabbitTemplate.convertAndSend(WEBSOCKET_EVENTS_EXCHANGE, "", webSocketEvent);
             log.debug("Published event to WebSocket exchange: type=SUPPLY_REQUEST_CREATED, barId={}",
                     request.barId());
-        } catch (Exception e) {
+        } catch (AmqpException e) {
             log.error("Failed to publish to WebSocket exchange: {}", e.getMessage());
         }
+    }
+
+    // Helper method to generate a consistent UUID for a product based on its name
+    private UUID productUuidFromName(String productName) {
+        String normalized = productName == null ? "unknown" : productName.trim().toLowerCase();
+        return UUID.nameUUIDFromBytes(("product-" + normalized).getBytes(StandardCharsets.UTF_8));
     }
 }

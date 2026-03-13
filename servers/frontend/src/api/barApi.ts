@@ -14,8 +14,10 @@ import type {
 
 /**
  * Bar API module
- * All methods use typed DTOs and JSON body payloads for consistency
+ * All methods use typed DTOs and JSON body payloads for consistency.
  */
+const BARS_BASE_PATH = '/api/v1/bars';
+
 export const barApi = {
   // =====================================================
   // Products
@@ -24,33 +26,26 @@ export const barApi = {
   /**
    * Get all available products/beverages
    */
-  getProducts: () => ApiService.get<Product[]>('/api/bars/products'),
+  getProducts: () => ApiService.get<Product[]>(`${BARS_BASE_PATH}/products`),
 
   // =====================================================
-  // Bars CRUD
+  // Bars (read-only configuration)
   // =====================================================
 
   /**
    * Get all bars
    */
-  getBars: () => ApiService.get<Bar[]>('/api/bars'),
+  getBars: () => ApiService.get<Bar[]>(BARS_BASE_PATH),
 
   /**
    * Get a specific bar by ID
    */
-  getBar: (barId: string) => ApiService.get<Bar>(`/api/bars/${barId}`),
+  getBar: (barId: string) => ApiService.get<Bar>(`${BARS_BASE_PATH}/${barId}`),
 
   /**
-   * Create a new bar
-   * @param payload - Bar creation data (name, location, maxCapacity)
+   * Create a local operational bar
    */
-  addBar: (payload: CreateBarPayload) =>
-    ApiService.post<Bar>('/api/bars', payload),
-
-  /**
-   * Delete a bar
-   */
-  deleteBar: (barId: string) => ApiService.delete(`/api/bars/${barId}`),
+  addBar: (payload: CreateBarPayload) => ApiService.post<Bar>(`${BARS_BASE_PATH}/local`, payload),
 
   // =====================================================
   // Stock Management
@@ -59,7 +54,7 @@ export const barApi = {
   /**
    * Get stock inventory for a specific bar
    */
-  getStock: (barId: string) => ApiService.get<StockItem[]>(`/api/bars/${barId}/stock`),
+  getStock: (barId: string) => ApiService.get<StockItem[]>(`${BARS_BASE_PATH}/${barId}/stock`),
 
   /**
    * Add stock to a bar
@@ -67,7 +62,7 @@ export const barApi = {
    * @param payload - Stock operation data (productId, quantity)
    */
   addStock: (barId: string, payload: StockOperationPayload) =>
-    ApiService.post<StockItem>(`/api/bars/${barId}/stock/add`, payload),
+    ApiService.post<StockItem>(`${BARS_BASE_PATH}/${barId}/stock/add`, payload),
 
   /**
    * Reduce stock from a bar
@@ -75,7 +70,7 @@ export const barApi = {
    * @param payload - Stock operation data (productId, quantity)
    */
   reduceStock: (barId: string, payload: StockOperationPayload) =>
-    ApiService.post<StockItem>(`/api/bars/${barId}/stock/reduce`, payload),
+    ApiService.post<StockItem>(`${BARS_BASE_PATH}/${barId}/stock/reduce`, payload),
 
   // =====================================================
   // Usage Logging
@@ -87,19 +82,19 @@ export const barApi = {
    * @param payload - Usage data (productId, quantity)
    */
   logDrink: (barId: string, payload: StockOperationPayload) =>
-    ApiService.post<BarUsageLog>(`/api/bars/${barId}/usage`, payload),
+    ApiService.post<BarUsageLog>(`${BARS_BASE_PATH}/${barId}/usage`, payload),
 
   /**
    * Get usage logs for a bar
    */
   getUsageLogs: (barId: string) =>
-    ApiService.get<BarUsageLog[]>(`/api/bars/${barId}/usage`),
+    ApiService.get<BarUsageLog[]>(`${BARS_BASE_PATH}/${barId}/usage`),
 
   /**
    * Get total served statistics for a bar
    */
   getTotalServed: (barId: string) =>
-    ApiService.get<TotalServed[]>(`/api/bars/${barId}/usage/total-served`),
+    ApiService.get<TotalServed[]>(`${BARS_BASE_PATH}/${barId}/usage/total-served`),
 
   // =====================================================
   // Supply Requests
@@ -111,13 +106,13 @@ export const barApi = {
    * @param payload - Supply request items
    */
   createSupplyRequest: (barId: string, payload: CreateSupplyRequestPayload) =>
-    ApiService.post<SupplyRequest>(`/api/bars/${barId}/supply`, payload),
+    ApiService.post<SupplyRequest>(`${BARS_BASE_PATH}/${barId}/supply`, payload),
 
   /**
    * Get all supply requests for a bar
    */
   getSupplyRequests: (barId: string) =>
-    ApiService.get<SupplyRequest[]>(`/api/bars/${barId}/supply`),
+    ApiService.get<SupplyRequest[]>(`${BARS_BASE_PATH}/${barId}/supply`),
 
   /**
    * Update supply request status
@@ -131,7 +126,7 @@ export const barApi = {
     payload: UpdateSupplyRequestPayload
   ) =>
     ApiService.patch<SupplyRequest>(
-      `/api/bars/${barId}/supply/${requestId}/status`,
+      `${BARS_BASE_PATH}/${barId}/supply/${requestId}/status`,
       payload
     ),
 
@@ -139,5 +134,5 @@ export const barApi = {
    * Cancel a pending supply request
    */
   cancelSupplyRequest: (barId: string, requestId: string) =>
-    ApiService.delete(`/api/bars/${barId}/supply/${requestId}`),
+    ApiService.delete(`${BARS_BASE_PATH}/${barId}/supply/${requestId}`),
 };

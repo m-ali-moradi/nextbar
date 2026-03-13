@@ -1,4 +1,4 @@
-package com.dmsa.warehouse.service;
+package com.nextbar.warehouse;
 
 import java.util.List;
 import java.util.UUID;
@@ -9,17 +9,17 @@ import org.slf4j.LoggerFactory;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
-import com.dmsa.warehouse.dto.external.SupplyItemDto;
-import com.dmsa.warehouse.dto.external.SupplyRequestDto;
-import com.dmsa.warehouse.dto.request.SupplyFulfillmentRequest;
-import com.dmsa.warehouse.dto.response.SupplyFulfillmentResponse;
-import com.dmsa.warehouse.event.SupplyEventPublisher;
-import com.dmsa.warehouse.exception.InsufficientStockException;
-import com.dmsa.warehouse.exception.InvalidStateTransitionException;
-import com.dmsa.warehouse.exception.ResourceNotFoundException;
-import com.dmsa.warehouse.model.entity.SupplyRequest;
-import com.dmsa.warehouse.model.enums.SupplyRequestStatus;
-import com.dmsa.warehouse.repository.SupplyRequestRepository;
+import com.nextbar.warehouse.dto.external.SupplyItemDto;
+import com.nextbar.warehouse.dto.external.SupplyRequestDto;
+import com.nextbar.warehouse.dto.request.SupplyFulfillmentRequest;
+import com.nextbar.warehouse.dto.response.SupplyFulfillmentResponse;
+import com.nextbar.warehouse.event.SupplyEventPublisher;
+import com.nextbar.warehouse.exception.InsufficientStockException;
+import com.nextbar.warehouse.exception.InvalidStateTransitionException;
+import com.nextbar.warehouse.exception.ResourceNotFoundException;
+import com.nextbar.warehouse.model.entity.SupplyRequest;
+import com.nextbar.warehouse.model.enums.SupplyRequestStatus;
+import com.nextbar.warehouse.repository.SupplyRequestRepository;
 
 
 /**

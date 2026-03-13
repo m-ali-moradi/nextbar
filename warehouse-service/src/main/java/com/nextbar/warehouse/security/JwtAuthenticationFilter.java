@@ -1,4 +1,4 @@
-package com.dmsa.warehouse.security;
+package com.nextbar.warehouse.security;
 
 import java.io.IOException;
 import java.util.Collections;

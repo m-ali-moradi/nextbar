@@ -37,6 +37,8 @@ export interface Bar {
     name: string;
     location: string;
     maxCapacity: number;
+    eventName?: string;
+    eventStatus?: 'SCHEDULED' | 'RUNNING' | 'COMPLETED' | 'CANCELLED' | string;
     createdAt?: string;
     updatedAt?: string;
 }
@@ -68,7 +70,7 @@ export interface StockItem {
 }
 
 export interface StockOperationPayload {
-    productId: string;
+    productName: string;
     quantity: number;
 }
 
@@ -82,14 +84,12 @@ export interface BarUsageLog {
 }
 
 export interface TotalServed {
-    productId: string;
-    productName: string;
-    totalQuantity: number;
+    name: string;
+    total: number;
 }
 
 export interface SupplyRequestItem {
-    productId: string;
-    productName?: string;
+    productName: string;
     quantity: number;
 }
 
@@ -178,4 +178,179 @@ export type CollectionRecordStatus = 'PENDING' | 'ACCEPTED' | 'COLLECTED' | 'RES
 
 export interface TotalBottlesCollected {
     totalBottlesCollected: number;
+}
+
+// =====================================================
+// Drop Point Types
+// =====================================================
+
+export interface DropPoint {
+    id?: number;
+    location: string;
+    capacity: number;
+    current_empties: number;
+    status: 'EMPTY' | 'FULL' | 'FULL_AND_NOTIFIED_TO_WAREHOUSE';
+    eventStatus?: 'SCHEDULED' | 'RUNNING' | 'COMPLETED' | 'CANCELLED' | string;
+}
+
+// =====================================================
+// Event Planner Types
+// =====================================================
+
+export type EventStatus = 'SCHEDULED' | 'RUNNING' | 'COMPLETED' | 'CANCELLED';
+export type ResourceMode = 'NEW' | 'EXISTING';
+
+export interface EventBar {
+    id: number;
+    name: string;
+    location?: string;
+    capacity?: number;
+    assignedStaff?: string;
+    active: boolean;
+    eventId: number;
+    eventName?: string;
+    stockCount?: number;
+    createdAt?: string;
+    updatedAt?: string;
+}
+
+export interface BarStock {
+    id: number;
+    barId: number;
+    barName?: string;
+    itemName: string;
+    quantity: number;
+    productId?: number;
+    productName?: string;
+    allocatedQuantity?: number;
+    usedQuantity?: number;
+    remainingQuantity?: number;
+    createdAt?: string;
+    updatedAt?: string;
+}
+
+export interface EventDropPoint {
+    id: number;
+    name: string;
+    location?: string;
+    capacity?: number;
+    eventId: number;
+    eventName?: string;
+    eventOccupancy?: number;
+    assignedStaff?: string;
+    createdAt?: string;
+    updatedAt?: string;
+}
+
+export interface EventSummary {
+    id: number;
+    name: string;
+    date: string;
+    location?: string;
+    status: EventStatus;
+    organizerName?: string;
+    barCount: number;
+    dropPointCount: number;
+    isPublic: boolean;
+    createdAt?: string;
+    updatedAt?: string;
+}
+
+export interface EventDetail extends EventSummary {
+    description?: string;
+    organizerEmail?: string;
+    organizerPhone?: string;
+    attendeesCount?: number;
+    maxAttendees?: number;
+    expectedAttendees?: number;
+    maxCapacity?: number;
+    bars: EventBar[];
+    dropPoints: EventDropPoint[];
+}
+
+export interface CreateEventRequest {
+    name: string;
+    date: string;
+    location?: string;
+    description?: string;
+    organizerName?: string;
+    organizerEmail?: string;
+    organizerPhone?: string;
+    attendeesCount?: number;
+    maxAttendees?: number;
+    isPublic?: boolean;
+}
+
+export interface UpdateEventRequest extends Partial<CreateEventRequest> {
+    status?: EventStatus;
+}
+
+export interface CreateBarRequest {
+    name?: string;
+    location?: string;
+    eventId: number;
+    capacity?: number;
+    assignedStaff?: string[];
+    resourceMode?: ResourceMode;
+    existingResourceId?: string;
+}
+
+export interface UpdateBarRequest {
+    name?: string;
+    location?: string;
+    capacity?: number;
+    assignedStaff?: string[];
+    active?: boolean;
+}
+
+export interface CreateDropPointRequest {
+    name?: string;
+    location?: string;
+    eventId: number;
+    assignedStaff?: string;
+    capacity?: number;
+    resourceMode?: ResourceMode;
+    existingResourceId?: string;
+}
+
+export interface UpdateDropPointRequest {
+    name?: string;
+    location?: string;
+    assignedStaff?: string;
+    capacity?: number;
+}
+
+export interface CreateBarStockRequest {
+    barId?: number;
+    itemName: string;
+    quantity: number;
+}
+
+export interface UserDto {
+    id: string;
+    username: string;
+    firstName?: string;
+    lastName?: string;
+    email?: string;
+    fullName?: string;
+    // Newer backend returns structured assignments; keep legacy roleAssignments for compatibility
+    assignments?: Array<{
+        assignmentId?: string;
+        service?: string;
+        role?: string;
+        resourceId?: string;
+    }>;
+    roleAssignments?: string[];
+}
+
+export interface WarehouseStockDto {
+    id: number;
+    productId: number;
+    productName: string;
+    quantity: number;
+    availableQuantity: number;
+    beverageType?: string;
+    minStockLevel?: number;
+    lowStock?: boolean;
+    unit?: string;
 }

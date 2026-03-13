@@ -6,6 +6,7 @@ import java.util.List;
 import java.util.UUID;
 
 import jakarta.persistence.CollectionTable;
+import jakarta.persistence.Column;
 import jakarta.persistence.ElementCollection;
 import jakarta.persistence.Entity;
 import jakarta.persistence.EnumType;
@@ -37,6 +38,9 @@ public class SupplyRequest {
    
     @Enumerated(EnumType.STRING)
     private SupplyStatus status;
+
+    @Column(name = "rejection_reason")
+    private String rejectionReason;
 
     private LocalDateTime createdAt;
 

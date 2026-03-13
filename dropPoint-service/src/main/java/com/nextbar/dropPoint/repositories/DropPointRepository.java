@@ -1,11 +1,11 @@
-package de.fhdo.dropPointsSys.repositories;
+package com.nextbar.dropPoint.repositories;
 
 import java.util.List;
 
 import org.springframework.data.jpa.repository.JpaRepository;
 
-import de.fhdo.dropPointsSys.domain.DropPoint;
-import de.fhdo.dropPointsSys.domain.DropPointStatus;
+import com.nextbar.dropPoint.domain.DropPoint;
+import com.nextbar.dropPoint.domain.DropPointStatus;
 
 /**
  * Repository interface for managing DropPoint entities.

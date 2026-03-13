@@ -96,75 +96,33 @@
         </router-link>
       </template>
     </nav>
-
-    <!-- User Section -->
-    <div class="px-5 py-5 border-t border-slate-700/50 bg-slate-800/50">
-      <div class="flex items-center gap-4">
-        <div class="w-12 h-12 rounded-full bg-gradient-to-br from-primary-400 to-primary-600 
-                    flex items-center justify-center text-lg font-bold shadow-lg">
-          {{ userInitials }}
-        </div>
-        <div class="flex-1 min-w-0">
-          <p class="text-base font-semibold text-white truncate">
-            {{ authStore.user?.username || 'Guest' }}
-          </p>
-          <p class="text-sm text-slate-400 truncate">
-            {{ userRole }}
-          </p>
-        </div>
-        <button 
-          @click="handleLogout"
-          class="p-3 rounded-xl text-slate-400 hover:text-white hover:bg-slate-700 
-                 transition-colors duration-200"
-          title="Logout"
-        >
-          <i class="fas fa-sign-out-alt text-lg"></i>
-        </button>
-      </div>
-    </div>
   </aside>
 </template>
 
-<script setup>
-import '@fortawesome/fontawesome-free/css/all.css';
+<script setup lang="ts">
 import { computed } from 'vue';
 import { useRoute, useRouter } from 'vue-router';
-import { useAuthStore } from '../../stores/authStore';
+import { useAuthStore } from '@/stores/authStore';
+import {
+  isAdmin as checkAdmin,
+  hasService as checkService,
+  hasManagerRole,
+  canAccessDroppoints,
+} from '@/composables/useAccessControl';
 
 const authStore = useAuthStore();
 const route = useRoute();
 const router = useRouter();
 
-const isAdmin = computed(() => !!authStore.user?.isAdmin);
+const user = computed(() => authStore.user);
+const isAdmin = computed(() => checkAdmin(user.value));
 
-const hasService = (serviceCode) => {
-  if (isAdmin.value) return true;
-  const roles = authStore.user?.roles;
-  return Array.isArray(roles) && roles.some((r) => r?.service === serviceCode);
-};
+const canSeeBars = computed(() => checkService(user.value, 'BAR'));
+const canSeeDroppoints = computed(() => canAccessDroppoints(user.value));
+const canSeeWarehouse = computed(() => checkService(user.value, 'WAREHOUSE'));
+const canSeeEvents = computed(() => hasManagerRole(user.value, 'EVENT'));
 
-const canSeeBars = computed(() => hasService('BAR'));
-const canSeeDroppoints = computed(() => hasService('DROP_POINT'));
-const canSeeWarehouse = computed(() => hasService('WAREHOUSE'));
-const canSeeEvents = computed(() => hasService('EVENT'));
-
-const isActive = (path) => {
-  return route.path.startsWith(path);
-};
-
-const userInitials = computed(() => {
-  const name = authStore.user?.username || 'G';
-  return name.charAt(0).toUpperCase();
-});
-
-const userRole = computed(() => {
-  if (isAdmin.value) return 'Administrator';
-  const roles = authStore.user?.roles;
-  if (Array.isArray(roles) && roles.length > 0) {
-    return roles[0]?.role || 'User';
-  }
-  return 'User';
-});
+const isActive = (path: string) => route.path.startsWith(path);
 
 const handleLogout = () => {
   authStore.logout();

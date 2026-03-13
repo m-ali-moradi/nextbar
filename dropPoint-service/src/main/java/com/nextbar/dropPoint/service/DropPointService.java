@@ -1,4 +1,4 @@
-package de.fhdo.dropPointsSys.service;
+package com.nextbar.dropPoint.service;
 
 import java.util.List;
 import java.util.Optional;
@@ -6,11 +6,11 @@ import java.util.Optional;
 import org.springframework.stereotype.Service;
 import org.springframework.util.StringUtils;
 
-import de.fhdo.dropPointsSys.domain.DropPoint;
-import de.fhdo.dropPointsSys.domain.DropPointStatus;
-import de.fhdo.dropPointsSys.event.DropPointCollectionEventPublisher;
-import de.fhdo.dropPointsSys.exception.ValidationException;
-import de.fhdo.dropPointsSys.repositories.DropPointRepository;
+import com.nextbar.dropPoint.domain.DropPoint;
+import com.nextbar.dropPoint.domain.DropPointStatus;
+import com.nextbar.dropPoint.event.DropPointCollectionEventPublisher;
+import com.nextbar.dropPoint.exception.ValidationException;
+import com.nextbar.dropPoint.repositories.DropPointRepository;
 
 /**
  * Service class for managing DropPoint operations.

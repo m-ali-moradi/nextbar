@@ -1,8 +1,8 @@
-package com.dmsa.warehouse.dto.response;
+package com.nextbar.warehouse.dto.response;
 
 import java.time.Instant;
 
-import com.dmsa.warehouse.model.entity.BeverageStock;
+import com.nextbar.warehouse.model.entity.BeverageStock;
 
 /**
  * Response DTO for beverage stock information.

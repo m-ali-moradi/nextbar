@@ -1,37 +1,30 @@
+# =============================================================================
+# users-service — Local Bootstrap Configuration
+# =============================================================================
+#
+# This file contains ONLY the minimal configuration required to connect to
+# Spring Cloud Config Server. All business configuration (datasource, JPA,
+# security, messaging, eureka, logging, etc.) lives in the config-repo under:
+#
+#   config-repo/users-service.yml          (default profile)
+#   config-repo/users-service-{profile}.yml (profile-specific overrides)
+#
+# WHY MINIMAL?
+#   Centralising config in Config Server provides a single source of truth,
+#   environment-specific overrides without rebuilding, and runtime refresh
+#   via Spring Cloud Bus or /actuator/refresh.
+#
+# WHY FAIL-FAST?
+#   In production the service MUST NOT start with stale or missing config.
+#   fail-fast=true ensures the application exits immediately if Config Server
+#   is unreachable, preventing silent misconfiguration.
+# =============================================================================
+
 spring:
   application:
     name: users-service
-  datasource:
-    url: jdbc:mysql://localhost:3306/user_db?createDatabaseIfNotExist=true
-    username: root
-    password: root
-    driver-class-name: com.mysql.cj.jdbc.Driver
-  jpa:
-    hibernate:
-      ddl-auto: create
-    properties:
-      hibernate:
-        dialect: org.hibernate.dialect.MySQLDialect
-        format_sql: true
+  config:
+    import: configserver:${CONFIG_SERVER_URL:http://localhost:8888}
   cloud:
     config:
-      uri: http://localhost:8888
-      fail-fast: false
-      enabled: false
-
-server:
-  port: 8090
-
-eureka:
-  client:
-    serviceUrl:
-      defaultZone: http://localhost:8761/eureka/
-  instance:
-    preferIpAddress: true
-
-security:
-  jwt:
-    secret: yourSecretKeyForJWTTokenGenerationMustBeLongEnoughForHS256Algorithm
-    expiration: 3600000
-    issuer: users-service
-
+      fail-fast: true

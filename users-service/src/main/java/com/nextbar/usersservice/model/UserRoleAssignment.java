@@ -8,34 +8,39 @@ import jakarta.persistence.Id;
 import jakarta.persistence.ManyToOne;
 import jakarta.persistence.Table;
 import lombok.AllArgsConstructor;
-import lombok.Data;
+import lombok.EqualsAndHashCode;
+import lombok.Getter;
 import lombok.NoArgsConstructor;
+import lombok.Setter;
+import lombok.ToString;
 
+/**
+ * Represents a user role assignment in the system.
+ * This entity is used to store and manage user role assignments in the
+ * database.
+ */
 @Entity
-@Data
+@Getter
+@Setter
 @NoArgsConstructor
 @AllArgsConstructor
+@EqualsAndHashCode(exclude = "user")
+@ToString(exclude = "user")
 @Table(name = "user_role_assignments")
 public class UserRoleAssignment {
 
-    @Id
-    @GeneratedValue
-    private UUID id;
+  @Id
+  @GeneratedValue
+  private UUID id;
 
-    @ManyToOne(optional = false)
-    private User user;
+  @ManyToOne(optional = false)
+  private User user;
 
-    @ManyToOne(optional = false)
-    private Role role;
+  @ManyToOne(optional = false)
+  private Role role;
 
-    @ManyToOne(optional = false)
-    private Service service;
+  @ManyToOne(optional = false)
+  private Service service;
 
-    private UUID resourceId;
-    /*
-      Example:
-      - Bartender → resourceId = barId
-      - BarManager → null (all bars)
-      - Admin → null + global role
-    */
+  private UUID resourceId;
 }

@@ -1,4 +1,4 @@
-package com.dmsa.warehouse.dto.request;
+package com.nextbar.warehouse.dto.request;
 
 import jakarta.validation.constraints.Min;
 import jakarta.validation.constraints.NotBlank;

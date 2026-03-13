@@ -22,6 +22,7 @@ spring:
     password: ${DB_PASSWORD:root}
     driver-class-name: com.mysql.cj.jdbc.Driver
   jpa:
+    defer-datasource-initialization: true
     hibernate:
       ddl-auto: ${JPA_DDL_AUTO:validate}
     show-sql: false

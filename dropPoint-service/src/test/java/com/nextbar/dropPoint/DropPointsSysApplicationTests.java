@@ -1,4 +1,4 @@
-package de.fhdo.dropPointsSys;
+package com.nextbar.dropPoint;
 
 import org.junit.jupiter.api.Test;
 import org.springframework.boot.test.context.SpringBootTest;

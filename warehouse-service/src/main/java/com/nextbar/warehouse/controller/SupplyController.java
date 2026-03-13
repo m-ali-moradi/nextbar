@@ -1,4 +1,4 @@
-package com.dmsa.warehouse.controller;
+package com.nextbar.warehouse.controller;
 
 import java.util.List;
 import java.util.UUID;
@@ -12,10 +12,10 @@ import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
 
-import com.dmsa.warehouse.dto.external.SupplyRequestDto;
-import com.dmsa.warehouse.dto.request.SupplyFulfillmentRequest;
-import com.dmsa.warehouse.dto.response.SupplyFulfillmentResponse;
-import com.dmsa.warehouse.service.SupplyRequestProcessingService;
+import com.nextbar.warehouse.dto.external.SupplyRequestDto;
+import com.nextbar.warehouse.dto.request.SupplyFulfillmentRequest;
+import com.nextbar.warehouse.dto.response.SupplyFulfillmentResponse;
+import com.nextbar.warehouse.SupplyRequestProcessingService;
 
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.tags.Tag;

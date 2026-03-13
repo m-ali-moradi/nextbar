@@ -147,8 +147,8 @@
 <script setup lang="ts">
 import { reactive, ref, watch } from 'vue';
 import { useRoute } from 'vue-router';
-import { barApi } from '../../api';
-import type { Product, StockOperationPayload } from '../../api/types';
+import { barApi } from '@/api';
+import type { Product, StockOperationPayload } from '@/api/types';
 
 const props = defineProps<{
   isOpen: boolean;
@@ -162,7 +162,13 @@ const emit = defineEmits<{
 const route = useRoute();
 const products = ref<Product[]>([]);
 
-const formData = reactive<StockOperationPayload>({
+const SAMPLE_PRODUCTS: Product[] = [
+  { id: 'cola', name: 'Cola', unitType: 'Bottle' },
+  { id: 'water', name: 'Water', unitType: 'Bottle' },
+  { id: 'orange-juice', name: 'Orange Juice', unitType: 'Bottle' },
+];
+
+const formData = reactive({
   productId: '',
   quantity: 10,
 });
@@ -179,9 +185,11 @@ watch(() => props.isOpen, async (newVal) => {
 async function fetchProducts() {
   try {
     const response = await barApi.getProducts();
-    products.value = response.data;
+    const fetchedProducts = Array.isArray(response.data) ? response.data : [];
+    products.value = fetchedProducts.length ? fetchedProducts : SAMPLE_PRODUCTS;
   } catch (error) {
     console.error('Error fetching products:', error);
+    products.value = SAMPLE_PRODUCTS;
   }
 }
 
@@ -198,13 +206,16 @@ function increaseQuantity() {
 async function handleSubmit() {
   if (formData.productId && formData.quantity > 0) {
     const barId = route.params.barId as string;
+    // Resolve productName from the selected productId
+    const selectedProduct = products.value.find(p => p.id === formData.productId);
+    const productName = selectedProduct?.name || formData.productId;
     try {
       await barApi.addStock(barId, {
-        productId: formData.productId,
+        productName,
         quantity: formData.quantity,
       });
       emit('close');
-      emit('stock-added', { ...formData });
+      emit('stock-added', { productName, quantity: formData.quantity });
     } catch (error) {
       console.error('Error adding stock:', error);
     }

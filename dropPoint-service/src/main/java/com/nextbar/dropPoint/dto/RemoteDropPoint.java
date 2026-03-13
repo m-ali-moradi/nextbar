@@ -1,4 +1,4 @@
-package de.fhdo.dropPointsSys.dto;
+package com.nextbar.dropPoint.dto;
 
 /**
  * RemoteDropPoint is a simple DTO representing a drop point with its ID, associated event ID,

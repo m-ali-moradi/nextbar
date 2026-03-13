@@ -1,18 +1,7 @@
 <template>
-  <div class="flex min-h-screen bg-slate-50">
-    <Sidebar />
-    
-    <div class="flex-1 ml-72">
-      <Navbar />
-
-      <main class="p-6 lg:p-8">
+  <div>
         <!-- Loading State -->
-        <div v-if="loading && !event" class="flex items-center justify-center py-32">
-          <div class="text-center">
-            <div class="w-16 h-16 border-4 border-event-200 border-t-event-600 rounded-full animate-spin mx-auto mb-4"></div>
-            <p class="text-slate-500 text-lg">Loading event details...</p>
-          </div>
-        </div>
+        <BaseLoadingSpinner v-if="loading && !event" color="event" size="lg" message="Loading event details..." />
 
         <!-- Event Not Found -->
         <div v-else-if="!event && !loading" class="card p-12 text-center">
@@ -107,11 +96,11 @@
                 </div>
                 <div class="flex justify-between items-center py-2 border-b border-slate-100">
                   <span class="text-slate-500">Expected Attendees</span>
-                  <span class="font-semibold text-slate-900">{{ event.expectedAttendees || 'N/A' }}</span>
+                  <span class="font-semibold text-slate-900">{{ event.attendeesCount ?? 'N/A' }}</span>
                 </div>
                 <div class="flex justify-between items-center py-2 border-b border-slate-100">
                   <span class="text-slate-500">Max Capacity</span>
-                  <span class="font-semibold text-slate-900">{{ event.maxCapacity || 'N/A' }}</span>
+                  <span class="font-semibold text-slate-900">{{ event.maxAttendees ?? 'N/A' }}</span>
                 </div>
                 <div class="flex justify-between items-center py-2">
                   <span class="text-slate-500">Visibility</span>
@@ -254,7 +243,7 @@
               <h3 class="text-lg font-bold text-slate-900">Bars</h3>
               <button
                 v-if="event.status === 'SCHEDULED'"
-                @click="showAddBarModal = true"
+                @click="selectedBarForEdit = null; showAddBarModal = true"
                 class="btn-secondary text-sm"
               >
                 <i class="fas fa-plus"></i>
@@ -306,7 +295,7 @@
                     <td>
                       <div class="flex items-center justify-end gap-2">
                         <button
-                          @click="viewBarStocks(bar.id)"
+                          @click="viewBarStocks(bar)"
                           class="p-2 rounded-lg text-slate-500 hover:text-bar-600 hover:bg-bar-50 transition-colors"
                           title="View Stocks"
                         >
@@ -344,7 +333,7 @@
               <p class="text-slate-500 mb-4">Add bars to this event to get started.</p>
               <button
                 v-if="event.status === 'SCHEDULED'"
-                @click="showAddBarModal = true"
+                @click="selectedBarForEdit = null; showAddBarModal = true"
                 class="btn-primary"
               >
                 <i class="fas fa-plus"></i>
@@ -359,7 +348,7 @@
               <h3 class="text-lg font-bold text-slate-900">Drop Points</h3>
               <button
                 v-if="event.status === 'SCHEDULED'"
-                @click="showAddDropPointModal = true"
+                @click="selectedDropPointForEdit = null; showAddDropPointModal = true"
                 class="btn-secondary text-sm"
               >
                 <i class="fas fa-plus"></i>
@@ -401,6 +390,10 @@
                 
                 <div class="space-y-2 text-sm">
                   <div class="flex justify-between">
+                    <span class="text-slate-500">Capacity</span>
+                    <span class="font-medium text-slate-900">{{ dp.capacity ?? 0 }}</span>
+                  </div>
+                  <div class="flex justify-between">
                     <span class="text-slate-500">Staff</span>
                     <span v-if="dp.assignedStaff" class="font-medium text-slate-900">
                       <i class="fas fa-user text-droppoint-500 mr-1"></i>
@@ -425,7 +418,7 @@
               <p class="text-slate-500 mb-4">Add drop points for attendee collection areas.</p>
               <button
                 v-if="event.status === 'SCHEDULED'"
-                @click="showAddDropPointModal = true"
+                @click="selectedDropPointForEdit = null; showAddDropPointModal = true"
                 class="btn-primary"
               >
                 <i class="fas fa-plus"></i>
@@ -434,8 +427,6 @@
             </div>
           </div>
         </template>
-      </main>
-    </div>
 
     <!-- Confirm Modal -->
     <ConfirmModal
@@ -453,7 +444,8 @@
     <AddBarModal
       v-if="showAddBarModal"
       :event-id="Number(route.params.id)"
-      @close="showAddBarModal = false"
+      :bar="selectedBarForEdit"
+      @close="closeBarModal"
       @saved="onBarSaved"
     />
 
@@ -461,34 +453,67 @@
     <AddDropPointModal
       v-if="showAddDropPointModal"
       :event-id="Number(route.params.id)"
-      @close="showAddDropPointModal = false"
+      :drop-point="selectedDropPointForEdit"
+      @close="closeDropPointModal"
       @saved="onDropPointSaved"
+    />
+
+    <!-- Bar Stock Modal -->
+    <BarStockModal
+      v-if="showBarStockModal && selectedBarForStock"
+      :bar="selectedBarForStock"
+      @close="showBarStockModal = false; selectedBarForStock = null"
+      @updated="refreshEvent"
     />
   </div>
 </template>
 
 <script setup lang="ts">
-import { ref, computed, onMounted } from 'vue';
+import { ref, computed } from 'vue';
 import { useRoute, useRouter } from 'vue-router';
-import { useEventStore } from '@/stores/eventStore';
+import { useQueryClient } from '@tanstack/vue-query';
+import {
+  useEventQuery,
+  useStartEvent,
+  useCompleteEvent,
+  useCancelEvent,
+  useDeleteEventBar,
+  useDeleteEventDropPoint,
+} from '@/composables/queries/useEventQueries';
+import { queryKeys } from '@/composables/queries/queryKeys';
 import { EventStatus, EventBar, EventDropPoint } from '@/api/eventApi';
 import { toast } from 'vue3-toastify';
-import 'vue3-toastify/dist/index.css';
-import Sidebar from '@/components/common/Sidebar.vue';
-import Navbar from '@/components/common/Navbar.vue';
+import { formatDate } from '@/composables/useDateFormat';
 import StatusBadge from '@/components/eventplanner/StatusBadge.vue';
 import ConfirmModal from '@/components/eventplanner/ConfirmModal.vue';
 import AddBarModal from '@/components/eventplanner/AddBarModal.vue';
 import AddDropPointModal from '@/components/eventplanner/AddDropPointModal.vue';
+import BarStockModal from '@/components/eventplanner/BarStockModal.vue';
+import BaseLoadingSpinner from '@/components/common/BaseLoadingSpinner.vue';
 
 const route = useRoute();
 const router = useRouter();
-const eventStore = useEventStore();
+const queryClient = useQueryClient();
+
+// ============ Vue Query ============
+const eventId = computed(() => Number(route.params.id));
+const { data: event, isLoading: loading, refetch: refetchEvent } = useEventQuery(eventId);
+
+// ============ Mutations ============
+const startEventMutation = useStartEvent();
+const completeEventMutation = useCompleteEvent();
+const cancelEventMutation = useCancelEvent();
+const deleteBarMutation = useDeleteEventBar();
+const deleteDropPointMutation = useDeleteEventDropPoint();
 
 // ============ State ============
 const activeTab = ref<'bars' | 'droppoints'>('bars');
 const showAddBarModal = ref(false);
 const showAddDropPointModal = ref(false);
+const showBarStockModal = ref(false);
+const selectedBarForEdit = ref<EventBar | null>(null);
+const selectedBarForStock = ref<EventBar | null>(null);
+const selectedDropPointForEdit = ref<EventDropPoint | null>(null);
 const showConfirmModal = ref(false);
 const confirmModal = ref({
   title: '',
@@ -500,11 +525,10 @@ const confirmModal = ref({
 });
 
 // ============ Computed ============
-const event = computed(() => eventStore.currentEvent);
-const loading = computed(() => eventStore.loading);
-const isAfterScheduled = computed(() => 
-  event.value?.status === 'RUNNING' || event.value?.status === 'COMPLETED'
-);
+const isAfterScheduled = computed(() => {
+  const s = event.value?.status;
+  return s === 'RUNNING' || s === 'COMPLETED' || s === 'CANCELLED';
+});
 
 // ============ Methods ============
 const goBack = () => {
@@ -513,16 +537,6 @@ const goBack = () => {
 
 const editEvent = () => {
   router.push(`/events/${route.params.id}/edit`);
-};
-
-const formatDate = (date: string | undefined) => {
-  if (!date) return 'N/A';
-  return new Date(date).toLocaleDateString('en-US', {
-    weekday: 'short',
-    year: 'numeric',
-    month: 'short',
-    day: 'numeric'
-  });
 };
 
 const getTimelineStepClass = (step: EventStatus) => {
@@ -560,11 +574,11 @@ const confirmStartEvent = () => {
     onConfirm: async () => {
       confirmModal.value.loading = true;
       try {
-        await eventStore.startEvent(Number(route.params.id));
+        await startEventMutation.mutateAsync(eventId.value);
         toast.success('Event started successfully!');
         closeConfirmModal();
       } catch (err) {
-        toast.error('Failed to start event');
+        toast.error(err instanceof Error ? err.message : 'Failed to start event');
         confirmModal.value.loading = false;
       }
     },
@@ -582,7 +596,7 @@ const confirmCompleteEvent = () => {
     onConfirm: async () => {
       confirmModal.value.loading = true;
       try {
-        await eventStore.completeEvent(Number(route.params.id));
+        await completeEventMutation.mutateAsync(eventId.value);
         toast.success('Event completed!');
         closeConfirmModal();
       } catch (err) {
@@ -604,7 +618,7 @@ const confirmCancelEvent = () => {
     onConfirm: async () => {
       confirmModal.value.loading = true;
       try {
-        await eventStore.cancelEvent(Number(route.params.id));
+        await cancelEventMutation.mutateAsync(eventId.value);
         toast.success('Event cancelled');
         closeConfirmModal();
       } catch (err) {
@@ -617,12 +631,23 @@ const confirmCancelEvent = () => {
 };
 
 // Bar handlers
-const viewBarStocks = (barId: number) => {
-  toast.info('Bar stocks view coming soon');
+const viewBarStocks = (bar: EventBar) => {
+  selectedBarForStock.value = bar;
+  showBarStockModal.value = true;
+};
+
+const refreshEvent = async () => {
+  await refetchEvent();
+};
+
+const closeBarModal = () => {
+  showAddBarModal.value = false;
+  selectedBarForEdit.value = null;
 };
 
 const editBar = (bar: EventBar) => {
-  toast.info('Bar edit modal coming soon');
+  selectedBarForEdit.value = bar;
+  showAddBarModal.value = true;
 };
 
 const confirmDeleteBar = (barId: number) => {
@@ -635,10 +660,10 @@ const confirmDeleteBar = (barId: number) => {
     onConfirm: async () => {
       confirmModal.value.loading = true;
       try {
-        await eventStore.deleteBar(barId);
+        await deleteBarMutation.mutateAsync(barId);
         toast.success('Bar deleted');
         closeConfirmModal();
-        await eventStore.fetchEvent(Number(route.params.id));
+        await queryClient.invalidateQueries({ queryKey: queryKeys.events.detail(eventId.value) });
       } catch (err) {
         toast.error('Failed to delete bar');
         confirmModal.value.loading = false;
@@ -649,14 +674,20 @@ const confirmDeleteBar = (barId: number) => {
 };
 
 const onBarSaved = async () => {
-  showAddBarModal.value = false;
-  await eventStore.fetchEvent(Number(route.params.id));
-  toast.success('Bar added successfully');
+  closeBarModal();
+  await refetchEvent();
+  toast.success('Bar saved successfully');
 };
 
 // Drop Point handlers
 const editDropPoint = (dp: EventDropPoint) => {
-  toast.info('Drop point edit modal coming soon');
+  selectedDropPointForEdit.value = dp;
+  showAddDropPointModal.value = true;
+};
+
+const closeDropPointModal = () => {
+  showAddDropPointModal.value = false;
+  selectedDropPointForEdit.value = null;
 };
 
 const confirmDeleteDropPoint = (dpId: number) => {
@@ -669,10 +700,10 @@ const confirmDeleteDropPoint = (dpId: number) => {
     onConfirm: async () => {
       confirmModal.value.loading = true;
       try {
-        await eventStore.deleteDropPoint(dpId);
+        await deleteDropPointMutation.mutateAsync(dpId);
         toast.success('Drop point deleted');
         closeConfirmModal();
-        await eventStore.fetchEvent(Number(route.params.id));
+        await queryClient.invalidateQueries({ queryKey: queryKeys.events.detail(eventId.value) });
       } catch (err) {
         toast.error('Failed to delete drop point');
         confirmModal.value.loading = false;
@@ -683,16 +714,8 @@ const confirmDeleteDropPoint = (dpId: number) => {
 };
 
 const onDropPointSaved = async () => {
-  showAddDropPointModal.value = false;
-  await eventStore.fetchEvent(Number(route.params.id));
-  toast.success('Drop point added successfully');
+  closeDropPointModal();
+  await refetchEvent();
+  toast.success('Drop point saved successfully');
 };
-
-// ============ Lifecycle ============
-onMounted(() => {
-  const id = Number(route.params.id);
-  if (id) {
-    eventStore.fetchEvent(id);
-  }
-});
 </script>

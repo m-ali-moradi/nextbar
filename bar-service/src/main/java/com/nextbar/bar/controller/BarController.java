@@ -4,9 +4,7 @@ import java.util.List;
 import java.util.Set;
 import java.util.UUID;
 
-import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
-import org.springframework.security.access.AccessDeniedException;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.PostMapping;
@@ -14,10 +12,13 @@ import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
 
-import com.nextbar.bar.model.dto.BarDto;
+import com.nextbar.bar.dto.request.CreateLocalBarRequest;
+import com.nextbar.bar.dto.response.BarDto;
+import com.nextbar.bar.exception.ResourceNotFoundException;
 import com.nextbar.bar.security.RbacService;
 import com.nextbar.bar.service.BarService;
 
+import io.swagger.v3.oas.annotations.tags.Tag;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
 
@@ -26,29 +27,13 @@ import lombok.RequiredArgsConstructor;
  * Provides endpoints to create, view, and list bars.
  */
 @RestController
-@RequestMapping("/bars")
+@RequestMapping("/api/v1/bars")
 @RequiredArgsConstructor
+@Tag(name = "Bars", description = "Bar management")
 public class BarController {
 
     private final BarService barService;
     private final RbacService rbacService;
-
-    /**
-     * Register a new bar.
-     *
-     * @param dto the bar details
-     * @return the created bar with HTTP 201
-     */
-    @PostMapping
-    public ResponseEntity<BarDto> registerBar(@Valid @RequestBody BarDto dto) {
-        rbacService.requireEventManagerOrAdmin();
-        BarDto created = barService.registerBar(
-                dto.id() != null ? dto.id() : UUID.randomUUID(),
-                dto.name(),
-                dto.location(),
-                dto.maxCapacity());
-        return ResponseEntity.status(HttpStatus.CREATED).body(created);
-    }
 
     /**
      * Get a specific bar by its ID.
@@ -69,16 +54,38 @@ public class BarController {
      */
     @GetMapping
     public ResponseEntity<List<BarDto>> getAllBars() {
-        if (rbacService.isAdmin() || rbacService.isBarManager() || rbacService.isWarehouseStaff()) {
+        if (rbacService.canListAllBars()) {
             return ResponseEntity.ok(barService.getAllBars());
         }
 
-        Set<UUID> barIds = rbacService.getOperatorBarIds();
+        Set<UUID> barIds = rbacService.requireStaffBarIdsForListing();
         if (barIds.isEmpty()) {
-            throw new AccessDeniedException("No bar assignments");
+            return ResponseEntity.ok(List.of());
         }
-
-        List<BarDto> bars = barIds.stream().map(barService::getBar).toList();
+        // For bar staff, only return bars they have access to
+        List<BarDto> bars = barIds.stream()
+                .map(barId -> {
+                    try {
+                        return barService.getBar(barId);
+                    } catch (ResourceNotFoundException ex) {
+                        return null;
+                    }
+                })
+                .filter(java.util.Objects::nonNull)
+                .toList();
         return ResponseEntity.ok(bars);
+    }
+
+    /**
+     * Create a new local bar.
+     *
+     * @param request the request containing bar details
+     * @return the created bar details
+     */
+    @PostMapping("/local")
+    public ResponseEntity<BarDto> createLocalBar(@Valid @RequestBody CreateLocalBarRequest request) {
+        rbacService.requireBarStaffOrAdmin();
+        BarDto created = barService.createLocalBar(request.name(), request.location(), request.maxCapacity());
+        return ResponseEntity.ok(created);
     }
 }

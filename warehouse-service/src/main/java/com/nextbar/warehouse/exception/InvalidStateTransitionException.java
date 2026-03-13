@@ -1,4 +1,4 @@
-package com.dmsa.warehouse.exception;
+package com.nextbar.warehouse.exception;
 
 import org.springframework.http.HttpStatus;
 import org.springframework.web.bind.annotation.ResponseStatus;

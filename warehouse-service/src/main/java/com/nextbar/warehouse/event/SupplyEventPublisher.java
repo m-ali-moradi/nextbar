@@ -1,7 +1,7 @@
-package com.dmsa.warehouse.event;
+package com.nextbar.warehouse.event;
 
-import com.dmsa.warehouse.model.entity.SupplyRequest;
-import com.dmsa.warehouse.model.enums.SupplyRequestStatus;
+import com.nextbar.warehouse.model.entity.SupplyRequest;
+import com.nextbar.warehouse.model.enums.SupplyRequestStatus;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.amqp.rabbit.core.RabbitTemplate;

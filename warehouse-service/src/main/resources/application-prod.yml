@@ -1,0 +1,26 @@
+# =============================================================================
+# warehouse-service — Production Profile Overrides
+# =============================================================================
+
+# ── Security ─────────────────────────────────────────────────────────────────
+security:
+  internal:
+    enabled: true
+
+# ── Logging (reduce to INFO in production) ───────────────────────────────────
+logging:
+  level:
+    root: INFO
+    com.dmsa.warehouse: INFO
+    org.springframework.security: WARN
+    io.github.resilience4j: INFO
+    org.springframework.cloud.openfeign: INFO
+
+# ── Actuator (restrict in production) ────────────────────────────────────────
+management:
+  endpoint:
+    health:
+      show-details: when-authorized
+  tracing:
+    sampling:
+      probability: 0.1

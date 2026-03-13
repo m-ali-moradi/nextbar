@@ -1,7 +1,5 @@
 package com.nextbar.bar.model;
 
-import java.util.UUID;
-
 import jakarta.persistence.Embeddable;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
@@ -16,17 +14,17 @@ import lombok.Setter;
  * This class contains details about the supply item including its product ID and quantity.
  */
 public class SupplyItem {
-    private UUID productId;
+    private String productName;
     private int quantity;
 
     /**
      * Constructs a SupplyItem with the specified product ID and quantity.
      *
-     * @param productId the ID of the product
+     * @param productName the name of the product
      * @param quantity  the quantity of the product
      */
-    public SupplyItem(UUID productId, int quantity) {
-        this.productId = productId;
+    public SupplyItem(String productName, int quantity) {
+        this.productName = productName;
         this.quantity = quantity;
     }
 }

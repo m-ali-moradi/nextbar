@@ -61,37 +61,34 @@
   </Transition>
 </template>
 
-<script>
-import api from "../../api";
+<script setup lang="ts">
+import { ref, watch } from 'vue';
+import { barApi } from '@/api';
 
-export default {
-  name: 'DrinkCatalogModal',
-  props: {
-    isOpen: Boolean
-  },
-  data() {
-    return {
-      products: [],
-    };
-  },
-  watch: {
-    isOpen(newVal) {
-      if (newVal) {
-        this.fetchProducts();
-      }
-    }
-  },
-  methods: {
-    async fetchProducts() {
-      try {
-        const products = await api.getProducts(); 
-        this.products = products;
-      } catch (error) {
-        console.error('Error fetching products:', error);
-      }
-    }
+const props = defineProps<{
+  isOpen: boolean;
+}>();
+
+defineEmits<{
+  close: [];
+}>();
+
+const products = ref<any[]>([]);
+
+watch(() => props.isOpen, (newVal) => {
+  if (newVal) {
+    fetchProducts();
   }
-};
+});
+
+async function fetchProducts() {
+  try {
+    const response = await barApi.getProducts();
+    products.value = response.data;
+  } catch (error) {
+    console.error('Error fetching products:', error);
+  }
+}
 </script>
 
 <style scoped>

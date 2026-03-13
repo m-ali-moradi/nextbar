@@ -1,4 +1,4 @@
-package de.fhdo.dropPointsSys.domain;
+package com.nextbar.dropPoint.domain;
 
 /**
  * Enum representing the status of a DropPoint.

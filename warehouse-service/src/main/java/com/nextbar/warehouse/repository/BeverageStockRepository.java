@@ -1,6 +1,6 @@
-package com.dmsa.warehouse.repository;
+package com.nextbar.warehouse.repository;
 
-import com.dmsa.warehouse.model.entity.BeverageStock;
+import com.nextbar.warehouse.model.entity.BeverageStock;
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.data.jpa.repository.Lock;
 import org.springframework.data.jpa.repository.Query;

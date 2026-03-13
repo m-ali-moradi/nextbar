@@ -19,17 +19,14 @@ import lombok.Setter;
 
 /**
  * Represents a stock item in a bar's inventory.
- * This class contains details about the stock item including its ID, bar ID, product ID, quantity, and the last updated timestamp.
+ * This class contains details about the stock item including its ID, bar ID, product name, quantity, and the last updated timestamp.
  */
 public class BarStockItem {
     @Id
     @GeneratedValue
     private UUID id;
     private UUID barId;
-    private UUID productId;
+    private String productName;
     private int quantity;
     private LocalDateTime updatedAt;
-
-    public BarStockItem(UUID id, UUID uuid, UUID uuid1, String name, int quantity, LocalDateTime localDateTime) {
-    }
 }

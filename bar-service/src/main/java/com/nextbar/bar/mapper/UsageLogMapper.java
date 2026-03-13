@@ -1,9 +1,11 @@
 package com.nextbar.bar.mapper;
 
+import java.util.Objects;
+
 import org.springframework.stereotype.Component;
 
 import com.nextbar.bar.model.UsageLog;
-import com.nextbar.bar.model.dto.UsageLogDto;
+import com.nextbar.bar.dto.response.UsageLogDto;
 
 /**
  * Mapper for converting between UsageLog entity and UsageLogDto.
@@ -22,13 +24,11 @@ public class UsageLogMapper {
             return null;
         }
         return new UsageLogDto(
-                log.getId(),
-                log.getBarId(),
-                log.getProductId(),
-                null, // productName will be set by service if needed
+                Objects.requireNonNull(log.getId()),
+                Objects.requireNonNull(log.getBarId()),
+                log.getProductName(),
                 log.getQuantity(),
-                log.getTimestamp()
-        );
+                log.getTimestamp());
     }
 
     /**
@@ -44,8 +44,7 @@ public class UsageLogMapper {
         UsageLog log = new UsageLog();
         log.setId(dto.id());
         log.setBarId(dto.barId());
-        log.setProductId(dto.productId());
-        // productName is not stored in entity
+        log.setProductName(dto.productName());
         log.setQuantity(dto.quantity());
         log.setTimestamp(dto.timestamp());
         return log;

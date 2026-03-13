@@ -148,93 +148,69 @@
   </Transition>
 </template>
 
-<script>
-export default {
-  name: "SellStockModal",
-  props: {
-    isOpen: Boolean,
-    item: Object,
-    barId: String,
-  },
-  data() {
-    return {
-      quantity: 1,
-      quickPresets: [1, 5, 10, 20],
-    };
-  },
+<script setup lang="ts">
+import { ref, computed, watch } from 'vue';
 
-  computed: {
-    productName() {
-      return this.item?.name ?? this.item?.productName ?? 'Unknown Product';
-    },
-    availableQuantity() {
-      return this.item?.quantity ?? 0;
-    }
-  },
+const props = defineProps<{
+  isOpen: boolean;
+  item: Record<string, any> | null;
+  barId: string;
+}>();
 
-  watch: {
-    isOpen(newVal) {
-      if (newVal) {
-        this.quantity = 1;
-      }
-    }
-  },
+const emit = defineEmits<{
+  close: [];
+  'sale-confirmed': [payload: { quantity: number }];
+}>();
 
-  methods: {
-    getProductBgClass(name) {
-      const lowerName = String(name ?? '').toLowerCase();
-      if (lowerName.includes('fanta')) return 'bg-gradient-to-br from-amber-400 to-amber-600';
-      if (lowerName.includes('coca') || lowerName.includes('zero')) return 'bg-gradient-to-br from-slate-700 to-slate-900';
-      if (lowerName.includes('red bull')) return 'bg-gradient-to-br from-red-400 to-red-600';
-      if (lowerName.includes('beer')) return 'bg-gradient-to-br from-yellow-400 to-yellow-600';
-      if (lowerName.includes('wine')) return 'bg-gradient-to-br from-purple-400 to-purple-600';
-      return 'bg-gradient-to-br from-bar-400 to-bar-600';
-    },
+const quantity = ref(1);
+const quickPresets = [1, 5, 10, 20];
 
-    getProductTextClass(name) {
-      const lowerName = String(name ?? '').toLowerCase();
-      if (lowerName.includes('fanta')) return 'text-amber-600';
-      if (lowerName.includes('coca') || lowerName.includes('zero')) return 'text-slate-700';
-      if (lowerName.includes('red bull')) return 'text-red-600';
-      if (lowerName.includes('beer')) return 'text-yellow-600';
-      if (lowerName.includes('wine')) return 'text-purple-600';
-      return 'text-bar-600';
-    },
+const productName = computed(() => props.item?.name ?? props.item?.productName ?? 'Unknown Product');
+const availableQuantity = computed(() => props.item?.quantity ?? 0);
 
-    decreaseQuantity() {
-      if (this.quantity > 1) {
-        this.quantity--;
-      }
-    },
+watch(() => props.isOpen, (newVal) => {
+  if (newVal) quantity.value = 1;
+});
 
-    increaseQuantity() {
-      if (this.quantity < this.availableQuantity) {
-        this.quantity++;
-      }
-    },
+function getProductBgClass(name: string): string {
+  const lowerName = String(name ?? '').toLowerCase();
+  if (lowerName.includes('fanta')) return 'bg-gradient-to-br from-amber-400 to-amber-600';
+  if (lowerName.includes('coca') || lowerName.includes('zero')) return 'bg-gradient-to-br from-slate-700 to-slate-900';
+  if (lowerName.includes('red bull')) return 'bg-gradient-to-br from-red-400 to-red-600';
+  if (lowerName.includes('beer')) return 'bg-gradient-to-br from-yellow-400 to-yellow-600';
+  if (lowerName.includes('wine')) return 'bg-gradient-to-br from-purple-400 to-purple-600';
+  return 'bg-gradient-to-br from-bar-400 to-bar-600';
+}
 
-    validateQuantity() {
-      if (this.quantity < 1) {
-        this.quantity = 1;
-      } else if (this.quantity > this.availableQuantity) {
-        this.quantity = this.availableQuantity;
-      }
-    },
+function getProductTextClass(name: string): string {
+  const lowerName = String(name ?? '').toLowerCase();
+  if (lowerName.includes('fanta')) return 'text-amber-600';
+  if (lowerName.includes('coca') || lowerName.includes('zero')) return 'text-slate-700';
+  if (lowerName.includes('red bull')) return 'text-red-600';
+  if (lowerName.includes('beer')) return 'text-yellow-600';
+  if (lowerName.includes('wine')) return 'text-purple-600';
+  return 'text-bar-600';
+}
 
-    async confirmSale() {
-      if (this.quantity === 0 || this.quantity > this.availableQuantity) {
-        return;
-      }
-      try {
-        this.$emit("sale-confirmed", { quantity: this.quantity });
-        this.$emit("close");
-        this.quantity = 1;
-      } catch (error) {
-        console.error("Error during sale:", error);
-      }
-    },
-  },
-};
+function decreaseQuantity() {
+  if (quantity.value > 1) quantity.value--;
+}
+
+function increaseQuantity() {
+  if (quantity.value < availableQuantity.value) quantity.value++;
+}
+
+function validateQuantity() {
+  if (quantity.value < 1) quantity.value = 1;
+  else if (quantity.value > availableQuantity.value) quantity.value = availableQuantity.value;
+}
+
+function confirmSale() {
+  if (quantity.value === 0 || quantity.value > availableQuantity.value) return;
+  emit('sale-confirmed', { quantity: quantity.value });
+  emit('close');
+  quantity.value = 1;
+}
 </script>
 
 <style scoped>

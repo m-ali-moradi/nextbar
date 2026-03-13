@@ -1,107 +1,30 @@
+# =============================================================================
+# warehouse-service — Local Bootstrap Configuration
+# =============================================================================
+#
+# This file contains ONLY the minimal configuration required to connect to
+# Spring Cloud Config Server. All business configuration (datasource, JPA,
+# security, messaging, eureka, logging, etc.) lives in the config-repo under:
+#
+#   config-repo/warehouse-service.yml          (default profile)
+#   config-repo/warehouse-service-{profile}.yml (profile-specific overrides)
+#
+# WHY MINIMAL?
+#   Centralising config in Config Server provides a single source of truth,
+#   environment-specific overrides without rebuilding, and runtime refresh
+#   via Spring Cloud Bus or /actuator/refresh.
+#
+# WHY FAIL-FAST?
+#   In production the service MUST NOT start with stale or missing config.
+#   fail-fast=true ensures the application exits immediately if Config Server
+#   is unreachable, preventing silent misconfiguration.
+# =============================================================================
+
 spring:
-  config:
-    import: optional:configserver:http://localhost:8888
   application:
     name: warehouse-service
-  
-  # MySQL Database Configuration
-  datasource:
-    url: jdbc:mysql://localhost:3306/warehouse_db?useSSL=false&serverTimezone=UTC&allowPublicKeyRetrieval=true
-    username: root
-    password: root
-    driver-class-name: com.mysql.cj.jdbc.Driver
-  
-  jpa:
-    hibernate:
-      ddl-auto: update
-    show-sql: false
-    database-platform: org.hibernate.dialect.MySQLDialect
-    properties:
-      hibernate:
-        format_sql: true
-  
-  sql:
-    init:
-      mode: always
-
-  # RabbitMQ Configuration
-  rabbitmq:
-    host: localhost
-    port: 5672
-    username: nextbar
-    password: nextbar123
-
-  # Spring Cloud Stream Bindings
+  config:
+    import: configserver:${CONFIG_SERVER_URL:http://localhost:8888}
   cloud:
-    stream:
-      bindings:
-        # Input binding for consuming supply request created events
-        supplyRequestCreated-in-0:
-          destination: supply.request.created
-          content-type: application/json
-          group: warehouse-service
-          consumer:
-            max-attempts: 5
-            backoff-initial-interval: 1000
-            backoff-multiplier: 2.0
-            backoff-max-interval: 10000
-        # Output binding for publishing supply request updated events
-        supplyRequestUpdated-out-0:
-          destination: supply.request.updated
-          content-type: application/json
-      rabbit:
-        bindings:
-          supplyRequestCreated-in-0:
-            consumer:
-              exchange-type: topic
-              auto-bind-dlq: true
-              republish-to-dlq: true
-              requeue-rejected: false
-          supplyRequestUpdated-out-0:
-            producer:
-              exchange-type: topic
-              exchange-durable: true
-              delivery-mode: PERSISTENT
-
-# Server Configuration
-server:
-  port: 8085
-
-# JWT Configuration
-jwt:
-  secret: ${JWT_SECRET:2YrmlATq8aGvu9r5OSwV2s3g6tZqYbhyZnMNsnU/wvO27lfYxbgm5foq7F2Vsmw1eZC4WbdKHx3IXW5J7PddEA==}
-
-# Eureka Client Configuration
-eureka:
-  client:
-    service-url:
-      defaultZone: http://localhost:8761/eureka/
-  instance:
-    prefer-ip-address: true
-
-# Actuator Configuration
-management:
-  endpoints:
-    web:
-      exposure:
-        include: health,info,metrics,prometheus
-  endpoint:
-    health:
-      show-details: always
-
-# Logging Configuration
-logging:
-  level:
-    root: INFO
-    com.dmsa.warehouse: DEBUG
-    org.springframework.security: INFO
-  pattern:
-    console: "%d{yyyy-MM-dd HH:mm:ss} [%thread] %-5level %logger{36} - %msg%n"
-
-# OpenAPI Configuration
-springdoc:
-  api-docs:
-    path: /v3/api-docs
-  swagger-ui:
-    path: /swagger-ui.html
-    operationsSorter: method
+    config:
+      fail-fast: true

@@ -11,13 +11,23 @@ import jakarta.persistence.Id;
 import jakarta.persistence.OneToMany;
 import jakarta.persistence.Table;
 import lombok.AllArgsConstructor;
-import lombok.Data;
+import lombok.EqualsAndHashCode;
+import lombok.Getter;
 import lombok.NoArgsConstructor;
+import lombok.Setter;
+import lombok.ToString;
 
+/**
+ * Represents a user in the system.
+ * This entity is used to store and manage user information in the database.
+ */
 @Entity
-@Data
+@Getter
+@Setter
 @NoArgsConstructor
 @AllArgsConstructor
+@EqualsAndHashCode(exclude = "roleAssignments")
+@ToString(exclude = "roleAssignments")
 @Table(name = "users")
 public class User {
 
@@ -32,10 +42,19 @@ public class User {
     private String email;
 
     @Column(nullable = false)
+    private String firstName;
+
+    @Column(nullable = false)
+    private String lastName;
+    
+    @Column(nullable = false)
     private String passwordHash;
 
     private boolean enabled;
     private boolean locked;
+
+    @Column(name = "mfa_enabled", nullable = false, columnDefinition = "TINYINT(1) DEFAULT 0")
+    private boolean mfaEnabled = false;
 
     @OneToMany(mappedBy = "user", cascade = CascadeType.ALL)
     private Set<UserRoleAssignment> roleAssignments;

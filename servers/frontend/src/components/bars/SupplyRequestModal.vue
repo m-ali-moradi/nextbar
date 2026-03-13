@@ -152,7 +152,7 @@ const displayName = computed(() => {
 });
 
 const canSubmit = computed(() => {
-  return !!props.item?.productId && quantity.value >= 1 && quantity.value <= 50;
+  return !!(props.item?.productId || props.item?.productName) && quantity.value >= 1 && quantity.value <= 50;
 });
 
 function decreaseQuantity() {

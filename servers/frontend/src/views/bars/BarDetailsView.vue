@@ -1,11 +1,5 @@
 <template>
-  <div class="flex min-h-screen bg-slate-50">
-    <Sidebar />
-    
-    <div class="flex-1 ml-72">
-      <Navbar />
-      
-      <main class="p-6">
+  <div>
         <!-- Page Header -->
         <div class="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4 mb-8">
           <div class="flex items-center gap-4">
@@ -19,10 +13,10 @@
             </router-link>
             <div>
               <h1 class="text-2xl font-bold text-slate-900">
-                {{ barStore.currentBar?.name || 'Bar Details' }}
+                {{ bar?.name || 'Bar Details' }}
               </h1>
               <p class="text-slate-500 mt-1">
-                {{ barStore.currentBar?.location || 'Manage stock and sales' }}
+                {{ bar?.location || 'Manage stock and sales' }}
               </p>
             </div>
           </div>
@@ -33,21 +27,16 @@
         </div>
 
         <!-- Loading State -->
-        <div v-if="barStore.loading" class="flex items-center justify-center py-20">
-          <div class="text-center">
-            <div class="w-12 h-12 border-4 border-bar-200 border-t-bar-600 rounded-full animate-spin mx-auto mb-4"></div>
-            <p class="text-slate-500">Loading bar details...</p>
-          </div>
-        </div>
+        <BaseLoadingSpinner v-if="isLoading" color="bar" message="Loading bar details..." />
 
         <!-- Error State -->
-        <div v-else-if="barStore.error" class="card p-8 text-center">
+        <div v-else-if="error" class="card p-8 text-center">
           <div class="w-16 h-16 rounded-full bg-red-100 flex items-center justify-center mx-auto mb-4">
             <i class="fas fa-exclamation-triangle text-2xl text-red-600"></i>
           </div>
           <h3 class="text-lg font-semibold text-slate-900 mb-2">Error Loading Bar</h3>
-          <p class="text-slate-500 mb-4">{{ barStore.error?.message || barStore.error }}</p>
-          <button @click="barStore.fetchBarDetails(String(route.params.barId))" class="btn-primary">
+          <p class="text-slate-500 mb-4">{{ error?.message ?? error }}</p>
+          <button @click="refetch()" class="btn-primary">
             <i class="fas fa-redo"></i>
             <span>Try Again</span>
           </button>
@@ -64,12 +53,12 @@
                 </div>
                 <div>
                   <h2 class="font-semibold text-slate-900">Stock Inventory</h2>
-                  <p class="text-xs text-slate-500">{{ barStore.stock.length }} items</p>
+                  <p class="text-xs text-slate-500">{{ stock.length }} items</p>
                 </div>
               </div>
             </div>
 
-            <div v-if="barStore.stock.length" class="overflow-x-auto">
+            <div v-if="stock.length" class="overflow-x-auto">
               <table class="table-modern">
                 <thead>
                   <tr>
@@ -102,7 +91,7 @@
                         {{ item.quantity === 0 ? 'Empty' : item.quantity }}
                       </span>
                     </td>
-                    <td class="text-slate-500">{{ formatDate(item.updatedAt || item.createdAt) }}</td>
+                    <td class="text-slate-500">{{ formatDate(getItemUpdatedAt(item)) }}</td>
                     <td>
                       <div class="flex items-center justify-end gap-2">
                         <button
@@ -115,7 +104,7 @@
                           Sell
                         </button>
                         <button
-                          v-if="item.quantity === 0 && !hasPendingRequest(item.productId)"
+                          v-if="item.quantity === 0 && !hasPendingRequest(item.productName)"
                           @click="openRequestModal(item)"
                           class="inline-flex items-center gap-1.5 px-3 py-1.5 bg-amber-500 text-white 
                                  rounded-lg text-sm font-medium hover:bg-amber-600 transition-colors"
@@ -124,7 +113,7 @@
                           Request
                         </button>
                         <span
-                          v-if="hasPendingRequest(item.productId)"
+                          v-if="hasPendingRequest(item.productName)"
                           class="badge badge-warning"
                         >
                           <i class="fas fa-clock mr-1.5"></i>
@@ -153,9 +142,9 @@
                 </div>
                 <h2 class="font-semibold text-slate-900">Usage Logs</h2>
               </div>
-              <div v-if="barStore.usageLogs.length" class="space-y-3 max-h-64 overflow-y-auto scrollbar-thin">
+              <div v-if="usageLogs.length" class="space-y-3 max-h-64 overflow-y-auto scrollbar-thin">
                 <div
-                  v-for="log in barStore.usageLogs.slice(0, 10)"
+                  v-for="log in usageLogs.slice(0, 10)"
                   :key="log.id"
                   class="flex items-center justify-between py-2 border-b border-slate-100 last:border-0"
                 >
@@ -177,14 +166,14 @@
                 </div>
                 <h2 class="font-semibold text-slate-900">Total Served</h2>
               </div>
-              <div v-if="barStore.totalServed.length" class="space-y-3 max-h-64 overflow-y-auto scrollbar-thin">
+              <div v-if="totalServed.length" class="space-y-3 max-h-64 overflow-y-auto scrollbar-thin">
                 <div
-                  v-for="served in barStore.totalServed"
-                  :key="served.productId"
+                  v-for="served in totalServed"
+                  :key="served.name"
                   class="flex items-center justify-between py-2 border-b border-slate-100 last:border-0"
                 >
-                  <span class="font-medium text-slate-900 text-sm">{{ served.productName }}</span>
-                  <span class="text-lg font-bold text-emerald-600">{{ served.totalQuantity }}</span>
+                  <span class="font-medium text-slate-900 text-sm">{{ served.name }}</span>
+                  <span class="text-lg font-bold text-emerald-600">{{ served.total }}</span>
                 </div>
               </div>
               <p v-else class="text-slate-500 text-sm">No data available</p>
@@ -198,9 +187,9 @@
                 </div>
                 <h2 class="font-semibold text-slate-900">Supply Requests</h2>
               </div>
-              <div v-if="barStore.supplyRequests.length" class="space-y-3 max-h-64 overflow-y-auto scrollbar-thin">
+              <div v-if="supplyRequests.length" class="space-y-3 max-h-64 overflow-y-auto scrollbar-thin">
                 <div
-                  v-for="request in barStore.supplyRequests"
+                  v-for="request in supplyRequests"
                   :key="request.id"
                   class="p-3 bg-slate-50 rounded-lg"
                 >
@@ -209,6 +198,22 @@
                       {{ request.status }}
                     </span>
                     <span class="text-xs text-slate-500">{{ formatDate(request.createdAt) }}</span>
+                  </div>
+                  <div class="mb-2 space-y-1">
+                    <p
+                      v-for="(item, index) in getRequestItemsSummary(request)"
+                      :key="`${request.id}-item-${index}`"
+                      class="text-sm text-slate-700"
+                    >
+                      {{ item }}
+                    </p>
+                    <p
+                      v-if="getRequestRejectionReason(request)"
+                      class="text-xs text-red-600"
+                    >
+                      <span class="font-semibold">Reason:</span>
+                      {{ getRequestRejectionReason(request) }}
+                    </p>
                   </div>
                   <div class="flex gap-2">
                     <button
@@ -255,56 +260,104 @@
           @close="showAddStockModal = false"
           @stock-added="handleAddStock"
         />
-      </main>
-    </div>
+        <AutoSupplyRequestModal
+          v-if="showAutoSupplyModal && autoSupplyItem"
+          :item="autoSupplyItem"
+          @confirm="handleAutoSupply"
+          @cancel="showAutoSupplyModal = false"
+        />
   </div>
 </template>
 
 <script setup lang="ts">
-import { ref, onMounted, computed, watch } from 'vue';
+import { ref, computed, watch } from 'vue';
 import { useRoute } from 'vue-router';
-import { useBarStore } from '../../stores/barStore';
+import { useQueryClient } from '@tanstack/vue-query';
+import {
+  useBarDetailsQuery,
+  useReduceStock,
+  useAddStock,
+  useCreateSupplyRequest,
+  useUpdateSupplyRequest,
+  useCancelSupplyRequest,
+} from '@/composables/queries/useBarQueries';
+import { queryKeys } from '@/composables/queries/queryKeys';
 import { useWebSocketEvents } from '@/composables/useWebSocketEvents';
-import Sidebar from '../../components/common/Sidebar.vue';
-import Navbar from '../../components/common/Navbar.vue';
-import SellStockModal from '../../components/bars/SellStockModal.vue';
-import SupplyRequestModal from '../../components/bars/SupplyRequestModal.vue'; 
-import AddStockModal from '../../components/bars/AddStockModal.vue'; 
+import SellStockModal from '@/components/bars/SellStockModal.vue';
+import SupplyRequestModal from '@/components/bars/SupplyRequestModal.vue';
+import AddStockModal from '@/components/bars/AddStockModal.vue';
+import AutoSupplyRequestModal from '@/components/bars/AutoSupplyRequestModal.vue';
+import { formatRelativeTime as formatDate } from '@/composables/useDateFormat';
+import BaseLoadingSpinner from '@/components/common/BaseLoadingSpinner.vue';
 
-const barStore = useBarStore();
 const route = useRoute();
+const queryClient = useQueryClient();
 const { eventsByType } = useWebSocketEvents();
+
+const barId = computed(() => String(route.params.barId ?? ''));
+const { data: barDetails, isLoading, error, refetch } = useBarDetailsQuery(barId);
+
+// Convenient aliases for template
+const bar = computed(() => barDetails.value?.bar ?? null);
+const stock = computed(() => barDetails.value?.stock ?? []);
+const usageLogs = computed(() => barDetails.value?.usageLogs ?? []);
+const totalServed = computed(() => barDetails.value?.totalServed ?? []);
+const supplyRequests = computed(() => barDetails.value?.supplyRequests ?? []);
+
+// Mutations
+const reduceStockMutation = useReduceStock();
+const addStockMutation = useAddStock();
+const createSupplyRequestMutation = useCreateSupplyRequest();
+const updateSupplyRequestMutation = useUpdateSupplyRequest();
+const cancelSupplyRequestMutation = useCancelSupplyRequest();
+
 const showSellModal = ref(false);
 const showRequestModal = ref(false);
 const showAddStockModal = ref(false);
-const selectedItem = ref(null);
-
-onMounted(() => {
-  const barId = String(route.params.barId);
-  barStore.fetchBarDetails(barId);
-});
+const showAutoSupplyModal = ref(false);
+const selectedItem = ref(null as any);
+const autoSupplyItem = ref(null as any);
 
 // Refresh bar data when warehouse updates supply status for this bar
 watch(
   () => eventsByType['SUPPLY_REQUEST_UPDATED'],
-  async (newEvent) => {
-    const barId = String(route.params.barId ?? '');
-    if (newEvent && newEvent.resourceId === barId) {
-      await barStore.fetchBarDetails(barId, { silent: true });
+  (newEvent) => {
+    if (newEvent && newEvent.resourceId === barId.value) {
+      queryClient.invalidateQueries({ queryKey: queryKeys.bars.details(barId.value) });
     }
   }
 );
 
+// Refresh bar data when stock is updated for this bar
 const sortedStock = computed(() => {
-  const stock = Array.isArray(barStore.stock) ? barStore.stock.filter(Boolean) : [];
-  const toTime = (value) => {
+  const items = stock.value.filter(Boolean);
+  const toTime = (value: string | undefined) => {
     const t = new Date(value ?? 0).getTime();
     return Number.isFinite(t) ? t : 0;
   };
-  return [...stock].sort((a, b) => toTime(b?.updatedAt) - toTime(a?.updatedAt));
+  return [...items].sort((a, b) => toTime(b?.updatedAt) - toTime(a?.updatedAt));
 });
 
-const getProductBgClass = (name) => {
+// Helper to format the items in a supply request for display in the UI
+const getRequestItemsSummary = (request: any) => {
+  const items = Array.isArray(request?.items) ? request.items : [];
+  if (items.length === 0) return ['No items'];
+  return items.map((item: any) => {
+    const name = String(item?.productName ?? 'Unknown');
+    const quantity = Number(item?.quantity ?? 0);
+    return `${name} × ${quantity}`;
+  });
+};
+
+// If a request was rejected, we can show the reason in the UI to provide more context to the user about why their supply request was rejected
+const getRequestRejectionReason = (request: any) => {
+  if (request?.status !== 'REJECTED') return null;
+  const reason = String(request?.rejectionReason ?? '').trim();
+  return reason || null;
+};
+
+// When selling an item, we can directly reduce the stock without needing to wait for a separate confirmation step since the user has already confirmed the sale in the SellStockModal
+const getProductBgClass = (name: string) => {
   const lowerName = String(name ?? '').toLowerCase();
   if (!lowerName) return 'bg-slate-500';
   if (lowerName === 'fanta') return 'bg-amber-500';
@@ -315,116 +368,138 @@ const getProductBgClass = (name) => {
   return 'bg-bar-500';
 };
 
-const getQuantityBadgeClass = (quantity) => {
+const getQuantityBadgeClass = (quantity: number) => {
   if (quantity === 0) return 'badge-danger';
   if (quantity < 10) return 'badge-warning';
   return 'badge-success';
 };
 
-const getRequestStatusBadgeClass = (status) => {
-  const classes = {
+/**
+ * Determine a sensible 'updatedAt' for a stock item.
+ * Prefer the stock item's explicit timestamp, otherwise use the most
+ * recent usage log for that product, then fall back to createdAt or null.
+ */
+const getItemUpdatedAt = (item: any) => {
+  if (!item) return null;
+  if (item.updatedAt) return item.updatedAt;
+  if (item.createdAt) return item.createdAt;
+
+  // Try to infer from the latest usage log for this product
+  const logs = usageLogs.value.filter((l: any) => l.productName === item.productName);
+  if (logs.length) {
+    const sorted = [...logs].sort((a: any, b: any) => {
+      const ta = new Date(a.timestamp ?? 0).getTime();
+      const tb = new Date(b.timestamp ?? 0).getTime();
+      return tb - ta;
+    });
+    return sorted[0]?.timestamp ?? null;
+  }
+
+  // No timestamp available
+  return null;
+};
+
+// Map supply request status to badge classes
+const getRequestStatusBadgeClass = (status: string) => {
+  const classes: Record<string, string> = {
     'REQUESTED': 'badge-info',
     'IN_PROGRESS': 'badge-warning',
     'DELIVERED': 'badge-success',
+    'REJECTED': 'badge-danger',
     'CANCELLED': 'badge-danger',
     'COMPLETED': 'badge-neutral',
   };
   return classes[status] || 'badge-neutral';
 };
 
-const formatDate = (date) => {
-  if (!date) return '—';
-  const updated = new Date(date);
-  const updatedTime = updated.getTime();
-  if (!Number.isFinite(updatedTime)) return '—';
-
-  const nowTime = Date.now();
-  const diffMs = Math.max(0, nowTime - updatedTime);
-  const diffSeconds = Math.floor(diffMs / 1000);
-  if (diffSeconds < 60) return 'Just now';
-
-  const diffMinutes = Math.floor(diffSeconds / 60);
-  if (diffMinutes < 60) return `${diffMinutes} min ago`;
-
-  const diffHours = Math.floor(diffMinutes / 60);
-  if (diffHours < 24) return `${diffHours}h ago`;
-
-  const diffDays = Math.floor(diffHours / 24);
-  return `${diffDays}d ago`;
-};
-
-const hasPendingRequest = (productId) => {
-  const requests = Array.isArray(barStore.supplyRequests) ? barStore.supplyRequests : [];
-  return requests.some((req) => {
+// Helper to check if there's a pending supply request for a given product
+const hasPendingRequest = (productName: string) => {
+  return supplyRequests.value.some((req) => {
     const items = Array.isArray(req?.items) ? req.items : [];
     return items.some(
       (item) =>
-        item?.productId === productId &&
+        item?.productName === productName &&
         (req?.status === 'REQUESTED' || req?.status === 'IN_PROGRESS' || req?.status === 'DELIVERED')
     );
   });
 };
 
-const openSellModal = (item) => {
+const openSellModal = (item: any) => {
   selectedItem.value = item;
   showSellModal.value = true;
 };
 
-const openRequestModal = (item) => {
+const openRequestModal = (item: any) => {
   selectedItem.value = item;
   showRequestModal.value = true;
 };
 
-const handleSell = async ({ quantity }) => {
-  const barId = route.params.barId as string;
-  const productId = selectedItem.value?.productId;
+// When selling an item, we can directly reduce the stock without needing to wait for a separate confirmation step since the user has already confirmed the sale in the SellStockModal
+const handleSell = async ({ quantity }: { quantity: number }) => {
+  const id = barId.value;
+  const productName = selectedItem.value?.productName;
   try {
-    if (!productId) throw new Error('Missing product id');
-    await barStore.reduceStock(barId, { productId, quantity });
-  } catch (error) {
-    // Error is handled by the store
+    if (!productName) throw new Error('Missing product name');
+    const updatedItem = await reduceStockMutation.mutateAsync({ barId: id, payload: { productName, quantity } });
+    // After sell completes, check if stock is low and trigger auto supply
+    if (updatedItem && updatedItem.quantity <= 5 && !hasPendingRequest(productName)) {
+      autoSupplyItem.value = updatedItem;
+      showAutoSupplyModal.value = true;
+    }
+  } catch {
+    // Error handled by Vue Query
   } finally {
     showSellModal.value = false;
   }
 };
 
-const handleSupplyRequest = async ({ quantity }) => {
-  const barId = route.params.barId as string;
-  const productId = selectedItem.value?.productId;
+// When a supply request is made, we can directly create the request without needing to update the stock first since the backend will handle the necessary validations and trigger events to update the UI accordingly
+const handleSupplyRequest = async ({ quantity }: { quantity: number }) => {
+  const id = barId.value;
+  const productName = selectedItem.value?.productName;
   try {
-    if (!productId) throw new Error('Missing product id');
-    await barStore.createSupplyRequest(barId, { items: [{ productId, quantity }] });
-  } catch (error) {
-    // Error is handled by the store
+    if (!productName) throw new Error('Missing product name');
+    await createSupplyRequestMutation.mutateAsync({ barId: id, payload: { items: [{ productName, quantity }] } });
+  } catch {
+    // Error handled by Vue Query
   } finally {
     showRequestModal.value = false;
   }
 };
 
-const cancelRequest = async (requestId) => {
+// When cancelling a request, we can directly call the cancel endpoint without needing to update the request status manually since the backend will handle that and trigger the necessary events to update the UI
+const cancelRequest = async (requestId: string) => {
   if (confirm('Are you sure you want to cancel this supply request?')) {
-    const barId = route.params.barId as string;
-    await barStore.cancelSupplyRequest(barId, requestId);
+    await cancelSupplyRequestMutation.mutateAsync({ barId: barId.value, requestId });
   }
 };
 
-const addToStock = async (request) => {
-  const barId = route.params.barId as string;
+// When marking a request as delivered, we can directly add to stock from the request details without waiting for a separate delivery confirmation step
+const addToStock = async (request: any) => {
+  const id = barId.value;
   const firstItem = Array.isArray(request?.items) ? request.items[0] : null;
-  const productId = firstItem?.productId;
+  const productName = firstItem?.productName || firstItem?.productId;
   const quantity = firstItem?.quantity;
-  if (!productId || !quantity) {
-    barStore.error = { message: 'Supply request has no items to add to stock.' };
-    return;
-  }
-  await barStore.addStock(barId, { productId, quantity });
-  await barStore.updateSupplyRequest(barId, request.id, { status: 'COMPLETED' });
+  if (!productName || !quantity) return;
+  await addStockMutation.mutateAsync({ barId: id, payload: { productName, quantity } });
+  await updateSupplyRequestMutation.mutateAsync({ barId: id, requestId: request.id, payload: { status: 'COMPLETED' } });
+};
+// After adding stock, we can also trigger the auto supply flow in case the user wants to automatically request more stock for this item
+const handleAddStock = async ({ productName, quantity }: { productName: string; quantity: number }) => {
+  await addStockMutation.mutateAsync({ barId: barId.value, payload: { productName, quantity } });
+  showAddStockModal.value = false;
 };
 
-const handleAddStock = async ({ productId, quantity }) => {
-  const barId = route.params.barId as string;
-  await barStore.addStock(barId, { productId, quantity });
-  showAddStockModal.value = false;
+// When auto supply is confirmed, we create a supply request for the item with the specified quantity
+const handleAutoSupply = async ({ productName, quantity }: { productName: string; quantity: number }) => {
+  try {
+    await createSupplyRequestMutation.mutateAsync({ barId: barId.value, payload: { items: [{ productName, quantity }] } });
+  } catch {
+    // Error handled by Vue Query
+  } finally {
+    showAutoSupplyModal.value = false;
+    autoSupplyItem.value = null;
+  }
 };
 </script>
 

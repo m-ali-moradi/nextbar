@@ -4,6 +4,8 @@ import java.time.LocalDate;
 import java.util.List;
 import java.util.UUID;
 
+import org.springframework.lang.NonNull;
+
 import org.springframework.format.annotation.DateTimeFormat;
 import org.springframework.http.ResponseEntity;
 import org.springframework.validation.annotation.Validated;
@@ -15,12 +17,13 @@ import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
 
-import com.nextbar.bar.model.dto.StockOperationDto;
-import com.nextbar.bar.model.dto.TotalServedDto;
-import com.nextbar.bar.model.dto.UsageLogDto;
+import com.nextbar.bar.dto.request.StockOperationDto;
+import com.nextbar.bar.dto.response.TotalServedDto;
+import com.nextbar.bar.dto.response.UsageLogDto;
 import com.nextbar.bar.security.RbacService;
 import com.nextbar.bar.service.UsageLogService;
 
+import io.swagger.v3.oas.annotations.tags.Tag;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
 
@@ -29,9 +32,10 @@ import lombok.RequiredArgsConstructor;
  * Provides endpoints to record and view usage logs for a bar.
  */
 @RestController
-@RequestMapping("/bars/{barId}/usage")
+@RequestMapping("/api/v1/bars/{barId}/usage")
 @RequiredArgsConstructor
 @Validated
+@Tag(name = "Usage", description = "Usage management")
 public class UsageLogController {
 
     private final UsageLogService usageLogService;
@@ -46,10 +50,10 @@ public class UsageLogController {
      */
     @PostMapping
     public ResponseEntity<Void> recordUsage(
-            @PathVariable UUID barId,
+            @PathVariable @NonNull UUID barId,
             @Valid @RequestBody StockOperationDto dto) {
         rbacService.requireBarAccess(barId);
-        usageLogService.logDrinkServed(barId, dto.productId(), dto.quantity());
+        usageLogService.logDrinkServed(barId, dto.productName(), dto.quantity());
         return ResponseEntity.ok().build();
     }
 
@@ -60,7 +64,7 @@ public class UsageLogController {
      * @return list of usage logs
      */
     @GetMapping
-    public ResponseEntity<List<UsageLogDto>> getUsageLogs(@PathVariable UUID barId) {
+    public ResponseEntity<List<UsageLogDto>> getUsageLogs(@PathVariable @NonNull UUID barId) {
         rbacService.requireBarAccess(barId);
         return ResponseEntity.ok(usageLogService.getLogsForBar(barId));
     }
@@ -72,7 +76,7 @@ public class UsageLogController {
      * @return list of totals (name + total)
      */
     @GetMapping("/total-served")
-    public ResponseEntity<List<TotalServedDto>> getTotalServed(@PathVariable UUID barId) {
+    public ResponseEntity<List<TotalServedDto>> getTotalServed(@PathVariable @NonNull UUID barId) {
         rbacService.requireBarAccess(barId);
         return ResponseEntity.ok(usageLogService.getTotalServed(barId));
     }
@@ -87,12 +91,10 @@ public class UsageLogController {
      */
     @GetMapping("/range")
     public ResponseEntity<List<UsageLogDto>> getUsageLogsByDateRange(
-            @PathVariable UUID barId,
+            @PathVariable @NonNull UUID barId,
             @RequestParam @DateTimeFormat(iso = DateTimeFormat.ISO.DATE) LocalDate startDate,
             @RequestParam @DateTimeFormat(iso = DateTimeFormat.ISO.DATE) LocalDate endDate) {
         rbacService.requireBarAccess(barId);
-        // Note: Date range filtering not implemented in service interface yet
-        // Returning all logs for the bar
-        return ResponseEntity.ok(usageLogService.getLogsForBar(barId));
+        return ResponseEntity.ok(usageLogService.getLogsForBarByDateRange(barId, startDate, endDate));
     }
 }

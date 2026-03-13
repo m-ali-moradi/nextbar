@@ -81,8 +81,8 @@
 
 <script setup lang="ts">
 import { reactive, watch } from 'vue';
-import { barApi } from '../../api';
-import type { CreateBarPayload } from '../../api/types';
+import { barApi } from '@/api';
+import type { CreateBarPayload } from '@/api/types';
 
 const props = defineProps<{
   isOpen: boolean;

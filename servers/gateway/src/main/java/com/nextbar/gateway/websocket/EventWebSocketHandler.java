@@ -2,7 +2,6 @@ package com.nextbar.gateway.websocket;
 
 import java.nio.charset.StandardCharsets;
 import java.time.Duration;
-import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
@@ -12,6 +11,7 @@ import java.util.stream.Collectors;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Value;
+import org.springframework.lang.NonNull;
 import org.springframework.stereotype.Component;
 import org.springframework.util.MultiValueMap;
 import org.springframework.web.reactive.socket.CloseStatus;
@@ -88,7 +88,7 @@ public class EventWebSocketHandler implements WebSocketHandler {
      * 4. Be removed from activeSessions on disconnect
      */
     @Override
-    public Mono<Void> handle(WebSocketSession session) {
+    public @NonNull Mono<Void> handle(@NonNull WebSocketSession session) {
         String sessionId = session.getId();
 
         ClientContext context = authenticateSession(session);
@@ -101,8 +101,8 @@ public class EventWebSocketHandler implements WebSocketHandler {
 
         // Create event stream: merges real events with periodic heartbeat
         Flux<WebSocketMessage> eventStream = eventSink.asFlux()
-            .filter(event -> isEventAllowed(event, context))
-            .onBackpressureLatest()
+                .filter(event -> isEventAllowed(event, context))
+                .onBackpressureLatest()
                 .map(event -> {
                     try {
                         String json = objectMapper.writeValueAsString(event);
@@ -143,6 +143,11 @@ public class EventWebSocketHandler implements WebSocketHandler {
 
         // Run both input and output handlers concurrently
         return Mono.zip(input, output).then();
+    }
+
+    @Override
+    public @NonNull List<String> getSubProtocols() {
+        return List.of("nextbar.v1");
     }
 
     // ==================== Event Broadcasting ====================
@@ -200,11 +205,17 @@ public class EventWebSocketHandler implements WebSocketHandler {
             return null;
         }
 
+        String tokenType = claims.get("tokenType", String.class);
+        if (!"ws_ticket".equalsIgnoreCase(tokenType)) {
+            logger.warn("WebSocket auth failed: invalid token type");
+            return null;
+        }
+
         List<String> roles = extractStringListClaim(claims, "roles");
         boolean allowAll = roles.stream().anyMatch(role -> role.toUpperCase().contains("ADMIN")
                 || role.toUpperCase().contains("WAREHOUSE"));
 
-        Set<String> allowedResourceIds = new HashSet<>(extractStringListClaim(claims, "assignments"));
+        Set<String> allowedResourceIds = extractAllowedResourceIds(claims);
         if (allowedResourceIds.isEmpty()) {
             String barId = getQueryParam(session, "barId");
             if (barId != null && !barId.isBlank()) {
@@ -226,18 +237,39 @@ public class EventWebSocketHandler implements WebSocketHandler {
             return authHeader.substring(7);
         }
 
-        String token = getQueryParam(session, "token");
-        if (token == null || token.isBlank()) {
-            token = getQueryParam(session, "access_token");
+        // Explicitly disallow tokens in query parameters to prevent accidental leakage
+        String tokenInQuery = getQueryParam(session, "token");
+        String tokenInAccess = getQueryParam(session, "access_token");
+        if ((tokenInQuery != null && !tokenInQuery.isBlank()) || (tokenInAccess != null && !tokenInAccess.isBlank())) {
+            logger.warn(
+                    "WebSocket connection attempted with token in query string; rejecting connection to avoid token leakage");
+            return null;
         }
-        return token;
+
+        List<String> protocols = session.getHandshakeInfo().getHeaders().get("Sec-WebSocket-Protocol");
+        if (protocols != null) {
+            for (String protocolHeader : protocols) {
+                if (protocolHeader == null || protocolHeader.isBlank()) {
+                    continue;
+                }
+                String[] offeredProtocols = protocolHeader.split(",");
+                for (String offeredProtocol : offeredProtocols) {
+                    String trimmedProtocol = offeredProtocol.trim();
+                    if (trimmedProtocol.startsWith("ticket.")) {
+                        return trimmedProtocol.substring("ticket.".length());
+                    }
+                }
+            }
+        }
+
+        return null;
     }
 
     private String getQueryParam(WebSocketSession session, String key) {
         MultiValueMap<String, String> params = UriComponentsBuilder
-            .fromUri(session.getHandshakeInfo().getUri())
-            .build()
-            .getQueryParams();
+                .fromUri(session.getHandshakeInfo().getUri())
+                .build()
+                .getQueryParams();
         List<String> values = params.get(key);
         return values == null || values.isEmpty() ? null : values.get(0);
     }
@@ -248,6 +280,24 @@ public class EventWebSocketHandler implements WebSocketHandler {
             return list.stream().map(String::valueOf).collect(Collectors.toList());
         }
         return List.of();
+    }
+
+    private Set<String> extractAllowedResourceIds(Claims claims) {
+        return extractStringListClaim(claims, "assignments").stream()
+                .map(this::extractResourceId)
+                .filter(resourceId -> resourceId != null && !resourceId.isBlank() && !"*".equals(resourceId))
+                .collect(Collectors.toSet());
+    }
+
+    private String extractResourceId(String assignmentClaim) {
+        if (assignmentClaim == null || assignmentClaim.isBlank()) {
+            return null;
+        }
+        String[] parts = assignmentClaim.split(":");
+        if (parts.length == 0) {
+            return null;
+        }
+        return parts[parts.length - 1].trim();
     }
 
     private boolean isEventAllowed(NextBarEvent event, ClientContext context) {

@@ -25,7 +25,7 @@ public class UsageLog {
     @GeneratedValue
     private UUID id;
     private UUID barId;
-    private UUID productId;
+    private String productName;
     private int quantity;
     private LocalDateTime timestamp;
 }

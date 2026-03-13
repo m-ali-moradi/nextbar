@@ -11,7 +11,7 @@
       <!-- Header section with title and close button -->
       <div class="flex justify-between items-center mb-2">
         <h3 class="text-lg font-semibold text-gray-800">
-          Low Stock: {{ item.name }}
+          Low Stock: {{ item.productName }}
         </h3>
         <!-- Close button, triggers cancel on click -->
         <button @click="cancel" class="text-gray-500 hover:text-red-500">
@@ -50,74 +50,68 @@
   </transition>
 </template>
 
-<script>
-// Vue component for the auto supply request modal
-export default {
-  name: "AutoSupplyRequestModal",
-  // Define props for the component
-  props: {
-    item: {
-      type: Object, // Expect an object containing item details
-      required: true, // Item prop is mandatory
-    },
-    duration: {
-      type: Number, // Duration of the countdown in seconds
-      default: 10, // Default countdown duration is 10 seconds
-    },
-  },
-  // Reactive data properties
-  data() {
-    return {
-      visible: true, // Controls modal visibility
-      countdown: this.duration, // Countdown timer value
-      quantity: 20, // Default requested quantity
-      timer: null, // Reference to the interval timer
-      paused: false, // Flag to pause the countdown
-    };
-  },
-  // Lifecycle hook: Start the timer when the component is mounted
-  mounted() {
-    this.startTimer();
-  },
-  // Component methods
-  methods: {
-    // Start the countdown timer
-    startTimer() {
-      this.timer = setInterval(() => {
-        if (!this.paused) {
-          this.countdown--; // Decrement countdown
-          if (this.countdown <= 0) {
-            this.confirm(); // Automatically confirm when countdown reaches zero
-          }
-        }
-      }, 1000); // Update every second
-    },
-    // Pause the countdown timer
-    pauseTimer() {
-      this.paused = true;
-    },
-    // Resume the countdown timer
-    resumeTimer() {
-      this.paused = false;
-    },
-    // Cancel the supply request and close the modal
-    cancel() {
-      clearInterval(this.timer); // Clear the timer
-      this.visible = false; // Hide the modal
-      this.$emit("cancel"); // Emit cancel event to parent
-    },
-    // Confirm the supply request and close the modal
-    confirm() {
-      clearInterval(this.timer); // Clear the timer
-      this.visible = false; // Hide the modal
-      // Emit confirm event with productId and quantity
-      this.$emit("confirm", {
-        productId: this.item.productId,
-        quantity: this.quantity,
-      });
-    },
-  },
-};
+<script setup lang="ts">
+import { ref, onMounted, onUnmounted } from 'vue';
+
+const props = defineProps<{
+  item: { productName: string; quantity: number };
+  duration?: number;
+}>();
+
+const emit = defineEmits<{
+  cancel: [];
+  confirm: [payload: { productName: string; quantity: number }];
+}>();
+
+const effectiveDuration = props.duration ?? 10;
+
+const visible = ref(true);
+const countdown = ref(effectiveDuration);
+const quantity = ref(20);
+const paused = ref(false);
+let timer: ReturnType<typeof setInterval> | null = null;
+
+function startTimer() {
+  timer = setInterval(() => {
+    if (!paused.value) {
+      countdown.value--;
+      if (countdown.value <= 0) {
+        confirm();
+      }
+    }
+  }, 1000);
+}
+
+function pauseTimer() {
+  paused.value = true;
+}
+
+function resumeTimer() {
+  paused.value = false;
+}
+
+function cancel() {
+  if (timer) clearInterval(timer);
+  visible.value = false;
+  emit('cancel');
+}
+
+function confirm() {
+  if (timer) clearInterval(timer);
+  visible.value = false;
+  emit('confirm', {
+    productName: props.item.productName,
+    quantity: quantity.value,
+  });
+}
+
+onMounted(() => {
+  startTimer();
+});
+
+onUnmounted(() => {
+  if (timer) clearInterval(timer);
+});
 </script>
 
 <style scoped>

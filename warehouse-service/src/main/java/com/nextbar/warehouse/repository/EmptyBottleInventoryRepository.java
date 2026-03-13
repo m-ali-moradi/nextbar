@@ -1,6 +1,6 @@
-package com.dmsa.warehouse.repository;
+package com.nextbar.warehouse.repository;
 
-import com.dmsa.warehouse.model.entity.EmptyBottleInventory;
+import com.nextbar.warehouse.model.entity.EmptyBottleInventory;
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.data.jpa.repository.Query;
 import org.springframework.stereotype.Repository;

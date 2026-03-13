@@ -1,9 +1,9 @@
-package com.dmsa.warehouse.event;
+package com.nextbar.warehouse.event;
 
-import com.dmsa.warehouse.model.entity.SupplyRequest;
-import com.dmsa.warehouse.model.entity.SupplyRequestItem;
-import com.dmsa.warehouse.model.enums.SupplyRequestStatus;
-import com.dmsa.warehouse.repository.SupplyRequestRepository;
+import com.nextbar.warehouse.model.entity.SupplyRequest;
+import com.nextbar.warehouse.model.entity.SupplyRequestItem;
+import com.nextbar.warehouse.model.enums.SupplyRequestStatus;
+import com.nextbar.warehouse.repository.SupplyRequestRepository;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.context.annotation.Bean;

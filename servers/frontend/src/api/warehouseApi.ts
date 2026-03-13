@@ -14,9 +14,11 @@ import type {
 
 /**
  * Warehouse API module
- * All methods use typed DTOs and JSON body payloads for consistency
- * Methods follow REST-aligned naming conventions
+ * All methods use typed DTOs and JSON body payloads for consistency.
+ * Methods follow REST-aligned naming conventions.
  */
+const WAREHOUSE_BASE_PATH = '/api/v1/warehouse';
+
 export const warehouseApi = {
   // =====================================================
   // Stock Management
@@ -25,28 +27,28 @@ export const warehouseApi = {
   /**
    * Get all warehouse stock/inventory
    */
-  getStock: () => ApiService.get<WarehouseStock[]>('/api/warehouse/stock'),
+  getStock: () => ApiService.get<WarehouseStock[]>(`${WAREHOUSE_BASE_PATH}/stock`),
 
   /**
    * Get specific stock item by beverage type
    */
   getStockByType: (beverageType: string) =>
     ApiService.get<WarehouseStock>(
-      `/api/warehouse/stock/type/${encodeURIComponent(beverageType)}`
+      `${WAREHOUSE_BASE_PATH}/stock/type/${encodeURIComponent(beverageType)}`
     ),
 
   /**
    * Get low stock items
    */
   getLowStockItems: () =>
-    ApiService.get<WarehouseStock[]>('/api/warehouse/stock/low'),
+    ApiService.get<WarehouseStock[]>(`${WAREHOUSE_BASE_PATH}/stock/low`),
 
   /**
    * Create new stock (add new beverage type)
    * @param payload - Stock creation data
    */
   createStock: (payload: ReplenishStockPayload) =>
-    ApiService.post<WarehouseStock>('/api/warehouse/stock', payload),
+    ApiService.post<WarehouseStock>(`${WAREHOUSE_BASE_PATH}/stock`, payload),
 
   /**
    * Update stock quantity for a beverage type
@@ -56,7 +58,7 @@ export const warehouseApi = {
    */
   updateStockQuantity: (beverageType: string, payload: UpdateStockQuantityPayload) =>
     ApiService.put<WarehouseStock>(
-      `/api/warehouse/stock/type/${encodeURIComponent(beverageType)}`,
+      `${WAREHOUSE_BASE_PATH}/stock/type/${encodeURIComponent(beverageType)}`,
       payload
     ),
 
@@ -66,7 +68,7 @@ export const warehouseApi = {
    */
   addStock: (beverageType: string, quantity: number) =>
     ApiService.put<WarehouseStock>(
-      `/api/warehouse/stock/type/${encodeURIComponent(beverageType)}/add`,
+      `${WAREHOUSE_BASE_PATH}/stock/type/${encodeURIComponent(beverageType)}/add`,
       { quantity }
     ),
 
@@ -74,13 +76,13 @@ export const warehouseApi = {
    * Delete a stock item
    */
   deleteStock: (id: number) =>
-    ApiService.delete(`/api/warehouse/stock/${id}`),
+    ApiService.delete(`${WAREHOUSE_BASE_PATH}/stock/${id}`),
 
   /**
    * Get a specific stock item by ID
    */
   getStockItem: (productId: number) =>
-    ApiService.get<WarehouseStock>(`/api/warehouse/stock/${productId}`),
+    ApiService.get<WarehouseStock>(`${WAREHOUSE_BASE_PATH}/stock/${productId}`),
 
   // =====================================================
   // Bars Management (from warehouse perspective)
@@ -89,7 +91,7 @@ export const warehouseApi = {
   /**
    * Get all bars
    */
-  getBars: () => ApiService.get<Bar[]>('/api/warehouse/bars'),
+  getBars: () => ApiService.get<Bar[]>(`${WAREHOUSE_BASE_PATH}/bars`),
 
   // =====================================================
   // Supply Requests - REST-aligned naming
@@ -99,14 +101,14 @@ export const warehouseApi = {
    * Get supply requests for a specific bar
    */
   getBarSupplyRequests: (barId: string | number) =>
-    ApiService.get<SupplyRequest[]>(`/api/warehouse/bars/${barId}/supply`),
+    ApiService.get<SupplyRequest[]>(`${WAREHOUSE_BASE_PATH}/bars/${barId}/supply`),
 
   /**
    * Get a specific supply request
    */
   getSupplyRequest: (barId: string | number, requestId: string | number) =>
     ApiService.get<SupplyRequest>(
-      `/api/warehouse/bars/${barId}/supply/${requestId}`
+      `${WAREHOUSE_BASE_PATH}/bars/${barId}/supply/${requestId}`
     ),
 
   /**
@@ -121,7 +123,7 @@ export const warehouseApi = {
     payload: FulfillSupplyRequestPayload
   ) =>
     ApiService.put<SupplyRequest>(
-      `/api/warehouse/bars/${barId}/supply/${requestId}/fulfill`,
+      `${WAREHOUSE_BASE_PATH}/bars/${barId}/supply/${requestId}/fulfill`,
       payload
     ),
 
@@ -137,7 +139,7 @@ export const warehouseApi = {
     payload: RejectSupplyRequestPayload
   ) =>
     ApiService.put<SupplyRequest>(
-      `/api/warehouse/bars/${barId}/supply/${requestId}/reject`,
+      `${WAREHOUSE_BASE_PATH}/bars/${barId}/supply/${requestId}/reject`,
       payload
     ),
 
@@ -154,7 +156,7 @@ export const warehouseApi = {
     payload: { status: string }
   ) =>
     ApiService.put<SupplyRequest>(
-      `/api/warehouse/bars/${barId}/supply/${requestId}/status`,
+      `${WAREHOUSE_BASE_PATH}/bars/${barId}/supply/${requestId}/status`,
       payload
     ),
 
@@ -163,7 +165,7 @@ export const warehouseApi = {
    * Note: This endpoint may not be implemented in the new backend
    */
   getAllSupplyRequests: () =>
-    ApiService.get<SupplyRequest[]>('/api/warehouse/supply'),
+    ApiService.get<SupplyRequest[]>(`${WAREHOUSE_BASE_PATH}/supply`),
 
   // =====================================================
   // Empty Bottle Collections
@@ -173,32 +175,32 @@ export const warehouseApi = {
    * Sync drop point notifications
    */
   syncCollections: () =>
-    ApiService.post<CollectionRecord[]>('/api/warehouse/collections/sync', {}),
+    ApiService.post<CollectionRecord[]>(`${WAREHOUSE_BASE_PATH}/collections/sync`, {}),
 
   /**
    * Get pending collections
    */
   getPendingCollections: () =>
-    ApiService.get<CollectionRecord[]>('/api/warehouse/collections/pending'),
+    ApiService.get<CollectionRecord[]>(`${WAREHOUSE_BASE_PATH}/collections/pending`),
 
   /**
    * Get all collections
    */
   getAllCollections: () =>
-    ApiService.get<CollectionRecord[]>('/api/warehouse/collections'),
+    ApiService.get<CollectionRecord[]>(`${WAREHOUSE_BASE_PATH}/collections`),
 
   /**
    * Get a specific collection
    */
   getCollection: (id: number) =>
-    ApiService.get<CollectionRecord>(`/api/warehouse/collections/${id}`),
+    ApiService.get<CollectionRecord>(`${WAREHOUSE_BASE_PATH}/collections/${id}`),
 
   /**
    * Accept a collection
    */
   acceptCollection: (id: number) =>
     ApiService.put<CollectionRecord>(
-      `/api/warehouse/collections/${id}/accept`,
+      `${WAREHOUSE_BASE_PATH}/collections/${id}/accept`,
       {}
     ),
 
@@ -207,7 +209,7 @@ export const warehouseApi = {
    */
   completeCollection: (id: number) =>
     ApiService.put<CollectionRecord>(
-      `/api/warehouse/collections/${id}/complete`,
+      `${WAREHOUSE_BASE_PATH}/collections/${id}/complete`,
       {}
     ),
 
@@ -215,14 +217,14 @@ export const warehouseApi = {
    * Get empty bottle inventory summary
    */
   getInventorySummary: () =>
-    ApiService.get<EmptyBottleInventory[]>('/api/warehouse/collections/inventory'),
+    ApiService.get<EmptyBottleInventory[]>(`${WAREHOUSE_BASE_PATH}/collections/inventory`),
 
   /**
    * Get total bottles collected
    */
   getTotalBottlesCollected: () =>
     ApiService.get<TotalBottlesCollected>(
-      '/api/warehouse/collections/inventory/total'
+      `${WAREHOUSE_BASE_PATH}/collections/inventory/total`
     ),
 };
 

@@ -1,4 +1,4 @@
-package com.dmsa.warehouse.dto.external;
+package com.nextbar.warehouse.dto.external;
 
 import com.fasterxml.jackson.annotation.JsonProperty;
 

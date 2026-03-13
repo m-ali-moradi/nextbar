@@ -1,4 +1,4 @@
-package com.dmsa.warehouse.model.entity;
+package com.nextbar.warehouse.model.entity;
 
 import jakarta.persistence.*;
 import java.util.UUID;

@@ -1,13 +1,14 @@
 package com.nextbar.bar.repository;
 
 import java.util.List;
+import java.util.Optional;
 import java.util.UUID;
 
+import org.springframework.data.jpa.repository.EntityGraph;
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.stereotype.Repository;
 
 import com.nextbar.bar.model.SupplyRequest;
-import com.nextbar.bar.model.SupplyStatus;
 
 /**
  * Repository interface for managing SupplyRequest entities.
@@ -21,7 +22,11 @@ public interface SupplyRequestRepository extends JpaRepository<SupplyRequest, UU
      * @param barId the ID of the bar for which to find supply requests
      * @return a list of SupplyRequest entities associated with the specified bar ID
      */
+    @EntityGraph(attributePaths = "items")
     List<SupplyRequest> findByBarId(UUID barId);
+
+    @EntityGraph(attributePaths = "items")
+    Optional<SupplyRequest> findWithItemsById(UUID id);
     // Checks if a supply request exists for a specific bar ID and product ID.
 //    boolean existsByBarIdAndProductIdAndStatusIn(UUID barId, UUID productId, List<SupplyStatus> statuses);
 }

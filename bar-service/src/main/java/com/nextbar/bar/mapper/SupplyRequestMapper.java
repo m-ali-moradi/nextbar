@@ -1,13 +1,14 @@
 package com.nextbar.bar.mapper;
 
+import java.util.Objects;
+import java.util.stream.Collectors;
+
 import org.springframework.stereotype.Component;
 
 import com.nextbar.bar.model.SupplyItem;
 import com.nextbar.bar.model.SupplyRequest;
-import com.nextbar.bar.model.dto.SupplyItemDto;
-import com.nextbar.bar.model.dto.SupplyRequestDto;
-
-import java.util.stream.Collectors;
+import com.nextbar.bar.dto.response.SupplyItemDto;
+import com.nextbar.bar.dto.response.SupplyRequestDto;
 
 /**
  * Mapper for converting between SupplyRequest entity and SupplyRequestDto.
@@ -26,14 +27,14 @@ public class SupplyRequestMapper {
             return null;
         }
         return new SupplyRequestDto(
-                request.getId(),
-                request.getBarId(),
+                Objects.requireNonNull(request.getId()),
+                Objects.requireNonNull(request.getBarId()),
                 request.getItems().stream()
                         .map(this::itemToDto)
                         .collect(Collectors.toList()),
                 request.getStatus(),
-                request.getCreatedAt()
-        );
+                request.getRejectionReason(),
+                request.getCreatedAt());
     }
 
     /**
@@ -47,10 +48,8 @@ public class SupplyRequestMapper {
             return null;
         }
         return new SupplyItemDto(
-                item.getProductId(),
-                null, // productName will be set by service if needed
-                item.getQuantity()
-        );
+                item.getProductName(),
+                item.getQuantity());
     }
 
     /**
@@ -64,8 +63,7 @@ public class SupplyRequestMapper {
             return null;
         }
         SupplyItem item = new SupplyItem();
-        item.setProductId(dto.productId());
-        // productName is not stored in entity
+        item.setProductName(dto.productName());
         item.setQuantity(dto.quantity());
         return item;
     }

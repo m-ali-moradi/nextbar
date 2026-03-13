@@ -7,6 +7,10 @@ import lombok.NoArgsConstructor;
 
 import java.util.UUID;
 
+/**
+ * Represents a service in the system.
+ * This entity is used to store and manage services in the database.
+ */
 @Entity
 @Data
 @NoArgsConstructor

@@ -1,8 +1,8 @@
-package com.dmsa.warehouse.controller;
+package com.nextbar.warehouse.controller;
 
-import com.dmsa.warehouse.dto.response.CollectionResponse;
-import com.dmsa.warehouse.dto.response.EmptyBottleInventoryResponse;
-import com.dmsa.warehouse.service.EmptyBottleCollectionService;
+import com.nextbar.warehouse.dto.response.CollectionResponse;
+import com.nextbar.warehouse.dto.response.EmptyBottleInventoryResponse;
+import com.nextbar.warehouse.EmptyBottleCollectionService;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.tags.Tag;
 import org.springframework.http.ResponseEntity;

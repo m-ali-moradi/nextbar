@@ -6,5 +6,5 @@ public record UserRoleAssignmentDTO(
         UUID assignmentId,
         String service,
         String role,
-        UUID resourceId
+        UUID resourceId 
 ) {}

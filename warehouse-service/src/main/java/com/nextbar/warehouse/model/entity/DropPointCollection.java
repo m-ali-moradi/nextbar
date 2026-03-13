@@ -1,6 +1,6 @@
-package com.dmsa.warehouse.model.entity;
+package com.nextbar.warehouse.model.entity;
 
-import com.dmsa.warehouse.model.enums.CollectionStatus;
+import com.nextbar.warehouse.model.enums.CollectionStatus;
 import jakarta.persistence.*;
 import java.time.Instant;
 

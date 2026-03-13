@@ -7,6 +7,7 @@ spring:
   cloud:
     config:
       uri: http://localhost:8888
+
   
   # ============================================
   # RabbitMQ Configuration for WebSocket Events
@@ -14,10 +15,10 @@ spring:
   # Gateway connects to RabbitMQ to receive events from
   # backend services and broadcast them via WebSocket
   rabbitmq:
-    host: localhost
-    port: 5672
-    username: nextbar
-    password: nextbar123
+    host: ${RABBITMQ_HOST:localhost}
+    port: ${RABBITMQ_AMQP_PORT:5672}
+    username: ${RABBITMQ_USERNAME:nextbar}
+    password: ${RABBITMQ_PASSWORD:nextbar123}
     listener:
       simple:
         retry:
@@ -30,17 +31,44 @@ spring:
 
 security:
   jwt:
-    secret: yourSecretKeyForJWTTokenGenerationMustBeLongEnoughForHS256Algorithm
+    secret: ${JWT_SECRET}
     expiration: 3600000
+  rate-limit:
+    login:
+      max-requests: ${LOGIN_RATE_LIMIT_MAX_REQUESTS:10}
+      window-seconds: ${LOGIN_RATE_LIMIT_WINDOW_SECONDS:60}
+      block-seconds: ${LOGIN_RATE_LIMIT_BLOCK_SECONDS:300}
+  internal:
+    # Dev default: disabled to avoid local startup coupling
+    enabled: false
+    secret: ${INTERNAL_SERVICE_SECRET:nextbar-internal-dev-secret}
     issuer: users-service
+  headers:
+    content-security-policy: ${SECURITY_CSP:default-src 'self'; frame-ancestors 'none'; object-src 'none'; base-uri 'self'}
+    referrer-policy: ${SECURITY_REFERRER_POLICY:no-referrer}
+    permissions-policy: ${SECURITY_PERMISSIONS_POLICY:geolocation=(), microphone=(), camera=()}
+    hsts:
+      max-age: ${SECURITY_HSTS_MAX_AGE:31536000}
+      include-subdomains: ${SECURITY_HSTS_INCLUDE_SUBDOMAINS:true}
+      preload: ${SECURITY_HSTS_PRELOAD:false}
 
 gateway:
   websocket:
-    allow-anonymous: true
+    allow-anonymous: false
+  auth-service:
+    base-url: ${AUTH_SERVICE_BASE_URL:http://localhost:8090}
 
 management:
+  endpoints:
+    web:
+      exposure:
+        include: health,info,metrics,prometheus
   tracing:
-    enabled: false
+    sampling:
+      probability: 1.0
+  zipkin:
+    tracing:
+      endpoint: ${ZIPKIN_BASE_URL:http://localhost:9411}/api/v2/spans
 
 # ============================================
 # Logging Configuration

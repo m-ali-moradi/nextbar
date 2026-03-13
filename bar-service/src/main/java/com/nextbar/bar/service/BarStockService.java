@@ -3,7 +3,9 @@ package com.nextbar.bar.service;
 import java.util.List;
 import java.util.UUID;
 
-import com.nextbar.bar.model.dto.BarStockItemDto;
+import org.springframework.lang.NonNull;
+
+import com.nextbar.bar.dto.response.BarStockItemDto;
 
 /**
  * Service interface for managing bar stock operations.
@@ -11,20 +13,24 @@ import com.nextbar.bar.model.dto.BarStockItemDto;
  */
 public interface BarStockService {
 
-    // Retrieves the stock of all products in a specific bar.
-    List<BarStockItemDto> getStock(UUID barId);
-    // Retrieves the stock of a specific product in a specific bar.
-    List<BarStockItemDto> getStockByProductAndBar(UUID productId, UUID barId);
-    // Retrieves the stock of a specific product in a specific bar by product ID.
-    void addStock(UUID barId, UUID productId, int quantity);
-    // Reduces the stock of a specific product in a specific bar by a given quantity.
-    void reduceStock(UUID barId, UUID productId, int quantity);
-    // Checks if a specific product is available in stock for a given bar and quantity.
-    boolean isStockAvailable(UUID barId, UUID productId, int quantity);
-    // Resets the stock for a specific bar, clearing all items.
-    void resetStock(UUID barId);
-    // Deletes a specific stock item from a bar by product ID.
-    void deleteStockItem(UUID barId, UUID productId);
+
+    List<BarStockItemDto> getStock(@NonNull UUID barId);
+
+    List<BarStockItemDto> getStockByProductAndBar(@NonNull UUID barId, String productName);
+
+    void addStock(@NonNull UUID barId, String productName, int quantity);
+
+    void upsertStock(@NonNull UUID barId, String productName, int quantity);
+
+    void reduceStock(@NonNull UUID barId, String productName, int quantity);
+
+    boolean isStockAvailable(@NonNull UUID barId, String productName, int quantity);
+
+    void resetStock(@NonNull UUID barId);
+
+    void deleteStockItem(@NonNull UUID barId, String productName);
+
+    void clearStock(@NonNull UUID barId);
 
 
 }

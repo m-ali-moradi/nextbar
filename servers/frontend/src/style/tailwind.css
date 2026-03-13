@@ -13,7 +13,7 @@
   }
 
   body {
-    @apply bg-slate-50 text-slate-900 font-sans;
+    @apply bg-slate-50 text-slate-900 font-sans overflow-x-hidden;
   }
 
   /* Focus styles for accessibility */

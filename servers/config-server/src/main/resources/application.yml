@@ -1,15 +1,21 @@
 server:
   port: 8888
 spring:
+  profiles:
+    active: ${SPRING_PROFILES_ACTIVE:git}
   cloud:
     config:
       server:
         git:
-          uri: https://github.com/m-ali-moradi/Microservices_BottleDrop.git
-          search-paths: config-repo
-          default-label: main
-          username: m-ali-moradi
-          password: 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 # access token
+          uri: ${SPRING_CLOUD_CONFIG_SERVER_GIT_URI:https://github.com/m-ali-moradi/nextBar}
+          search-paths: ${SPRING_CLOUD_CONFIG_SERVER_GIT_SEARCH_PATHS:config-repo}
+          default-label: ${SPRING_CLOUD_CONFIG_SERVER_GIT_DEFAULT_LABEL:main}
+          clone-on-start: ${SPRING_CLOUD_CONFIG_SERVER_GIT_CLONE_ON_START:true}
+          force-pull: ${SPRING_CLOUD_CONFIG_SERVER_GIT_FORCE_PULL:true}
+          username: ${SPRING_CLOUD_CONFIG_SERVER_GIT_USERNAME:${GITHUB_ACTOR:}}
+          password: ${SPRING_CLOUD_CONFIG_SERVER_GIT_PASSWORD:${SPRING_CLOUD_CONFIG_SERVER_GIT_TOKEN:${GITHUB_TOKEN:}}}
+        native:
+          search-locations: ${SPRING_CLOUD_CONFIG_SERVER_NATIVE_SEARCH_LOCATIONS:file:../../config-repo}
           
   application:
     name: config-server
@@ -19,4 +25,3 @@ management:
     web:
       exposure:
         include: health, info, prometheus
-

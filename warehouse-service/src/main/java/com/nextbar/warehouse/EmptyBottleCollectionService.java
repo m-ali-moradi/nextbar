@@ -1,4 +1,4 @@
-package com.dmsa.warehouse.service;
+package com.nextbar.warehouse;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -9,17 +9,17 @@ import org.slf4j.LoggerFactory;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
-import com.dmsa.warehouse.dto.response.CollectionResponse;
-import com.dmsa.warehouse.event.DropPointCollectionStatusEvent;
-import com.dmsa.warehouse.event.WarehouseCollectionLifecyclePublisher;
-import com.dmsa.warehouse.dto.response.EmptyBottleInventoryResponse;
-import com.dmsa.warehouse.exception.InvalidStateTransitionException;
-import com.dmsa.warehouse.exception.ResourceNotFoundException;
-import com.dmsa.warehouse.model.entity.DropPointCollection;
-import com.dmsa.warehouse.model.entity.EmptyBottleInventory;
-import com.dmsa.warehouse.model.enums.CollectionStatus;
-import com.dmsa.warehouse.repository.DropPointCollectionRepository;
-import com.dmsa.warehouse.repository.EmptyBottleInventoryRepository;
+import com.nextbar.warehouse.dto.response.CollectionResponse;
+import com.nextbar.warehouse.event.DropPointCollectionStatusEvent;
+import com.nextbar.warehouse.event.WarehouseCollectionLifecyclePublisher;
+import com.nextbar.warehouse.dto.response.EmptyBottleInventoryResponse;
+import com.nextbar.warehouse.exception.InvalidStateTransitionException;
+import com.nextbar.warehouse.exception.ResourceNotFoundException;
+import com.nextbar.warehouse.model.entity.DropPointCollection;
+import com.nextbar.warehouse.model.entity.EmptyBottleInventory;
+import com.nextbar.warehouse.model.enums.CollectionStatus;
+import com.nextbar.warehouse.repository.DropPointCollectionRepository;
+import com.nextbar.warehouse.repository.EmptyBottleInventoryRepository;
 
 /**
  * Service for managing empty bottle collection from drop points.

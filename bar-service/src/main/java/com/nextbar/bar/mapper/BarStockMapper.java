@@ -1,9 +1,11 @@
 package com.nextbar.bar.mapper;
 
+import java.util.Objects;
+
 import org.springframework.stereotype.Component;
 
 import com.nextbar.bar.model.BarStockItem;
-import com.nextbar.bar.model.dto.BarStockItemDto;
+import com.nextbar.bar.dto.response.BarStockItemDto;
 
 /**
  * Mapper for converting between BarStockItem entity and BarStockItemDto.
@@ -22,12 +24,10 @@ public class BarStockMapper {
             return null;
         }
         return new BarStockItemDto(
-                stockItem.getId(),
+                Objects.requireNonNull(stockItem.getId()),
                 stockItem.getBarId(),
-                stockItem.getProductId(),
-                null, // productName will be set by service if needed
-                stockItem.getQuantity()
-        );
+                stockItem.getProductName(),
+                stockItem.getQuantity());
     }
 
     /**
@@ -43,8 +43,7 @@ public class BarStockMapper {
         BarStockItem stockItem = new BarStockItem();
         stockItem.setId(dto.id());
         stockItem.setBarId(dto.barId());
-        stockItem.setProductId(dto.productId());
-        // productName is not stored in entity
+        stockItem.setProductName(dto.productName());
         stockItem.setQuantity(dto.quantity());
         return stockItem;
     }

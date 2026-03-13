@@ -5,6 +5,7 @@ import { VueQueryPlugin } from '@tanstack/vue-query';
 import App from './App.vue';
 import router from './router';
 import '@fortawesome/fontawesome-free/css/all.css';
+import 'vue3-toastify/dist/index.css';
 import '@/style/tailwind.css';
 
 const app = createApp(App);

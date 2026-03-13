@@ -1,11 +1,5 @@
 <template>
-  <div class="flex min-h-screen bg-slate-50">
-    <Sidebar />
-    
-    <div class="flex-1 ml-72">
-      <Navbar />
-
-      <main class="p-6 lg:p-8 max-w-4xl mx-auto">
+  <div>
         <!-- Page Header -->
         <div class="flex items-center gap-4 mb-8">
           <button 
@@ -164,7 +158,7 @@
                   <label class="label" for="expectedAttendees">Expected Attendees</label>
                   <input
                     id="expectedAttendees"
-                    v-model.number="form.expectedAttendees"
+                    v-model.number="form.attendeesCount"
                     type="number"
                     min="0"
                     class="input"
@@ -177,7 +171,7 @@
                   <label class="label" for="maxCapacity">Max Capacity</label>
                   <input
                     id="maxCapacity"
-                    v-model.number="form.maxCapacity"
+                    v-model.number="form.maxAttendees"
                     type="number"
                     min="0"
                     class="input"
@@ -240,7 +234,7 @@
                   </div>
                   <div>
                     <span class="text-event-600">Expected:</span>
-                    <span class="font-medium text-event-900 ml-2">{{ form.expectedAttendees || 'N/A' }} attendees</span>
+                    <span class="font-medium text-event-900 ml-2">{{ form.attendeesCount || 'N/A' }} attendees</span>
                   </div>
                   <div>
                     <span class="text-event-600">Visibility:</span>
@@ -291,9 +285,9 @@
                   v-else
                   type="submit"
                   class="btn-success"
-                  :disabled="loading"
+                  :disabled="isSubmitting"
                 >
-                  <span v-if="loading" class="flex items-center gap-2">
+                  <span v-if="isSubmitting" class="flex items-center gap-2">
                     <i class="fas fa-spinner animate-spin"></i>
                     {{ isEdit ? 'Saving...' : 'Creating...' }}
                   </span>
@@ -306,23 +300,18 @@
             </div>
           </form>
         </div>
-      </main>
-    </div>
   </div>
 </template>
 
 <script setup lang="ts">
-import { ref, computed, onMounted } from 'vue';
+import { ref, computed, watch } from 'vue';
 import { useRoute, useRouter } from 'vue-router';
-import { useEventStore } from '@/stores/eventStore';
+import { useEventQuery, useCreateEvent, useUpdateEvent } from '@/composables/queries/useEventQueries';
 import { toast } from 'vue3-toastify';
-import 'vue3-toastify/dist/index.css';
-import Sidebar from '@/components/common/Sidebar.vue';
-import Navbar from '@/components/common/Navbar.vue';
+import { formatDateLong as formatDate } from '@/composables/useDateFormat';
 
 const route = useRoute();
 const router = useRouter();
-const eventStore = useEventStore();
 
 // ============ Steps Configuration ============
 const steps = [
@@ -331,9 +320,23 @@ const steps = [
   { id: 'settings', title: 'Settings' },
 ];
 
+// ============ Queries & Mutations ============
+const eventId = computed(() => {
+  const id = route.params.id;
+  return id ? Number(id) : 0;
+});
+const isEdit = computed(() => !!route.params.id);
+
+const { data: existingEvent } = useEventQuery(eventId);
+const createEventMutation = useCreateEvent();
+const updateEventMutation = useUpdateEvent();
+
+const isSubmitting = computed(
+  () => createEventMutation.isPending.value || updateEventMutation.isPending.value,
+);
+
 // ============ State ============
 const currentStep = ref(0);
-const loading = ref(false);
 const form = ref({
   name: '',
   date: '',
@@ -342,15 +345,13 @@ const form = ref({
   organizerName: '',
   organizerEmail: '',
   organizerPhone: '',
-  expectedAttendees: undefined as number | undefined,
-  maxCapacity: undefined as number | undefined,
+  attendeesCount: undefined as number | undefined,
+  maxAttendees: undefined as number | undefined,
   isPublic: true,
 });
 const errors = ref<Record<string, string>>({});
 
 // ============ Computed ============
-const isEdit = computed(() => route.path.includes('/edit'));
-const eventId = computed(() => route.params.id ? Number(route.params.id) : null);
 const minDate = computed(() => new Date().toISOString().split('T')[0]);
 
 // ============ Methods ============
@@ -417,20 +418,9 @@ const goBack = () => {
   router.push('/events');
 };
 
-const formatDate = (date: string) => {
-  if (!date) return 'N/A';
-  return new Date(date).toLocaleDateString('en-US', {
-    weekday: 'long',
-    year: 'numeric',
-    month: 'long',
-    day: 'numeric'
-  });
-};
-
 const handleSubmit = async () => {
   if (!validateStep()) return;
 
-  loading.value = true;
   try {
     const payload = {
       name: form.value.name.trim(),
@@ -440,50 +430,40 @@ const handleSubmit = async () => {
       organizerName: form.value.organizerName.trim() || undefined,
       organizerEmail: form.value.organizerEmail.trim() || undefined,
       organizerPhone: form.value.organizerPhone.trim() || undefined,
-      expectedAttendees: form.value.expectedAttendees || undefined,
-      maxCapacity: form.value.maxCapacity || undefined,
+      attendeesCount: form.value.attendeesCount || undefined,
+      maxAttendees: form.value.maxAttendees || undefined,
       isPublic: form.value.isPublic,
     };
 
     if (isEdit.value && eventId.value) {
-      await eventStore.updateEvent(eventId.value, payload);
+      await updateEventMutation.mutateAsync({ id: eventId.value, data: payload });
       toast.success('Event updated successfully!');
     } else {
-      await eventStore.createEvent(payload);
+      await createEventMutation.mutateAsync(payload);
       toast.success('Event created successfully!');
     }
     router.push('/events');
   } catch (err) {
     const errorMessage = err instanceof Error ? err.message : 'Failed to save event';
     toast.error(errorMessage);
-  } finally {
-    loading.value = false;
   }
 };
 
-// ============ Lifecycle ============
-onMounted(async () => {
-  if (isEdit.value && eventId.value) {
-    try {
-      const event = await eventStore.fetchEvent(eventId.value);
-      if (event) {
-        form.value = {
-          name: event.name || '',
-          date: event.date || '',
-          location: event.location || '',
-          description: event.description || '',
-          organizerName: event.organizerName || '',
-          organizerEmail: event.organizerEmail || '',
-          organizerPhone: event.organizerPhone || '',
-          expectedAttendees: event.expectedAttendees,
-          maxCapacity: event.maxCapacity,
-          isPublic: event.isPublic ?? true,
-        };
-      }
-    } catch (err) {
-      toast.error('Failed to load event');
-      router.push('/events');
-    }
+// ============ Populate form in edit mode ============
+watch(existingEvent, (event) => {
+  if (event && isEdit.value) {
+    form.value = {
+      name: event.name || '',
+      date: event.date || '',
+      location: event.location || '',
+      description: event.description || '',
+      organizerName: event.organizerName || '',
+      organizerEmail: event.organizerEmail || '',
+      organizerPhone: event.organizerPhone || '',
+      attendeesCount: event.attendeesCount,
+      maxAttendees: event.maxAttendees,
+      isPublic: event.isPublic ?? true,
+    };
   }
-});
+}, { immediate: true });
 </script>

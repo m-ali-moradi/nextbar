@@ -1,4 +1,4 @@
-package com.dmsa.warehouse.service;
+package com.nextbar.warehouse;
 
 import java.util.List;
 import java.util.stream.Collectors;
@@ -8,12 +8,12 @@ import org.slf4j.LoggerFactory;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
-import com.dmsa.warehouse.dto.request.CreateStockRequest;
-import com.dmsa.warehouse.dto.response.StockResponse;
-import com.dmsa.warehouse.exception.InsufficientStockException;
-import com.dmsa.warehouse.exception.ResourceNotFoundException;
-import com.dmsa.warehouse.model.entity.BeverageStock;
-import com.dmsa.warehouse.repository.BeverageStockRepository;
+import com.nextbar.warehouse.dto.request.CreateStockRequest;
+import com.nextbar.warehouse.dto.response.StockResponse;
+import com.nextbar.warehouse.exception.InsufficientStockException;
+import com.nextbar.warehouse.exception.ResourceNotFoundException;
+import com.nextbar.warehouse.model.entity.BeverageStock;
+import com.nextbar.warehouse.repository.BeverageStockRepository;
 
 /**
  * Service for managing beverage stock inventory.

@@ -5,46 +5,51 @@
       class="modal-overlay"
       @click.self="$emit('close')"
     >
-      <div class="modal-content max-w-lg">
+      <div class="modal-content max-w-lg max-h-[90vh] overflow-y-auto scrollbar-thin">
         <!-- Header -->
-        <div class="flex items-center justify-between mb-6">
-          <div class="flex items-center gap-3">
-            <div class="w-12 h-12 rounded-xl bg-admin-100 flex items-center justify-center">
-              <i class="fas fa-user-edit text-xl text-admin-600"></i>
+        <div class="sticky top-0 bg-white z-10 px-6 py-5 border-b border-slate-100">
+          <div class="flex items-center justify-between">
+            <div class="flex items-center gap-3">
+              <div
+                class="w-12 h-12 rounded-full flex items-center justify-center text-white font-bold"
+                :class="getAvatarClass(user?.role)"
+              >
+                {{ getInitials(user?.username) }}
+              </div>
+              <div>
+                <h2 class="text-lg font-bold text-slate-900">Edit User</h2>
+                <p class="text-sm text-slate-500">{{ user?.username }}</p>
+              </div>
             </div>
-            <div>
-              <h2 class="text-xl font-bold text-slate-900">Edit User</h2>
-              <p class="text-sm text-slate-500">{{ user?.username }}</p>
-            </div>
+            <button
+              @click="$emit('close')"
+              class="p-2 rounded-lg text-slate-400 hover:text-slate-600 hover:bg-slate-100 transition-colors"
+            >
+              <i class="fas fa-times text-lg"></i>
+            </button>
           </div>
-          <button 
-            @click="$emit('close')" 
-            class="p-2 rounded-lg text-slate-400 hover:text-slate-600 hover:bg-slate-100 transition-colors"
-          >
-            <i class="fas fa-times text-lg"></i>
-          </button>
         </div>
 
         <!-- Form -->
-        <form @submit.prevent="handleSubmit" class="space-y-5">
-          <!-- User Info (Read Only) -->
-          <div class="p-4 rounded-xl bg-slate-50 border border-slate-200">
-            <div class="grid grid-cols-2 gap-4">
-              <div>
-                <p class="text-xs text-slate-500 font-medium mb-1">Username</p>
-                <p class="text-base font-semibold text-slate-900">{{ user?.username }}</p>
-              </div>
-              <div>
-                <p class="text-xs text-slate-500 font-medium mb-1">Email</p>
-                <p class="text-base text-slate-700">{{ user?.email || '—' }}</p>
-              </div>
-            </div>
+        <form @submit.prevent="handleSubmit" class="p-6 space-y-6">
+          <!-- Email Edit -->
+          <div>
+            <label class="label">
+              <i class="fas fa-envelope mr-1.5 text-slate-400"></i>
+              Email Address
+            </label>
+            <input
+              v-model="editEmail"
+              type="email"
+              class="input"
+              placeholder="user@example.com"
+            />
           </div>
 
           <!-- Role Selection -->
           <div>
-            <label class="block text-sm font-semibold text-slate-700 mb-2">
-              <i class="fas fa-user-tag mr-2 text-slate-400"></i>
+            <label class="label">
+              <i class="fas fa-user-tag mr-1.5 text-slate-400"></i>
               Role
             </label>
             <div class="grid grid-cols-3 gap-3">
@@ -54,8 +59,8 @@
                 type="button"
                 @click="selectedRole = role.value"
                 class="p-3 rounded-xl border-2 transition-all text-center"
-                :class="selectedRole === role.value 
-                  ? 'border-admin-500 bg-admin-50 text-admin-700' 
+                :class="selectedRole === role.value
+                  ? 'border-primary-500 bg-primary-50 text-primary-700'
                   : 'border-slate-200 hover:border-slate-300 text-slate-600'"
               >
                 <i :class="role.icon" class="text-lg mb-1"></i>
@@ -64,10 +69,10 @@
             </div>
           </div>
 
-          <!-- Service Selection (only for non-admin) -->
+          <!-- Service Selection -->
           <div v-if="selectedRole !== 'ADMIN'">
-            <label class="block text-sm font-semibold text-slate-700 mb-2">
-              <i class="fas fa-cogs mr-2 text-slate-400"></i>
+            <label class="label">
+              <i class="fas fa-cogs mr-1.5 text-slate-400"></i>
               Service
             </label>
             <div class="grid grid-cols-2 gap-3">
@@ -77,8 +82,8 @@
                 type="button"
                 @click="selectedService = service.value"
                 class="p-3 rounded-xl border-2 transition-all flex items-center gap-3"
-                :class="selectedService === service.value 
-                  ? 'border-primary-500 bg-primary-50 text-primary-700' 
+                :class="selectedService === service.value
+                  ? 'border-primary-500 bg-primary-50 text-primary-700'
                   : 'border-slate-200 hover:border-slate-300 text-slate-600'"
               >
                 <i :class="service.icon" class="text-lg"></i>
@@ -87,28 +92,28 @@
             </div>
           </div>
 
-          <!-- Resource Assignment (only for OPERATOR role and BAR service) -->
-          <div v-if="selectedRole === 'OPERATOR' && selectedService === 'BAR'">
-            <label class="block text-sm font-semibold text-slate-700 mb-2">
-              <i class="fas fa-map-marker-alt mr-2 text-slate-400"></i>
-              Assigned Bar
+          <!-- Resource Assignment -->
+          <div v-if="selectedRole !== 'ADMIN' && selectedService === 'BAR'">
+            <label class="label">
+              <i class="fas fa-map-marker-alt mr-1.5 text-slate-400"></i>
+              Assigned Bar (Optional)
             </label>
             <select v-model="selectedResource" class="input w-full">
-              <option value="">Select a bar...</option>
-              <option v-for="bar in bars" :key="bar.id" :value="bar.id">
-                {{ bar.name }}
+              <option value="">No resource</option>
+              <option v-for="resource in availableResources" :key="resource.value" :value="resource.value">
+                {{ resource.label }}
               </option>
             </select>
-            <p class="text-xs text-slate-500 mt-1">
-              Leave empty to allow access to all bars
-            </p>
+            <p class="text-xs text-slate-500 mt-1">Leave empty to allow access to all bars</p>
           </div>
 
           <!-- Status Toggle -->
           <div class="flex items-center justify-between p-4 rounded-xl bg-slate-50 border border-slate-200">
             <div>
               <p class="text-sm font-semibold text-slate-700">Account Status</p>
-              <p class="text-xs text-slate-500">Enable or disable this account</p>
+              <p class="text-xs text-slate-500">
+                {{ isEnabled ? 'User can log in' : 'User login disabled' }}
+              </p>
             </div>
             <button
               type="button"
@@ -131,8 +136,8 @@
             </p>
           </div>
 
-          <!-- Actions -->
-          <div class="flex items-center gap-3 pt-4">
+          <!-- Primary Actions -->
+          <div class="flex items-center gap-3 pt-2">
             <button
               type="button"
               @click="$emit('close')"
@@ -155,6 +160,40 @@
               </template>
             </button>
           </div>
+
+          <!-- Danger Zone -->
+          <div class="border-t border-slate-200 pt-5">
+            <button
+              type="button"
+              @click="showDangerZone = !showDangerZone"
+              class="flex items-center gap-2 text-sm text-slate-400 hover:text-red-500 transition-colors w-full"
+            >
+              <i class="fas fa-exclamation-triangle"></i>
+              <span class="font-medium">Danger Zone</span>
+              <i :class="showDangerZone ? 'fas fa-chevron-up' : 'fas fa-chevron-down'" class="ml-auto text-xs"></i>
+            </button>
+
+            <Transition name="slide">
+              <div v-if="showDangerZone" class="mt-4 p-4 rounded-xl border-2 border-red-200 bg-red-50/50 space-y-3">
+                <button
+                  type="button"
+                  @click="$emit('reset-password', user)"
+                  class="w-full px-4 py-2.5 rounded-lg border border-amber-200 bg-white text-sm font-medium text-amber-700 hover:bg-amber-50 transition-colors flex items-center gap-2"
+                >
+                  <i class="fas fa-key"></i>
+                  Reset Password
+                </button>
+                <button
+                  type="button"
+                  @click="$emit('delete', user)"
+                  class="w-full px-4 py-2.5 rounded-lg border border-red-200 bg-white text-sm font-medium text-red-600 hover:bg-red-50 transition-colors flex items-center gap-2"
+                >
+                  <i class="fas fa-trash-alt"></i>
+                  Delete Account
+                </button>
+              </div>
+            </Transition>
+          </div>
         </form>
       </div>
     </div>
@@ -162,31 +201,18 @@
 </template>
 
 <script setup>
-import { ref, watch, computed } from 'vue';
+import { computed, ref, watch } from 'vue';
 import { authApi, barApi } from '@/api';
+import { availableRoles, availableServices, getInitials, getAvatarClass } from '@/composables/useRoleStyling';
 
 const props = defineProps({
   isOpen: Boolean,
   user: Object,
 });
 
-const emit = defineEmits(['close', 'updated']);
+const emit = defineEmits(['close', 'updated', 'reset-password', 'delete']);
 
-// Available options based on DummyUsersInitializer
-const availableRoles = [
-  { value: 'ADMIN', label: 'Admin', icon: 'fas fa-user-shield text-violet-500' },
-  { value: 'MANAGER', label: 'Manager', icon: 'fas fa-user-tie text-blue-500' },
-  { value: 'OPERATOR', label: 'Operator', icon: 'fas fa-user text-emerald-500' },
-];
-
-const availableServices = [
-  { value: 'BAR', label: 'Bar', icon: 'fas fa-glass-martini text-bar-500' },
-  { value: 'EVENT', label: 'Event', icon: 'fas fa-calendar text-event-500' },
-  { value: 'DROP_POINT', label: 'Drop Point', icon: 'fas fa-map-marker-alt text-droppoint-500' },
-  { value: 'WAREHOUSE', label: 'Warehouse', icon: 'fas fa-warehouse text-warehouse-500' },
-];
-
-// Form state
+const editEmail = ref('');
 const selectedRole = ref('');
 const selectedService = ref('');
 const selectedResource = ref('');
@@ -194,129 +220,88 @@ const isEnabled = ref(true);
 const saving = ref(false);
 const errorMessage = ref('');
 const bars = ref([]);
+const showDangerZone = ref(false);
 
-// Load bars for resource dropdown
-async function loadBars() {
+const availableResources = computed(() => {
+  if (selectedService.value !== 'BAR') return [];
+  return (bars.value || []).map((bar) => ({ value: bar.id, label: bar.name }));
+});
+
+async function loadResources() {
   try {
-    const response = await barApi.getBars();
-    bars.value = response.data || [];
+    const [barsResponse] = await Promise.all([barApi.getBars()]);
+    bars.value = barsResponse.data || [];
   } catch (e) {
-    console.error('Failed to load bars:', e);
+    console.error('Failed to load resources:', e);
   }
 }
 
-// Map display role to DB role name
-function getRoleNameForDb(role, serviceCode) {
-  if (role === 'ADMIN') return 'ADMIN';
-  
-  const servicePrefix = serviceCode || 'BAR';
-  
-  if (role === 'MANAGER') {
-    return `${servicePrefix}_MANAGER`;
-  }
-  
-  if (role === 'OPERATOR') {
-    if (servicePrefix === 'BAR') return 'BARTENDER';
-    return `${servicePrefix}_OPERATOR`;
-  }
-  
-  return role;
-}
-
-// Map display service to DB service code
-function getServiceCodeForDb(service) {
-  if (!service) return 'BAR_SERVICE';
-  return `${service}_SERVICE`;
-}
-
-// Watch for user changes to initialize form
 watch(() => props.user, (newUser) => {
   if (newUser) {
-    // Extract current values from user
     const assignments = newUser._raw?.assignments || [];
     const primary = assignments[0] || null;
-    
-    // Determine role from assignments
+
+    editEmail.value = newUser.email || newUser._raw?.email || '';
+
     const hasAdmin = assignments.some(a => String(a?.role || '').toUpperCase().includes('ADMIN'));
     if (hasAdmin) {
       selectedRole.value = 'ADMIN';
       selectedService.value = '';
     } else if (primary) {
       const roleName = String(primary.role || '').toUpperCase();
-      if (roleName.includes('MANAGER')) {
-        selectedRole.value = 'MANAGER';
-      } else if (roleName.includes('BARTENDER') || roleName.includes('OPERATOR')) {
-        selectedRole.value = 'OPERATOR';
-      } else {
-        selectedRole.value = '';
-      }
-      
-      // Extract service
+      if (roleName.includes('MANAGER')) selectedRole.value = 'MANAGER';
+      else if (roleName.includes('BARTENDER') || roleName.includes('OPERATOR')) selectedRole.value = 'OPERATOR';
+      else selectedRole.value = '';
+
       const serviceCode = String(primary.service || '').toUpperCase();
       if (serviceCode.includes('BAR')) selectedService.value = 'BAR';
       else if (serviceCode.includes('EVENT')) selectedService.value = 'EVENT';
       else if (serviceCode.includes('DROP_POINT')) selectedService.value = 'DROP_POINT';
       else if (serviceCode.includes('WAREHOUSE')) selectedService.value = 'WAREHOUSE';
       else selectedService.value = '';
-      
-      // Extract resource
+
       selectedResource.value = primary.resourceId || '';
     } else {
       selectedRole.value = '';
       selectedService.value = '';
       selectedResource.value = '';
     }
-    
+
     isEnabled.value = newUser._raw?.enabled ?? true;
     errorMessage.value = '';
-    
-    // Load bars for dropdown
-    loadBars();
+    showDangerZone.value = false;
+
+    loadResources();
   }
 }, { immediate: true });
 
 async function handleSubmit() {
   if (!props.user) return;
-  
+
   saving.value = true;
   errorMessage.value = '';
-  
+
   try {
     const rawUser = props.user._raw;
-    
-    // Build new assignments array
+
     let newAssignments = [];
-    
+
     if (selectedRole.value === 'ADMIN') {
-      // Admin gets all services
-      newAssignments = [
-        { role: 'ADMIN', service: 'BAR_SERVICE', resourceId: null },
-        { role: 'ADMIN', service: 'EVENT_SERVICE', resourceId: null },
-        { role: 'ADMIN', service: 'DROP_POINT_SERVICE', resourceId: null },
-      ];
+      newAssignments = [{ roleName: 'ADMIN', serviceCode: null, resourceId: null }];
     } else if (selectedRole.value && selectedService.value) {
-      const roleName = getRoleNameForDb(selectedRole.value, selectedService.value);
-      const serviceCode = getServiceCodeForDb(selectedService.value);
-      const resourceId = selectedRole.value === 'OPERATOR' && selectedResource.value 
-        ? selectedResource.value 
-        : null;
-      
-      newAssignments = [{
-        role: roleName,
-        service: serviceCode,
-        resourceId: resourceId,
-      }];
+      const resourceId = selectedService.value === 'BAR' ? (selectedResource.value || null) : null;
+      newAssignments = [{ roleName: selectedRole.value, serviceCode: selectedService.value, resourceId }];
     }
-    
-    // Update user with new data
+
     await authApi.updateUser(rawUser.id, {
       id: rawUser.id,
       username: rawUser.username,
-      email: rawUser.email,
+      email: editEmail.value || rawUser.email,
       enabled: isEnabled.value,
-      assignments: newAssignments,
     });
-    
+
+    await authApi.setUserAssignments(rawUser.id, newAssignments);
+
     emit('updated');
   } catch (e) {
     errorMessage.value = e?.message ?? 'Failed to update user';
@@ -340,5 +325,22 @@ async function handleSubmit() {
 .modal-enter-from .modal-content,
 .modal-leave-to .modal-content {
   transform: scale(0.95);
+}
+
+.slide-enter-active,
+.slide-leave-active {
+  transition: all 0.25s ease;
+}
+
+.slide-enter-from,
+.slide-leave-to {
+  opacity: 0;
+  max-height: 0;
+  overflow: hidden;
+}
+
+.slide-enter-to,
+.slide-leave-from {
+  max-height: 200px;
 }
 </style>

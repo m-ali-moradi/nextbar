@@ -1,15 +1,15 @@
 package com.nextbar.bar.event;
 
-import com.nextbar.bar.model.SupplyStatus;
-import com.nextbar.bar.repository.SupplyRequestRepository;
-import com.nextbar.events.SupplyRequestUpdatedEvent;
+import java.util.function.Consumer;
+
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.transaction.annotation.Transactional;
 
-import java.util.function.Consumer;
+import com.nextbar.bar.model.SupplyStatus;
+import com.nextbar.bar.repository.SupplyRequestRepository;
 
 /**
  * Listens for supply request updates from warehouse-service via RabbitMQ.
@@ -44,6 +44,7 @@ public class SupplyEventListener {
                                 // Map the event status to local enum
                                 SupplyStatus newStatus = mapStatus(event.getStatus());
                                 request.setStatus(newStatus);
+                                request.setRejectionReason(event.getRejectionReason());
                                 supplyRequestRepository.save(request);
                                 log.info("Updated supply request {} to status {}",
                                         event.getRequestId(), newStatus);
@@ -52,7 +53,7 @@ public class SupplyEventListener {
         };
     }
 
-    private SupplyStatus mapStatus(com.nextbar.events.SupplyStatus eventStatus) {
+    private SupplyStatus mapStatus(com.nextbar.bar.event.SupplyStatus eventStatus) {
         return switch (eventStatus) {
             case PENDING -> SupplyStatus.REQUESTED;
             case IN_PROGRESS -> SupplyStatus.IN_PROGRESS;

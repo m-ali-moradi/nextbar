@@ -1,4 +1,4 @@
-package com.dmsa.warehouse.config;
+package com.nextbar.warehouse.config;
 
 import java.util.Arrays;
 import java.util.List;
@@ -20,8 +20,8 @@ import org.springframework.web.cors.CorsConfiguration;
 import org.springframework.web.cors.CorsConfigurationSource;
 import org.springframework.web.cors.UrlBasedCorsConfigurationSource;
 
-import com.dmsa.warehouse.security.InternalRequestVerificationFilter;
-import com.dmsa.warehouse.security.JwtAuthenticationFilter;
+import com.nextbar.warehouse.security.InternalRequestVerificationFilter;
+import com.nextbar.warehouse.security.JwtAuthenticationFilter;
 
 /**
  * Security configuration for warehouse-service.

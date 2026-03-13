@@ -1,9 +1,11 @@
 package com.nextbar.bar.mapper;
 
+import java.util.Objects;
+
 import org.springframework.stereotype.Component;
 
 import com.nextbar.bar.model.Bar;
-import com.nextbar.bar.model.dto.BarDto;
+import com.nextbar.bar.dto.response.BarDto;
 
 /**
  * Mapper for converting between Bar entity and BarDto.
@@ -22,11 +24,12 @@ public class BarMapper {
             return null;
         }
         return new BarDto(
-                bar.getId(),
+                Objects.requireNonNull(bar.getId()),
                 bar.getName(),
                 bar.getLocation(),
-                bar.getMaxCapacity()
-        );
+                bar.getMaxCapacity(),
+                null,
+                null);
     }
 
     /**

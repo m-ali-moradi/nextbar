@@ -1,24 +1,26 @@
 package com.nextbar.bar.service.impl;
 
 import java.time.LocalDateTime;
+import java.util.Comparator;
 import java.util.List;
+import java.util.Objects;
 import java.util.UUID;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import org.springframework.lang.NonNull;
 import org.springframework.stereotype.Service;
 
 import com.nextbar.bar.event.SupplyEventPublisher;
 import com.nextbar.bar.exception.ValidationException;
+
+import com.nextbar.bar.dto.response.SupplyItemDto;
+import com.nextbar.bar.dto.response.SupplyRequestDto;
 import com.nextbar.bar.model.Bar;
-import com.nextbar.bar.model.Product;
 import com.nextbar.bar.model.SupplyItem;
 import com.nextbar.bar.model.SupplyRequest;
 import com.nextbar.bar.model.SupplyStatus;
-import com.nextbar.bar.model.dto.SupplyItemDto;
-import com.nextbar.bar.model.dto.SupplyRequestDto;
 import com.nextbar.bar.repository.BarRepository;
-import com.nextbar.bar.repository.ProductRepository;
 import com.nextbar.bar.repository.SupplyRequestRepository;
 import com.nextbar.bar.service.SupplyRequestService;
 
@@ -39,7 +41,6 @@ public class SupplyRequestServiceImpl implements SupplyRequestService {
 
     // Repositories for accessing supply requests and products
     private final SupplyRequestRepository requestRepo;
-    private final ProductRepository productRepository;
     private final BarRepository barRepository;
 
     // Event publisher for notifying warehouse service
@@ -51,7 +52,7 @@ public class SupplyRequestServiceImpl implements SupplyRequestService {
 
     // Creates a new supply request for a bar with specified items.
     @Override
-    public SupplyRequestDto createRequest(UUID barId, List<SupplyItemDto> items) {
+    public SupplyRequestDto createRequest(@NonNull UUID barId, List<SupplyItemDto> items) {
 
         // check if bar exists
         if (!barRepository.existsById(barId)) {
@@ -59,16 +60,19 @@ public class SupplyRequestServiceImpl implements SupplyRequestService {
         }
         // check if quantity of requested items are within valid range
         for (SupplyItemDto item : items) {
+            if (item.productName() == null || item.productName().isBlank()) {
+                throw new ValidationException("Product name is required");
+            }
             if (item.quantity() < MIN_SUPPLY_QUANTITY || item.quantity() > MAX_SUPPLY_QUANTITY) {
                 throw new ValidationException(
-                        String.format("Supply quantity must be between %d and %d, but was %d for product ID %s",
-                                MIN_SUPPLY_QUANTITY, MAX_SUPPLY_QUANTITY, item.quantity(), item.productId()));
+                        String.format("Supply quantity must be between %d and %d, but was %d for product '%s'",
+                                MIN_SUPPLY_QUANTITY, MAX_SUPPLY_QUANTITY, item.quantity(), item.productName()));
             }
         }
 
         // check if there is already a supply request for the bar and product in
         // REQUESTED, IN_PROGRESS, or DELIVERED status
-        // for (SupplyItemDto item : items) {
+        // for (SupplyItemDto item: items) {
         // if (requestRepo.existsByBarIdAndProductIdAndStatusIn(barId, item.productId(),
         // List.of(SupplyStatus.REQUESTED, SupplyStatus.IN_PROGRESS,
         // SupplyStatus.DELIVERED))) {
@@ -87,7 +91,7 @@ public class SupplyRequestServiceImpl implements SupplyRequestService {
 
         // Convert DTOs to entity items
         List<SupplyItem> supplyItems = items.stream()
-                .map(dto -> new SupplyItem(dto.productId(), dto.quantity()))
+                .map(dto -> new SupplyItem(dto.productName().trim(), dto.quantity()))
                 .toList();
         req.setItems(supplyItems);
 
@@ -110,7 +114,7 @@ public class SupplyRequestServiceImpl implements SupplyRequestService {
     // Retrieves all supply requests for a specific bar, sorted by created date in
     // descending order.
     @Override
-    public List<SupplyRequestDto> getRequestsByBar(UUID barId) {
+    public List<SupplyRequestDto> getRequestsByBar(@NonNull UUID barId) {
 
         // check if there is requests for the given bar.
         // if (requestRepo.findByBarId(barId).isEmpty()) {
@@ -120,23 +124,24 @@ public class SupplyRequestServiceImpl implements SupplyRequestService {
 
         // Fetch and convert supply requests for the given bar if they exist
         return requestRepo.findByBarId(barId).stream()
+                .sorted(Comparator.comparing(SupplyRequest::getCreatedAt,
+                        Comparator.nullsLast(Comparator.naturalOrder())).reversed())
                 .map(this::toDto)
-                .sorted((a, b) -> b.createdAt().compareTo(a.createdAt()))
                 .toList();
     }
 
     // Retrieves a specific supply request by its ID
     @Override
-    public SupplyRequestDto getRequest(UUID requestId) {
+    public SupplyRequestDto getRequest(@NonNull UUID requestId) {
 
         // Fetch a specific supply request or throw an exception if not found
-        return requestRepo.findById(requestId)
+        return requestRepo.findWithItemsById(requestId)
                 .map(this::toDto)
                 .orElseThrow(() -> new ValidationException("Supply request not found for ID: " + requestId));
     }
 
     @Override
-    public void updateRequestStatus(UUID requestId, Integer quantity, SupplyStatus status) {
+    public void updateRequestStatus(@NonNull UUID requestId, Integer quantity, SupplyStatus status) {
         /*
          * Data validation for requestId and status
          * 1. request should be available
@@ -147,7 +152,7 @@ public class SupplyRequestServiceImpl implements SupplyRequestService {
          * 6. DELIVERED requests cannot be updated
          */
 
-        // check if request is available
+        // check if the request is available
         SupplyRequest req = requestRepo.findById(requestId)
                 .orElseThrow(() -> new ValidationException("Supply request not found for ID: " + requestId));
 
@@ -181,7 +186,7 @@ public class SupplyRequestServiceImpl implements SupplyRequestService {
     }
 
     @Override
-    public void deleteRequest(UUID requestId) {
+    public void deleteRequest(@NonNull UUID requestId) {
         /*
          * Data validation for requestId
          * 1. request should be available
@@ -189,23 +194,14 @@ public class SupplyRequestServiceImpl implements SupplyRequestService {
          * 3. IN_PROGRESS and DELIVERED requests cannot be deleted
          * 4. REJECTED requests cannot be deleted
          */
-        // check if request is available
+        // check if the request is available
 
         // check if the request exists
         SupplyRequest req = requestRepo.findById(requestId)
                 .orElseThrow(() -> new ValidationException("Supply request not found for ID: " + requestId));
 
-        // IN_PROGRESS requests cannot be deleted
-        if (req.getStatus() == SupplyStatus.IN_PROGRESS) {
-            throw new ValidationException("IN_PROGRESS supply requests cannot be deleted");
-        }
-        // DELIVERED requests cannot be deleted
-        if (req.getStatus() == SupplyStatus.DELIVERED) {
-            throw new ValidationException("DELIVERED supply requests cannot be deleted");
-        }
-        // REJECTED requests cannot be deleted
-        if (req.getStatus() == SupplyStatus.REJECTED) {
-            throw new ValidationException("REJECTED supply requests cannot be deleted");
+        if (req.getStatus() != SupplyStatus.REQUESTED) {
+            throw new ValidationException("Only REQUESTED supply requests can be cancelled");
         }
 
         // Delete the supply request
@@ -214,16 +210,19 @@ public class SupplyRequestServiceImpl implements SupplyRequestService {
 
     // Converts a SupplyRequest entity to a SupplyRequestDto
     private SupplyRequestDto toDto(SupplyRequest req) {
-        List<SupplyItemDto> itemDtos = req.getItems().stream()
-                .map(i -> {
-                    // Fetch product details for each supply item
-                    // If product is not found, throw an exception
-                    Product product = productRepository.findById(i.getProductId())
-                            .orElseThrow(() -> new ValidationException("Product not found: " + i.getProductId()));
-                    return new SupplyItemDto(i.getProductId(), product.getName(), i.getQuantity());
-                })
+        List<SupplyItemDto> itemDtos = (req.getItems() == null ? List.<SupplyItem>of() : req.getItems()).stream()
+                .map(i -> new SupplyItemDto(
+                        i.getProductName() == null ? "" : i.getProductName(),
+                        i.getQuantity()))
                 .toList();
 
-        return new SupplyRequestDto(req.getId(), req.getBarId(), itemDtos, req.getStatus(), req.getCreatedAt());
+        return new SupplyRequestDto(
+                Objects.requireNonNull(req.getId()),
+                Objects.requireNonNull(req.getBarId()),
+                itemDtos,
+                req.getStatus(),
+                req.getRejectionReason(),
+                req.getCreatedAt());
     }
+
 }

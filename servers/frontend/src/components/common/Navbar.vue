@@ -96,6 +96,7 @@
             </div>
             <div class="py-2">
               <button 
+                @click="goToProfile"
                 class="w-full flex items-center gap-4 px-5 py-3 text-base text-slate-700 
                        hover:bg-slate-50 transition-colors"
               >
@@ -155,6 +156,7 @@ const pageTitle = computed(() => {
     '/events': 'Events',
     '/warehouse': 'Warehouse',
     '/admin': 'Admin Panel',
+    '/profile': 'Profile',
   };
   
   // Check for specific routes first
@@ -202,6 +204,11 @@ const toggleUserMenu = () => {
 const closeDropdowns = () => {
   showNotifications.value = false;
   showUserMenu.value = false;
+};
+
+const goToProfile = () => {
+  closeDropdowns();
+  router.push('/profile');
 };
 
 const handleLogout = () => {

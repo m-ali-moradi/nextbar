@@ -1,22 +1,28 @@
 package com.nextbar.bar.service;
 
+import java.time.LocalDate;
 import java.util.List;
 import java.util.UUID;
 
-import com.nextbar.bar.model.dto.TotalServedDto;
-import com.nextbar.bar.model.dto.UsageLogDto;
+import org.springframework.lang.NonNull;
+
+import com.nextbar.bar.dto.response.TotalServedDto;
+import com.nextbar.bar.dto.response.UsageLogDto;
 
 /**
  * Service interface for managing usage logs in a bar.
- * Provides methods to log drink servings and retrieve usage logs for bars and products.
+ * Provides methods to log drink servings and retrieve usage logs for bars and
+ * products.
  */
 public interface UsageLogService {
-    void logDrinkServed(UUID barId, UUID productId, int quantity);
+    void logDrinkServed(@NonNull UUID barId, String productName, int quantity);
 
-    List<UsageLogDto> getLogsForBar(UUID barId);
+    List<UsageLogDto> getLogsForBar(@NonNull UUID barId);
 
-    List<UsageLogDto> getLogsForProduct(UUID barId, UUID productId);
+    List<UsageLogDto> getLogsForProduct(@NonNull UUID barId, String productName);
 
-    List<TotalServedDto> getTotalServed(UUID barId);
+    List<UsageLogDto> getLogsForBarByDateRange(@NonNull UUID barId, LocalDate startDate, LocalDate endDate);
+
+    List<TotalServedDto> getTotalServed(@NonNull UUID barId);
 
 }

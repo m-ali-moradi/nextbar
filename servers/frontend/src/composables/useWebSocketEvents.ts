@@ -1,16 +1,5 @@
-/**
- * ============================================================
- * useWebSocketEvents Composable - Reactive WebSocket for Vue.js
- * ============================================================
- * 
- * This composable provides a Vue-native reactive WebSocket connection.
- * It uses Vue's ref() and reactive() to ensure UI updates automatically
- * when WebSocket events arrive.
- * 
- * Key difference from plain class: This is integrated with Vue's reactivity!
- */
-
-import { ref, reactive, onMounted, onUnmounted, watch } from 'vue';
+import { ref, reactive, watch } from 'vue';
+import ApiService from '@/api';
 
 // ============================================================
 // Type Definitions
@@ -69,25 +58,69 @@ const eventsByType = reactive<Record<EventType, NextBarEvent | null>>({
 let socket: WebSocket | null = null;
 let reconnectAttempts = 0;
 let reconnectTimeout: ReturnType<typeof setTimeout> | null = null;
-const wsUrl = 'ws://localhost:8080/ws/events';
+const WS_BASE_URL = 'ws://localhost:8080/ws/events';
 const maxReconnectAttempts = 10;
 const reconnectDelay = 5000;
 
+function getAuthToken(): string | null {
+    // Read from short-lived session storage only; tokens must not be in localStorage.
+    try {
+        const token = sessionStorage.getItem('authToken');
+        return token && token.trim() ? token : null;
+    } catch {
+        return null;
+    }
+}
+
+/**
+ * Build WebSocket URL with JWT token for authentication.
+ * Token is read from localStorage where the auth store persists it.
+ */
+function buildWsUrl(): string {
+    // Do not send tokens in URL. Use cookie-based auth or Authorization header in future.
+    return WS_BASE_URL;
+}
+
 function connect() {
+    void connectInternal();
+}
+
+async function connectInternal() {
     if (socket?.readyState === WebSocket.OPEN || connecting.value) {
-        console.log('[useWebSocketEvents] Already connected or connecting');
         return;
     }
 
     connecting.value = true;
     error.value = null;
-    console.log('[useWebSocketEvents] Connecting to', wsUrl);
+    const authToken = getAuthToken();
+    if (!authToken) {
+        // No short-lived token available; do not open authenticated websocket.
+        connecting.value = false;
+        connected.value = false;
+        return;
+    }
+
+    const wsUrl = buildWsUrl();
+    let wsTicket: string;
 
     try {
-        socket = new WebSocket(wsUrl);
+        const response = await ApiService.get('/api/v1/users/ws-ticket');
+        wsTicket = response?.data?.ticket;
+        if (!wsTicket || typeof wsTicket !== 'string') {
+            throw new Error('Missing websocket ticket');
+        }
+    } catch {
+        error.value = 'Unable to authenticate websocket';
+        connecting.value = false;
+        connected.value = false;
+        return;
+    }
+
+    try {
+        // Do not include token in URL. Pass one-time ticket via subprotocol header.
+        socket = new WebSocket(wsUrl, ['nextbar.v1', `ticket.${wsTicket}`]);
 
         socket.onopen = () => {
-            console.log('[useWebSocketEvents] ✅ Connected!');
             connected.value = true;
             connecting.value = false;
             reconnectAttempts = 0;
@@ -97,25 +130,24 @@ function connect() {
             try {
                 const data: NextBarEvent = JSON.parse(event.data);
 
-                if (data.type !== 'HEARTBEAT') {
-                    console.log('[useWebSocketEvents] 📨 Event received:', data.type, data);
-                }
-
                 // ====== TRIGGER VUE REACTIVITY ======
                 // Update the reactive refs - this triggers Vue watchers!
                 lastEvent.value = data;
                 eventCounter.value++;
                 eventsByType[data.type] = data;
 
-            } catch (e) {
-                console.error('[useWebSocketEvents] Parse error:', e);
+            } catch {
             }
         };
 
         socket.onclose = (event) => {
-            console.log('[useWebSocketEvents] 🔌 Disconnected:', event.code);
             connected.value = false;
             connecting.value = false;
+
+            if (event.code === 4401) {
+                error.value = 'Unauthorized';
+                return;
+            }
 
             if (!event.wasClean) {
                 scheduleReconnect();
@@ -123,14 +155,12 @@ function connect() {
         };
 
         socket.onerror = () => {
-            console.error('[useWebSocketEvents] ❌ Connection error');
             error.value = 'WebSocket connection error';
             connected.value = false;
             connecting.value = false;
         };
 
-    } catch (e) {
-        console.error('[useWebSocketEvents] Failed to connect:', e);
+    } catch {
         error.value = 'Failed to connect';
         connecting.value = false;
         scheduleReconnect();
@@ -138,14 +168,16 @@ function connect() {
 }
 
 function scheduleReconnect() {
+    if (!getAuthToken()) {
+        return;
+    }
+
     if (reconnectAttempts >= maxReconnectAttempts) {
-        console.log('[useWebSocketEvents] Max reconnect attempts reached');
         error.value = 'Unable to connect to server';
         return;
     }
 
     reconnectAttempts++;
-    console.log(`[useWebSocketEvents] Reconnecting in ${reconnectDelay}ms (attempt ${reconnectAttempts})`);
 
     reconnectTimeout = setTimeout(() => {
         connect();
@@ -172,16 +204,6 @@ function disconnect() {
 /**
  * Composable for reactive WebSocket events
  * 
- * @example
- * ```typescript
- * const { connected, lastEvent, onEvent } = useWebSocketEvents();
- * 
- * // Watch for specific event types
- * onEvent('SUPPLY_REQUEST_UPDATED', (event) => {
- *   console.log('Supply request updated!', event);
- *   refreshData();
- * });
- * ```
  */
 export function useWebSocketEvents() {
 
@@ -195,7 +217,6 @@ export function useWebSocketEvents() {
             () => eventsByType[eventType],
             (newEvent) => {
                 if (newEvent) {
-                    console.log(`[useWebSocketEvents] 🔔 Triggering callback for ${eventType}`);
                     callback(newEvent);
                 }
             },
@@ -233,5 +254,4 @@ export function useWebSocketEvents() {
 
 // Auto-connect on module load (for singleton behavior)
 // This ensures connection happens when the module is first imported
-console.log('[useWebSocketEvents] Module loaded, connecting...');
 connect();

@@ -8,6 +8,7 @@ import java.util.stream.Collectors;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import org.springframework.lang.NonNull;
 import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
 import org.springframework.security.core.authority.SimpleGrantedAuthority;
 import org.springframework.security.core.context.SecurityContextHolder;
@@ -35,9 +36,9 @@ public class JwtAuthenticationFilter extends OncePerRequestFilter {
     private static final String HEADER_ASSIGNMENTS = "X-Assignments";
 
     @Override
-    protected void doFilterInternal(HttpServletRequest request,
-                                    HttpServletResponse response,
-                                    FilterChain filterChain) throws ServletException, IOException {
+    protected void doFilterInternal(@NonNull HttpServletRequest request,
+                                    @NonNull HttpServletResponse response,
+                                    @NonNull FilterChain filterChain) throws ServletException, IOException {
 
         if (SecurityContextHolder.getContext().getAuthentication() == null) {
             String username = request.getHeader(HEADER_USER_ID);
@@ -47,13 +48,23 @@ public class JwtAuthenticationFilter extends OncePerRequestFilter {
 
                 List<SimpleGrantedAuthority> authorities = new ArrayList<>();
                 if (isAdmin(roles, assignments)) {
-                    authorities.add(new SimpleGrantedAuthority("ADMIN"));
+                    authorities.add(new SimpleGrantedAuthority(RbacRole.ADMIN.value()));
                 }
 
                 UsernamePasswordAuthenticationToken authToken = new UsernamePasswordAuthenticationToken(username, null, authorities);
                 authToken.setDetails(new RbacClaims(roles, assignments));
                 SecurityContextHolder.getContext().setAuthentication(authToken);
                 log.debug("Gateway authentication successful for user: {}", username);
+            } else if (!isPublicPath(request.getRequestURI())) {
+                String sourceIp = request.getHeader("X-Forwarded-For");
+                if (sourceIp == null || sourceIp.isBlank()) {
+                    sourceIp = request.getRemoteAddr();
+                }
+                log.warn("Missing gateway identity header: header={}, method={}, path={}, sourceIp={}",
+                        HEADER_USER_ID,
+                        request.getMethod(),
+                        request.getRequestURI(),
+                        sourceIp);
             }
         }
 
@@ -61,11 +72,11 @@ public class JwtAuthenticationFilter extends OncePerRequestFilter {
     }
 
     private static boolean isAdmin(List<String> roles, List<String> assignments) {
-        if (roles != null && roles.stream().anyMatch(r -> "ADMIN".equalsIgnoreCase(r))) {
+        if (roles != null && roles.stream().anyMatch(RbacRole.ADMIN::equalsIgnoreCase)) {
             return true;
         }
         if (assignments != null) {
-            return assignments.stream().anyMatch(a -> a != null && a.toUpperCase().contains(":ADMIN:"));
+            return assignments.stream().anyMatch(RbacRole.ADMIN::presentInAssignment);
         }
         return false;
     }
@@ -77,5 +88,12 @@ public class JwtAuthenticationFilter extends OncePerRequestFilter {
                 .map(String::trim)
                 .filter(s -> !s.isBlank())
                 .collect(Collectors.toList());
+    }
+
+    // Define public paths that do not require authentication
+    private static boolean isPublicPath(String path) {
+        return path.startsWith("/actuator")
+                || path.startsWith("/swagger-ui")
+                || path.startsWith("/v3/api-docs");
     }
 }

@@ -1,0 +1,216 @@
+# =============================================================================
+# NextBar CI/CD Pipeline — Build, Test, Docker, Deploy to Azure
+# =============================================================================
+#
+# Triggered on:
+#   - Push to main branch
+#   - Pull requests targeting main
+#
+# Pipeline stages:
+#   1. test        → Maven verify (all modules)
+#   2. build-push  → Docker build + tag + push to ACR (per service)
+#   3. deploy-dev  → Deploy to Azure (staging)
+#   4. deploy-prod → Deploy to Azure (production, manual approval)
+# =============================================================================
+
+name: CI/CD Pipeline
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+    branches: [main]
+
+env:
+  JAVA_VERSION: '21'
+  NODE_VERSION: '22'
+  ACR_REGISTRY: ${{ vars.ACR_REGISTRY }}          # e.g. nextbar.azurecr.io
+  IMAGE_TAG: ${{ github.sha }}
+
+permissions:
+  contents: read
+  packages: write
+
+# ─── Stage 1: Test ────────────────────────────────────────────────────────────
+jobs:
+  test:
+    name: Build & Test (Maven)
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Set up Java ${{ env.JAVA_VERSION }}
+        uses: actions/setup-java@v4
+        with:
+          distribution: temurin
+          java-version: ${{ env.JAVA_VERSION }}
+          cache: maven
+
+      - name: Run Maven verify
+        run: mvn -B -f pom.xml verify
+
+      - name: Upload test reports
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: test-reports
+          path: '**/target/surefire-reports/*.xml'
+          retention-days: 7
+
+  # ─── Frontend Tests ───────────────────────────────────────────────────────
+  test-frontend:
+    name: Frontend Lint & Build
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Set up Node.js ${{ env.NODE_VERSION }}
+        uses: actions/setup-node@v4
+        with:
+          node-version: ${{ env.NODE_VERSION }}
+          cache: npm
+          cache-dependency-path: servers/frontend/package-lock.json
+
+      - name: Install dependencies
+        working-directory: servers/frontend
+        run: npm ci
+
+      - name: Build frontend
+        working-directory: servers/frontend
+        run: npm run build
+
+  # ─── Stage 2: Docker Build & Push ─────────────────────────────────────────
+  build-push:
+    name: Docker Build & Push
+    needs: [test, test-frontend]
+    runs-on: ubuntu-latest
+    if: github.ref == 'refs/heads/main' && github.event_name == 'push'
+
+    strategy:
+      fail-fast: false
+      matrix:
+        include:
+          - service: bar-service
+            dockerfile: bar-service/Dockerfile
+            context: .
+          - service: droppoint-service
+            dockerfile: dropPoint-service/Dockerfile
+            context: .
+          - service: eventplanner-service
+            dockerfile: eventPlanner-service/Dockerfile
+            context: .
+          - service: users-service
+            dockerfile: users-service/Dockerfile
+            context: .
+          - service: warehouse-service
+            dockerfile: warehouse-service/Dockerfile
+            context: .
+          - service: config-server
+            dockerfile: servers/config-server/Dockerfile
+            context: .
+          - service: eureka-server
+            dockerfile: servers/eureka-server/Dockerfile
+            context: .
+          - service: gateway
+            dockerfile: servers/gateway/Dockerfile
+            context: .
+          - service: frontend
+            dockerfile: servers/frontend/Dockerfile
+            context: .
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Log in to Azure Container Registry
+        uses: azure/docker-login@v1
+        with:
+          login-server: ${{ env.ACR_REGISTRY }}
+          username: ${{ secrets.ACR_USERNAME }}
+          password: ${{ secrets.ACR_PASSWORD }}
+
+      - name: Set up Docker Buildx
+        uses: docker/setup-buildx-action@v3
+
+      - name: Build and push ${{ matrix.service }}
+        uses: docker/build-push-action@v5
+        with:
+          context: ${{ matrix.context }}
+          file: ${{ matrix.dockerfile }}
+          push: true
+          tags: |
+            ${{ env.ACR_REGISTRY }}/${{ matrix.service }}:${{ env.IMAGE_TAG }}
+            ${{ env.ACR_REGISTRY }}/${{ matrix.service }}:latest
+          cache-from: type=gha
+          cache-to: type=gha,mode=max
+
+      - name: Scan image with Trivy
+        uses: aquasecurity/trivy-action@master
+        with:
+          image-ref: '${{ env.ACR_REGISTRY }}/${{ matrix.service }}:${{ env.IMAGE_TAG }}'
+          format: 'table'
+          severity: 'CRITICAL,HIGH'
+          exit-code: '1'
+
+  # ─── Stage 3: Deploy to Staging ───────────────────────────────────────────
+  deploy-dev:
+    name: Deploy to Staging
+    needs: build-push
+    runs-on: ubuntu-latest
+    environment: staging
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Azure Login
+        uses: azure/login@v2
+        with:
+          creds: ${{ secrets.AZURE_CREDENTIALS }}
+
+      - name: Deploy infrastructure services
+        run: |
+          for svc in config-server eureka-server; do
+            az containerapp update \
+              --resource-group ${{ vars.AZURE_RESOURCE_GROUP }} \
+              --name $svc \
+              --image ${{ env.ACR_REGISTRY }}/$svc:${{ env.IMAGE_TAG }}
+          done
+
+      - name: Deploy business services
+        run: |
+          for svc in users-service bar-service eventplanner-service droppoint-service warehouse-service gateway frontend; do
+            az containerapp update \
+              --resource-group ${{ vars.AZURE_RESOURCE_GROUP }} \
+              --name $svc \
+              --image ${{ env.ACR_REGISTRY }}/$svc:${{ env.IMAGE_TAG }}
+          done
+
+  # ─── Stage 4: Deploy to Production ────────────────────────────────────────
+  deploy-prod:
+    name: Deploy to Production
+    needs: deploy-dev
+    runs-on: ubuntu-latest
+    environment: production       # Requires manual approval via GitHub Environment protection rules
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Azure Login
+        uses: azure/login@v2
+        with:
+          creds: ${{ secrets.AZURE_CREDENTIALS }}
+
+      - name: Deploy to production
+        run: |
+          for svc in config-server eureka-server users-service bar-service eventplanner-service droppoint-service warehouse-service gateway frontend; do
+            az containerapp update \
+              --resource-group ${{ vars.AZURE_RESOURCE_GROUP }} \
+              --name $svc \
+              --image ${{ env.ACR_REGISTRY }}/$svc:${{ env.IMAGE_TAG }}
+          done

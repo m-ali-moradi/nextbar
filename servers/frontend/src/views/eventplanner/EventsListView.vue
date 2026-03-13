@@ -1,11 +1,5 @@
 <template>
-  <div class="flex min-h-screen bg-slate-50">
-    <Sidebar />
-    
-    <div class="flex-1 ml-72">
-      <Navbar />
-
-      <main class="p-6 lg:p-8">
+  <div>
         <!-- Page Header -->
         <div class="flex flex-col lg:flex-row lg:items-center lg:justify-between gap-4 mb-8">
           <div>
@@ -128,12 +122,7 @@
         </div>
 
         <!-- Loading State -->
-        <div v-if="loading" class="flex items-center justify-center py-20">
-          <div class="text-center">
-            <div class="w-16 h-16 border-4 border-event-200 border-t-event-600 rounded-full animate-spin mx-auto mb-4"></div>
-            <p class="text-slate-500 text-lg">Loading events...</p>
-          </div>
-        </div>
+        <BaseLoadingSpinner v-if="isLoading" color="event" size="lg" message="Loading events..." />
 
         <!-- Error State -->
         <div v-else-if="error" class="card p-12 text-center">
@@ -142,7 +131,7 @@
           </div>
           <h3 class="text-xl font-semibold text-slate-900 mb-2">Error Loading Events</h3>
           <p class="text-slate-500 mb-6">{{ error }}</p>
-          <button @click="eventStore.fetchEvents" class="btn-primary">
+          <button @click="refetch()" class="btn-primary">
             <i class="fas fa-redo"></i>
             <span>Try Again</span>
           </button>
@@ -289,8 +278,6 @@
             <span>Clear Filters</span>
           </button>
         </div>
-      </main>
-    </div>
 
     <!-- Confirmation Modal -->
     <ConfirmModal
@@ -307,20 +294,25 @@
 </template>
 
 <script setup lang="ts">
-import { ref, computed, onMounted } from 'vue';
+import { ref, computed } from 'vue';
 import { useRouter } from 'vue-router';
-import { useEventStore } from '@/stores/eventStore';
+import { useEventsQuery, useStartEvent, useCompleteEvent, useDeleteEvent } from '@/composables/queries/useEventQueries';
 import { EventSummary, EventStatus } from '@/api/eventApi';
 import { toast } from 'vue3-toastify';
-import 'vue3-toastify/dist/index.css';
-import Sidebar from '@/components/common/Sidebar.vue';
-import Navbar from '@/components/common/Navbar.vue';
+import { formatDate } from '@/composables/useDateFormat';
 import EventCard from '@/components/eventplanner/EventCard.vue';
 import StatusBadge from '@/components/eventplanner/StatusBadge.vue';
 import ConfirmModal from '@/components/eventplanner/ConfirmModal.vue';
+import BaseLoadingSpinner from '@/components/common/BaseLoadingSpinner.vue';
 
 const router = useRouter();
-const eventStore = useEventStore();
+
+const { data: eventsData, isLoading, error, refetch } = useEventsQuery();
+const events = computed(() => eventsData.value ?? []);
+
+const startEventMutation = useStartEvent();
+const completeEventMutation = useCompleteEvent();
+const deleteEventMutation = useDeleteEvent();
 
 // ============ State ============
 const searchQuery = ref('');
@@ -347,10 +339,12 @@ const statusFilters = [
 ];
 
 // ============ Computed ============
-const events = computed(() => eventStore.events);
-const loading = computed(() => eventStore.loading);
-const error = computed(() => eventStore.error);
-const statusCounts = computed(() => eventStore.statusCounts);
+const statusCounts = computed(() => ({
+  scheduled: events.value.filter(e => e.status === 'SCHEDULED').length,
+  running: events.value.filter(e => e.status === 'RUNNING').length,
+  completed: events.value.filter(e => e.status === 'COMPLETED').length,
+  cancelled: events.value.filter(e => e.status === 'CANCELLED').length,
+}));
 
 const hasActiveFilters = computed(() =>
   searchQuery.value.trim() !== '' ||
@@ -429,16 +423,6 @@ const editEvent = (id: number) => {
   router.push(`/events/${id}/edit`);
 };
 
-const formatDate = (date: string) => {
-  if (!date) return 'N/A';
-  return new Date(date).toLocaleDateString('en-US', {
-    weekday: 'short',
-    year: 'numeric',
-    month: 'short',
-    day: 'numeric'
-  });
-};
-
 // Confirmation modals
 const closeConfirmModal = () => {
   showConfirmModal.value = false;
@@ -455,11 +439,11 @@ const confirmStartEvent = (id: number) => {
     onConfirm: async () => {
       confirmModal.value.loading = true;
       try {
-        await eventStore.startEvent(id);
+        await startEventMutation.mutateAsync(id);
         toast.success('Event started successfully!');
         closeConfirmModal();
       } catch (err) {
-        toast.error('Failed to start event');
+        toast.error(err instanceof Error ? err.message : 'Failed to start event');
         confirmModal.value.loading = false;
       }
     },
@@ -477,7 +461,7 @@ const confirmCompleteEvent = (id: number) => {
     onConfirm: async () => {
       confirmModal.value.loading = true;
       try {
-        await eventStore.completeEvent(id);
+        await completeEventMutation.mutateAsync(id);
         toast.success('Event completed!');
         closeConfirmModal();
       } catch (err) {
@@ -499,7 +483,7 @@ const confirmDeleteEvent = (id: number) => {
     onConfirm: async () => {
       confirmModal.value.loading = true;
       try {
-        await eventStore.deleteEvent(id);
+        await deleteEventMutation.mutateAsync(id);
         toast.success('Event deleted successfully');
         closeConfirmModal();
       } catch (err) {
@@ -511,8 +495,4 @@ const confirmDeleteEvent = (id: number) => {
   showConfirmModal.value = true;
 };
 
-// ============ Lifecycle ============
-onMounted(() => {
-  eventStore.fetchEvents();
-});
 </script>

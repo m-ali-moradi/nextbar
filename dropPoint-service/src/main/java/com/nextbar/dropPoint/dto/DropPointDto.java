@@ -1,6 +1,6 @@
-package de.fhdo.dropPointsSys.dto;
+package com.nextbar.dropPoint.dto;
 
-import de.fhdo.dropPointsSys.domain.DropPointStatus;
+import com.nextbar.dropPoint.domain.DropPointStatus;
 
 /**
  * Data Transfer Object for DropPoint entity.

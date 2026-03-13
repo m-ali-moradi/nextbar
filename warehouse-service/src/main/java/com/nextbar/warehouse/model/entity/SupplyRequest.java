@@ -1,11 +1,11 @@
-package com.dmsa.warehouse.model.entity;
+package com.nextbar.warehouse.model.entity;
 
 import jakarta.persistence.*;
 import java.time.LocalDateTime;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.UUID;
-import com.dmsa.warehouse.model.enums.SupplyRequestStatus;
+import com.nextbar.warehouse.model.enums.SupplyRequestStatus;
 
 /**
  * Entity representing a supply request received from bar-service.

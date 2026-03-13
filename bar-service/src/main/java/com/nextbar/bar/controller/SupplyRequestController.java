@@ -5,6 +5,7 @@ import java.util.UUID;
 
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
+import org.springframework.lang.NonNull;
 import org.springframework.web.bind.annotation.DeleteMapping;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PatchMapping;
@@ -15,12 +16,13 @@ import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
 
 import com.nextbar.bar.model.SupplyStatus;
-import com.nextbar.bar.model.dto.CreateSupplyRequestDto;
-import com.nextbar.bar.model.dto.SupplyRequestDto;
-import com.nextbar.bar.model.dto.UpdateSupplyRequestStatusDto;
+import com.nextbar.bar.dto.request.CreateSupplyRequestDto;
+import com.nextbar.bar.dto.request.UpdateSupplyRequestStatusDto;
+import com.nextbar.bar.dto.response.SupplyRequestDto;
 import com.nextbar.bar.security.RbacService;
 import com.nextbar.bar.service.SupplyRequestService;
 
+import io.swagger.v3.oas.annotations.tags.Tag;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
 
@@ -29,8 +31,9 @@ import lombok.RequiredArgsConstructor;
  * Provides endpoints to create, view, delete and update supply requests.
  */
 @RestController
-@RequestMapping("/bars/{barId}/supply")
+@RequestMapping("/api/v1/bars/{barId}/supply")
 @RequiredArgsConstructor
+@Tag(name = "Supply", description = "Supply management")
 public class SupplyRequestController {
 
     private final SupplyRequestService requestService;
@@ -45,7 +48,7 @@ public class SupplyRequestController {
      */
     @PostMapping
     public ResponseEntity<SupplyRequestDto> createRequest(
-            @PathVariable UUID barId,
+            @PathVariable @NonNull UUID barId,
             @Valid @RequestBody CreateSupplyRequestDto dto) {
         rbacService.requireBarAccess(barId);
         SupplyRequestDto created = requestService.createRequest(barId, dto.items());
@@ -54,27 +57,26 @@ public class SupplyRequestController {
 
     /**
      * View all supply requests for a bar.
-     * This endpoint can be shared with warehouse personnel to view all requests for
-     * a bar.
      *
      * @param barId the bar UUID
      * @return list of supply requests
      */
     @GetMapping
-    public ResponseEntity<List<SupplyRequestDto>> getRequests(@PathVariable UUID barId) {
+    public ResponseEntity<List<SupplyRequestDto>> getRequests(@PathVariable @NonNull UUID barId) {
         rbacService.requireBarAccess(barId);
         return ResponseEntity.ok(requestService.getRequestsByBar(barId));
     }
 
     /**
      * View a single supply request.
-     * This endpoint can be shared with warehouse personnel to view one request.
      *
+     * @param barId     the bar UUID
      * @param requestId the request UUID
      * @return the supply request details
      */
     @GetMapping("/{requestId}")
-    public ResponseEntity<SupplyRequestDto> getRequest(@PathVariable UUID barId, @PathVariable UUID requestId) {
+    public ResponseEntity<SupplyRequestDto> getRequest(@PathVariable @NonNull UUID barId,
+            @PathVariable @NonNull UUID requestId) {
         rbacService.requireBarAccess(barId);
         return ResponseEntity.ok(requestService.getRequest(requestId));
     }
@@ -86,7 +88,8 @@ public class SupplyRequestController {
      * @return empty response with HTTP 204
      */
     @DeleteMapping("/{requestId}")
-    public ResponseEntity<Void> deleteRequest(@PathVariable UUID barId, @PathVariable UUID requestId) {
+    public ResponseEntity<Void> deleteRequest(@PathVariable @NonNull UUID barId,
+            @PathVariable @NonNull UUID requestId) {
         rbacService.requireBarAccess(barId);
         requestService.deleteRequest(requestId);
         return ResponseEntity.noContent().build();
@@ -94,7 +97,6 @@ public class SupplyRequestController {
 
     /**
      * Update supply request status (e.g., from PENDING to APPROVED).
-     * This endpoint can be used by warehouse personnel.
      *
      * @param requestId the request UUID
      * @param dto       the status update payload
@@ -102,8 +104,8 @@ public class SupplyRequestController {
      */
     @PatchMapping("/{requestId}/status")
     public ResponseEntity<SupplyRequestDto> updateRequestStatus(
-            @PathVariable UUID barId,
-            @PathVariable UUID requestId,
+            @PathVariable @NonNull UUID barId,
+            @PathVariable @NonNull UUID requestId,
             @Valid @RequestBody UpdateSupplyRequestStatusDto dto) {
         rbacService.requireBarAccess(barId);
         // Parse status from string to enum

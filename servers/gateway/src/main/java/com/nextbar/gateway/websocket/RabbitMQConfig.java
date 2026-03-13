@@ -26,7 +26,8 @@ import org.springframework.context.annotation.Configuration;
  * 3. RabbitEventListener processes events and broadcasts via WebSocket
  * 
  * Exchange: nextbar.events (fanout - broadcasts to all bound queues)
- * Queue: per-instance auto-delete queue (receives all events for WebSocket broadcast)
+ * Queue: per-instance auto-delete queue (receives all events for WebSocket
+ * broadcast)
  */
 @Configuration
 public class RabbitMQConfig {
@@ -38,7 +39,6 @@ public class RabbitMQConfig {
      * Fanout type ensures all services receive all events
      */
     public static final String EVENTS_EXCHANGE = "nextbar.events";
-
 
     // ==================== Exchange Definitions ====================
 
@@ -58,14 +58,14 @@ public class RabbitMQConfig {
     // ==================== Queue Definitions ====================
 
     /**
-      * Queue for the gateway to receive events
-      * 
-      * Uses an auto-delete, exclusive queue per instance so each
-      * gateway replica gets its own copy of fanout events.
+     * Queue for the gateway to receive events
+     * 
+     * Uses an auto-delete, exclusive queue per instance so each
+     * gateway replica gets its own copy of fanout events.
      */
     @Bean
     public Queue gatewayEventsQueue() {
-          return new AnonymousQueue();
+        return new AnonymousQueue();
     }
 
     // ==================== Bindings ====================

@@ -1,12 +1,6 @@
 import { defineStore } from 'pinia';
-import { authApi } from '../api';
-
-interface AuthState {
-  user: any | null;
-  token: string | null;
-  loading: boolean;
-  error: string | null;
-}
+import { ref } from 'vue';
+import { authApi } from '@/api';
 
 type ServiceCode = 'BAR' | 'DROP_POINT' | 'WAREHOUSE' | 'EVENT' | string;
 type RoleName = 'ADMIN' | 'MANAGER' | 'OPERATOR' | string;
@@ -21,6 +15,8 @@ type NormalizedUser = {
   id?: string;
   username?: string;
   email?: string;
+  firstName?: string;
+  lastName?: string;
   roles: UserRole[];
   isAdmin: boolean;
 };
@@ -52,13 +48,19 @@ function normalizeRoleName(raw: unknown): RoleName | null {
 function normalizeUser(input: any | null): NormalizedUser | null {
   if (!input) return null;
 
-  const roles: UserRole[] = Array.isArray(input.roles)
-    ? input.roles.map((r: any) => ({
-        service: normalizeServiceCode(r?.service ?? r?.serviceCode),
-        role: normalizeRoleName(r?.role ?? r?.roleName),
-        resourceId: r?.resourceId ?? null,
-      }))
-    : [];
+  const rawRoles = Array.isArray(input.roles)
+    ? input.roles
+    : Array.isArray(input.assignments)
+      ? input.assignments
+      : [];
+
+  const roles: UserRole[] = rawRoles
+    .map((r: any) => ({
+      service: normalizeServiceCode(r?.service ?? r?.serviceCode),
+      role: normalizeRoleName(r?.role ?? r?.roleName),
+      resourceId: r?.resourceId ?? null,
+    }))
+    .filter((r) => !!r.service && !!r.role);
 
   const isAdmin = roles.some((r) => r?.role === 'ADMIN');
 
@@ -66,27 +68,29 @@ function normalizeUser(input: any | null): NormalizedUser | null {
     id: input.id,
     username: input.username,
     email: input.email,
+    firstName: input.firstName,
+    lastName: input.lastName,
     roles,
     isAdmin,
   };
 }
 
-function hasService(user: NormalizedUser | null, service: ServiceCode): boolean {
+function hasServiceCheck(user: NormalizedUser | null, service: ServiceCode, requiredRole?: RoleName): boolean {
   if (!user) return false;
   if (user.isAdmin) return true;
-  return user.roles.some((r) => r?.service === service);
+  return user.roles.some((r) =>
+    r?.service === service && (requiredRole ? r?.role === requiredRole : true)
+  );
 }
 
 export function defaultRouteForUser(user: NormalizedUser | null): string {
   if (!user) return '/login';
-  if (user.isAdmin) return '/bars';
+  if (user.isAdmin) return '/admin/users';
 
-  // Prefer landing in an area the user can access.
-  if (hasService(user, 'BAR')) return '/bars';
-  if (hasService(user, 'EVENT')) return '/events';
-  if (hasService(user, 'DROP_POINT')) return '/droppoints';
-  if (hasService(user, 'WAREHOUSE')) return '/warehouse';
-  // If the user has no service roles we can route to, avoid redirect loops.
+  if (hasServiceCheck(user, 'BAR')) return '/bars';
+  if (hasServiceCheck(user, 'EVENT', 'MANAGER')) return '/events';
+  if (hasServiceCheck(user, 'DROP_POINT')) return '/droppoints';
+  if (hasServiceCheck(user, 'WAREHOUSE')) return '/warehouse';
   return '/login';
 }
 
@@ -94,7 +98,6 @@ function decodeJwtPayload(token: string): any | null {
   try {
     const payloadPart = token.split('.')[1];
     if (!payloadPart) return null;
-    // base64url -> base64
     const base64 = payloadPart.replace(/-/g, '+').replace(/_/g, '/');
     const padded = base64.padEnd(base64.length + ((4 - (base64.length % 4)) % 4), '=');
     return JSON.parse(atob(padded));
@@ -108,113 +111,183 @@ function parseAssignments(assignments: unknown): UserRole[] {
 
   const parsed: UserRole[] = [];
   for (const item of assignments) {
-    if (typeof item !== 'string') continue;
-    const [serviceRaw, roleRaw, resourceRaw] = item.split(':');
-    const service = normalizeServiceCode(serviceRaw);
-    const role = normalizeRoleName(roleRaw);
-    const resourceIdRaw = (resourceRaw ?? '').trim();
+    if (typeof item === 'string') {
+      const [serviceRaw, roleRaw, resourceRaw] = item.split(':');
+      const service = normalizeServiceCode(serviceRaw);
+      const role = normalizeRoleName(roleRaw);
+      const resourceIdRaw = (resourceRaw ?? '').trim();
 
-    if (!service || !role) continue;
+      if (!service || !role) continue;
 
-    parsed.push({
-      service,
-      role,
-      resourceId: !resourceIdRaw || resourceIdRaw === '*' ? null : resourceIdRaw,
-    });
+      parsed.push({
+        service,
+        role,
+        resourceId: !resourceIdRaw || resourceIdRaw === '*' ? null : resourceIdRaw,
+      });
+      continue;
+    }
+
+    if (item && typeof item === 'object') {
+      const service = normalizeServiceCode((item as any).service ?? (item as any).serviceCode);
+      const role = normalizeRoleName((item as any).role ?? (item as any).roleName);
+      const resourceId = (item as any).resourceId ?? null;
+      if (!service || !role) continue;
+      parsed.push({ service, role, resourceId });
+    }
   }
 
   return parsed;
 }
 
-export const useAuthStore = defineStore('auth', {
-  state: (): AuthState => ({
-    user: null,
-    token: null,
-    loading: false,
-    error: null,
-  }),
-  actions: {
-    async login(username: string, password: string) {
-      this.loading = true;
-      try {
-        const response = await authApi.login(username, password);
-        // Support APIs that return different token shapes (token | accessToken)
-        const token = response.data?.token ?? response.data?.accessToken ?? response.data?.access_token;
-        const refreshToken = response.data?.refreshToken ?? response.data?.refresh_token;
+/** Extract user + roles from a JWT token response */
+function userFromTokenResponse(responseData: any): { user: NormalizedUser | null; token: string | null } {
+  const token = responseData?.token ?? responseData?.accessToken ?? responseData?.access_token;
+  let user: NormalizedUser | null = null;
 
-        // Set user from response if provided, otherwise try to decode from JWT
-        if (response.data?.user) {
-          this.user = normalizeUser(response.data.user);
-        } else if (token) {
-          const payload = decodeJwtPayload(token);
-          if (payload) {
-            const assignmentRoles = parseAssignments(payload.assignments);
-            const legacyRoles = Array.isArray(payload.roles)
-              ? payload.roles.map((role: any) => ({ role }))
-              : [];
-            const roles = assignmentRoles.length > 0 ? assignmentRoles : legacyRoles;
-            this.user = normalizeUser({ username: payload.sub, roles });
-          } else {
-            this.user = null;
-          }
-        } else {
-          this.user = null;
+  if (responseData?.user) {
+    user = normalizeUser(responseData.user);
+  } else if (token) {
+    const payload = decodeJwtPayload(token);
+    if (payload) {
+      const assignmentRoles = parseAssignments(payload.assignments);
+      const legacyRoles = Array.isArray(payload.roles)
+        ? payload.roles.map((role: any) => ({ role }))
+        : [];
+      const roles = assignmentRoles.length > 0 ? assignmentRoles : legacyRoles;
+      const emailFromPayload = payload.email ?? payload.preferred_username ?? payload.username ?? null;
+      user = normalizeUser({ username: payload.sub, email: emailFromPayload, roles });
+    }
+  }
+
+  return { user, token: token ?? null };
+}
+
+export const useAuthStore = defineStore('auth', () => {
+  // ============ State ============
+  const user = ref<NormalizedUser | null>(null);
+  const token = ref<string | null>(null);
+  const loading = ref(false);
+  const error = ref<string | null>(null);
+
+  // ============ Actions ============
+  async function login(username: string, password: string) {
+    loading.value = true;
+    error.value = null;
+    try {
+      const response = await authApi.login(username, password);
+      const result = userFromTokenResponse(response.data);
+      user.value = result.user;
+      token.value = result.token;
+      // Keep token only in-memory; allow short-lived session fallback
+      if (token.value) {
+        try {
+          sessionStorage.setItem('authToken', token.value);
+        } catch {
         }
-
-        this.token = token ?? null;
-        if (this.token) localStorage.setItem('authToken', this.token);
-        if (refreshToken) localStorage.setItem('refreshToken', refreshToken);
-        this.error = null;
-      } catch (error) {
-        this.error = (error as Error).message;
-      } finally {
-        this.loading = false;
       }
-    },
-    async register(username: string, password: string, email: string) {
-      this.loading = true;
-      try {
-        const response = await authApi.register(username, password, email);
-        const token = response.data?.token ?? response.data?.accessToken ?? response.data?.access_token;
-        const refreshToken = response.data?.refreshToken ?? response.data?.refresh_token;
-
-        if (response.data?.user) {
-          this.user = normalizeUser(response.data.user);
-        } else if (token) {
-          const payload = decodeJwtPayload(token);
-          if (payload) {
-            const assignmentRoles = parseAssignments(payload.assignments);
-            const legacyRoles = Array.isArray(payload.roles)
-              ? payload.roles.map((role: any) => ({ role }))
-              : [];
-            const roles = assignmentRoles.length > 0 ? assignmentRoles : legacyRoles;
-            this.user = normalizeUser({ username: payload.sub, roles });
-          } else {
-            this.user = null;
-          }
-        } else {
-          this.user = null;
-        }
-
-        this.token = token ?? null;
-        if (this.token) localStorage.setItem('authToken', this.token);
-        if (refreshToken) localStorage.setItem('refreshToken', refreshToken);
-        this.error = null;
-      } catch (error) {
-        this.error = (error as Error).message;
-      } finally {
-        this.loading = false;
+      if (token.value) {
+        const { useWebSocketEvents } = await import('@/composables/useWebSocketEvents');
+        useWebSocketEvents().connect();
       }
-    },
-    logout() {
-      this.user = null;
-      this.token = null;
-      localStorage.removeItem('authToken');
-    },
+      error.value = null;
+    } catch (err) {
+      error.value = (err as Error).message;
+    } finally {
+      loading.value = false;
+    }
+  }
 
-    getDefaultRoute(): string {
-      return defaultRouteForUser(this.user);
-    },
+  async function logout() {
+    // Call logout endpoint without sending refresh token in body (prepare for cookie-based refresh)
+    try {
+      await authApi.logout();
+    } catch {
+      // Ignore remote logout failures and clear local session anyway.
+    }
+    user.value = null;
+    token.value = null;
+    const { useWebSocketEvents } = await import('@/composables/useWebSocketEvents');
+    useWebSocketEvents().disconnect();
+    try {
+      sessionStorage.removeItem('authToken');
+    } catch {
+    }
+  }
+
+  async function refreshSession() {
+    // Refresh flow will be migrated to cookie-based handling. For now, attempt a refresh
+    // without sending a client-held refresh token (backend should accept cookie-based refresh).
+    try {
+      const response = await authApi.refresh();
+      const result = userFromTokenResponse(response.data);
+      if (result.token) {
+        token.value = result.token;
+        try { sessionStorage.setItem('authToken', result.token); } catch {}
+      }
+      if (result.user) {
+        user.value = result.user;
+      } else {
+        syncUserFromToken();
+      }
+    } catch {
+      // No-op: resource-sync updates are eventually visible on next login/refresh.
+    }
+  }
+
+  function getDefaultRoute(): string {
+    return defaultRouteForUser(user.value);
+  }
+
+  function syncUserFromToken() {
+    const t = token.value || sessionStorage.getItem('authToken');
+    if (!t) {
+      user.value = null;
+      token.value = null;
+      error.value = null;
+      return;
+    }
+
+    const payload = decodeJwtPayload(t);
+    if (!payload) {
+      user.value = null;
+      token.value = null;
+      error.value = null;
+      try { sessionStorage.removeItem('authToken'); } catch {}
+      return;
+    }
+
+    const assignmentRoles = parseAssignments(payload.assignments);
+    const legacyRoles = Array.isArray(payload.roles)
+      ? payload.roles.map((role: any) => ({ role }))
+      : [];
+    const roles = assignmentRoles.length > 0 ? assignmentRoles : legacyRoles;
+    const emailFromPayload = payload.email ?? payload.preferred_username ?? payload.username ?? null;
+
+    user.value = normalizeUser({
+      id: payload.userId,
+      username: payload.sub,
+      email: emailFromPayload,
+      roles,
+    });
+    token.value = t;
+  }
+
+  return {
+    // State
+    user,
+    token,
+    loading,
+    error,
+    // Actions
+    login,
+    logout,
+    refreshSession,
+    getDefaultRoute,
+    syncUserFromToken,
+  };
+  }, {
+  persist: {
+    // Do NOT persist tokens to long-lived storage. Persist only the user profile if desired.
+    pick: ['user'],
   },
-  persist: true,
 });

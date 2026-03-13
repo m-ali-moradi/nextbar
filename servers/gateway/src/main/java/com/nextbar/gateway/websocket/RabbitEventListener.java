@@ -61,9 +61,6 @@ public class RabbitEventListener {
         try {
             // Broadcast event to all connected WebSocket clients
             webSocketHandler.broadcastEvent(event);
-
-            logger.debug("✅ Event broadcasted to {} clients",
-                    webSocketHandler.getConnectedClientCount());
         } catch (Exception e) {
             logger.error("❌ Failed to broadcast event: {}", e.getMessage(), e);
             // Don't rethrow - we don't want to requeue failed broadcasts

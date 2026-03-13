@@ -1,0 +1,24 @@
+# =============================================================================
+# bar-service — Production Profile Overrides
+# =============================================================================
+
+# ── Security ─────────────────────────────────────────────────────────────────
+security:
+  internal:
+    enabled: true
+
+# ── Logging (reduce to INFO in production) ───────────────────────────────────
+logging:
+  level:
+    root: INFO
+    com.nextbar.bar: INFO
+    org.springframework.security: WARN
+
+# ── Actuator (restrict in production) ────────────────────────────────────────
+management:
+  endpoint:
+    health:
+      show-details: when-authorized
+  tracing:
+    sampling:
+      probability: 0.1

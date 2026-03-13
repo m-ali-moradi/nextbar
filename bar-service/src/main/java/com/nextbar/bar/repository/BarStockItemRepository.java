@@ -23,16 +23,11 @@ public interface BarStockItemRepository extends JpaRepository<BarStockItem, UUID
      */
     List<BarStockItem> findByBarId(UUID barId);
 
-    /**
-     * Finds a BarStockItem entity by its bar ID and product ID.
-     *
-     * @param barId     the ID of the bar
-     * @param productId the ID of the product
-     * @return an Optional containing the BarStockItem if found, or empty if not found
-     */
-    Optional<BarStockItem> findByBarIdAndProductId(UUID barId, UUID productId);
+    Optional<BarStockItem> findByBarIdAndProductNameIgnoreCase(UUID barId, String productName);
 
-    boolean existsByBarIdAndProductId(UUID barId, UUID productId);
+    boolean existsByBarIdAndProductNameIgnoreCase(UUID barId, String productName);
 
     boolean existsByBarId(UUID barId);
+
+    void deleteByBarId(UUID barId);
 }

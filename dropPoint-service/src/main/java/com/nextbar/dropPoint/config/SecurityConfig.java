@@ -1,4 +1,4 @@
-package de.fhdo.dropPointsSys.config;
+package com.nextbar.dropPoint.config;
 
 import java.util.Arrays;
 import java.util.List;
@@ -19,8 +19,8 @@ import org.springframework.web.cors.CorsConfiguration;
 import org.springframework.web.cors.CorsConfigurationSource;
 import org.springframework.web.cors.UrlBasedCorsConfigurationSource;
 
-import de.fhdo.dropPointsSys.security.InternalRequestVerificationFilter;
-import de.fhdo.dropPointsSys.security.JwtAuthenticationFilter;
+import com.nextbar.dropPoint.security.InternalRequestVerificationFilter;
+import com.nextbar.dropPoint.security.JwtAuthenticationFilter;
 
 /**
  * Security configuration for drop-points-service.

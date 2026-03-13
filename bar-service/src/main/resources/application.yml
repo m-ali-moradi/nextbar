@@ -1,101 +1,30 @@
-server:
-  port: 8081
-  cloud:
-    config:
-      uri: http://localhost:8888
-      fail-fast: false
+# =============================================================================
+# bar-service — Local Bootstrap Configuration
+# =============================================================================
+#
+# This file contains ONLY the minimal configuration required to connect to
+# Spring Cloud Config Server. All business configuration (datasource, JWT,
+# security, messaging, eureka, logging, etc.) lives in the config-repo under:
+#
+#   config-repo/bar-service.yml          (default profile)
+#   config-repo/bar-service-{profile}.yml (profile-specific overrides)
+#
+# WHY MINIMAL?
+#   Centralising config in Config Server provides a single source of truth,
+#   environment-specific overrides without rebuilding, and runtime refresh
+#   via Spring Cloud Bus or /actuator/refresh.
+#
+# WHY FAIL-FAST?
+#   In production the service MUST NOT start with stale or missing config.
+#   fail-fast=true ensures the application exits immediately if Config Server
+#   is unreachable, preventing silent misconfiguration.
+# =============================================================================
 
 spring:
   application:
     name: bar-service
-  datasource:
-    url: jdbc:mysql://localhost:3306/bar_db?createDatabaseIfNotExist=true
-    username: root
-    password: root
-    driver-class-name: com.mysql.cj.jdbc.Driver
-  jpa:
-    hibernate:
-      ddl-auto: create
-    properties:
-      hibernate:
-        dialect: org.hibernate.dialect.MySQLDialect
-        format_sql: true
-
-jwt:
-  secret: ${JWT_SECRET:2YrmlATq8aGvu9r5OSwV2s3g6tZqYbhyZnMNsnU/wvO27lfYxbgm5foq7F2Vsmw1eZC4WbdKHx3IXW5J7PddEA==}
-
-management:
-  endpoints:
-    web:
-      exposure:
-        include: health,info,metrics,prometheus
-  endpoint:
-    health:
-      show-details: always
-  tracing:
-    sampling:
-      probability: 1.0
-  zipkin:
-    tracing:
-      endpoint: http://host.docker.internal:9411/api/v2/spans
-
-eureka:
-  client:
-    service-url:
-      defaultZone: http://localhost:8761/eureka/
-    fetch-registry: true
-    register-with-eureka: true
-  instance:
-    preferIpAddress: true
-    hostname: localhost
-
-springdoc:
-  api-docs:
-    path: /v3/api-docs
-  swagger-ui:
-    path: /swagger-ui.html
-
-logging:
-  level:
-    root: INFO
-    com.coditects.bar: DEBUG
-    org.springframework.security: DEBUG
-
-# =====================================================
-# RabbitMQ Configuration (Spring Cloud Stream)
-# =====================================================
-spring.rabbitmq:
-  host: localhost
-  port: 5672
-  username: nextbar
-  password: nextbar123
-
-spring.cloud.stream:
-  bindings:
-    # Output binding for publishing supply request created events
-    supplyRequestCreated-out-0:
-      destination: supply.request.created
-      content-type: application/json
-    # Input binding for consuming supply request updated events
-    supplyRequestUpdated-in-0:
-      destination: supply.request.updated
-      content-type: application/json
-      group: bar-service
-      consumer:
-        max-attempts: 5
-        backoff-initial-interval: 1000
-        backoff-multiplier: 2.0
-        backoff-max-interval: 10000
-  rabbit:
-    bindings:
-      supplyRequestCreated-out-0:
-        producer:
-          exchange-type: topic
-          exchange-durable: true
-          delivery-mode: PERSISTENT
-      supplyRequestUpdated-in-0:
-        consumer:
-          exchange-type: topic
-          auto-bind-dlq: true
-          republish-to-dlq: true
-          requeue-rejected: false
+  config:
+    import: configserver:${CONFIG_SERVER_URL:http://localhost:8888}
+  cloud:
+    config:
+      fail-fast: true

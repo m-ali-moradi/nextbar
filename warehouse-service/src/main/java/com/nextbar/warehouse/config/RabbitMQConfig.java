@@ -1,4 +1,4 @@
-package com.dmsa.warehouse.config;
+package com.nextbar.warehouse.config;
 
 import org.springframework.amqp.rabbit.connection.ConnectionFactory;
 import org.springframework.amqp.rabbit.core.RabbitTemplate;

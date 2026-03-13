@@ -1,7 +1,7 @@
-package com.dmsa.warehouse.dto.response;
+package com.nextbar.warehouse.dto.response;
 
-import com.dmsa.warehouse.model.entity.DropPointCollection;
-import com.dmsa.warehouse.model.enums.CollectionStatus;
+import com.nextbar.warehouse.model.entity.DropPointCollection;
+import com.nextbar.warehouse.model.enums.CollectionStatus;
 
 import java.time.Instant;
 

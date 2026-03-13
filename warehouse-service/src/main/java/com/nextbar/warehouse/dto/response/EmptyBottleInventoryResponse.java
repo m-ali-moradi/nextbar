@@ -1,6 +1,6 @@
-package com.dmsa.warehouse.dto.response;
+package com.nextbar.warehouse.dto.response;
 
-import com.dmsa.warehouse.model.entity.EmptyBottleInventory;
+import com.nextbar.warehouse.model.entity.EmptyBottleInventory;
 
 import java.time.Instant;
 

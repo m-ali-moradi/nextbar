@@ -1,7 +1,7 @@
-package com.dmsa.warehouse.repository;
+package com.nextbar.warehouse.repository;
 
-import com.dmsa.warehouse.model.entity.DropPointCollection;
-import com.dmsa.warehouse.model.enums.CollectionStatus;
+import com.nextbar.warehouse.model.entity.DropPointCollection;
+import com.nextbar.warehouse.model.enums.CollectionStatus;
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.data.jpa.repository.Query;
 import org.springframework.data.repository.query.Param;

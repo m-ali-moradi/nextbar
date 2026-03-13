@@ -1,4 +1,4 @@
-package com.dmsa.warehouse.model.enums;
+package com.nextbar.warehouse.model.enums;
 
 /**
  * Status of empty bottle collection from drop points.

@@ -1,6 +1,6 @@
-package com.dmsa.warehouse.dto.response;
+package com.nextbar.warehouse.dto.response;
 
-import com.dmsa.warehouse.model.enums.SupplyRequestStatus;
+import com.nextbar.warehouse.model.enums.SupplyRequestStatus;
 
 import java.util.UUID;
 

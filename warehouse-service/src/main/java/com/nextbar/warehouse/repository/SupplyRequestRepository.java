@@ -1,7 +1,7 @@
-package com.dmsa.warehouse.repository;
+package com.nextbar.warehouse.repository;
 
-import com.dmsa.warehouse.model.entity.SupplyRequest;
-import com.dmsa.warehouse.model.enums.SupplyRequestStatus;
+import com.nextbar.warehouse.model.entity.SupplyRequest;
+import com.nextbar.warehouse.model.enums.SupplyRequestStatus;
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.stereotype.Repository;
 

@@ -143,6 +143,7 @@
 <script setup lang="ts">
 import { computed } from 'vue';
 import { EventSummary } from '@/api/eventApi';
+import { formatDate } from '@/composables/useDateFormat';
 import StatusBadge from './StatusBadge.vue';
 
 interface Props {
@@ -201,13 +202,4 @@ const statusIcon = computed(() => {
   }
 });
 
-const formatDate = (date: string) => {
-  if (!date) return 'N/A';
-  return new Date(date).toLocaleDateString('en-US', {
-    weekday: 'short',
-    month: 'short',
-    day: 'numeric',
-    year: 'numeric'
-  });
-};
 </script>
