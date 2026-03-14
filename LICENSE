@@ -1,21 +1,58 @@
-MIT License
+NEXTBAR EDUCATIONAL USE LICENSE
+Version 1.0, March 2026
 
 Copyright (c) 2026 NextBar — Event Beverage Management Platform
 
-Permission is hereby granted, free of charge, to any person obtaining a copy
-of this software and associated documentation files (the "Software"), to deal
-in the Software without restriction, including without limitation the rights
-to use, copy, modify, merge, publish, distribute, sublicense, and/or sell
-copies of the Software, and to permit persons to whom the Software is
-furnished to do so, subject to the following conditions:
+1. Definitions
 
-The above copyright notice and this permission notice shall be included in all
-copies or substantial portions of the Software.
+"Project" means the source code, documentation, configuration, and other
+materials in this repository.
 
-THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
+"Educational Purpose" means personal learning, classroom teaching, coursework,
+academic research, and non-commercial demonstrations.
+
+2. Grant of Permission
+
+Permission is granted to use, copy, and modify the Project solely for
+Educational Purpose.
+
+3. Attribution Requirement
+
+Any use, publication, presentation, report, or derivative work that includes
+all or part of the Project must include clear attribution to this repository,
+including:
+
+- Project name: NextBar
+- Repository URL
+- Access date
+- Original copyright notice
+
+4. Restrictions
+
+You may not:
+
+- use the Project for commercial, production, or revenue-generating purposes;
+- sublicense or sell the Project or derivative works;
+- redistribute substantial portions of the Project without this license and
+	attribution notice.
+
+Commercial or production use requires prior written permission from the
+copyright holder.
+
+5. No Trademark Rights
+
+This license does not grant permission to use project names, logos, or marks,
+except as required for accurate attribution.
+
+6. Disclaimer of Warranty
+
+THE PROJECT IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
 IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
-FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE
-AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
-LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
-OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
-SOFTWARE.
+FITNESS FOR A PARTICULAR PURPOSE, AND NONINFRINGEMENT.
+
+7. Limitation of Liability
+
+IN NO EVENT SHALL THE AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM,
+DAMAGES, OR OTHER LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT, OR
+OTHERWISE, ARISING FROM, OUT OF, OR IN CONNECTION WITH THE PROJECT OR THE USE
+OR OTHER DEALINGS IN THE PROJECT.
