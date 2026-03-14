@@ -179,6 +179,19 @@ jobs:
       - name: Checkout code
         uses: actions/checkout@v4
 
+      - name: Validate Azure credentials
+        shell: bash
+        run: |
+          if [ -z "${{ secrets.AZURE_CREDENTIALS }}" ]; then
+            echo "::error::Missing AZURE_CREDENTIALS secret."
+            echo "::error::Create repository secret AZURE_CREDENTIALS with JSON: {\"clientId\":\"...\",\"clientSecret\":\"...\",\"subscriptionId\":\"...\",\"tenantId\":\"...\"}."
+            exit 1
+          fi
+          if ! echo '${{ secrets.AZURE_CREDENTIALS }}' | grep -q '"clientId"'; then
+            echo "::error::AZURE_CREDENTIALS is malformed. It must include clientId, clientSecret, subscriptionId, tenantId."
+            exit 1
+          fi
+
       - name: Azure Login
         uses: azure/login@v2
         with:
@@ -212,6 +225,19 @@ jobs:
     steps:
       - name: Checkout code
         uses: actions/checkout@v4
+
+      - name: Validate Azure credentials
+        shell: bash
+        run: |
+          if [ -z "${{ secrets.AZURE_CREDENTIALS }}" ]; then
+            echo "::error::Missing AZURE_CREDENTIALS secret."
+            echo "::error::Create repository secret AZURE_CREDENTIALS with JSON: {\"clientId\":\"...\",\"clientSecret\":\"...\",\"subscriptionId\":\"...\",\"tenantId\":\"...\"}."
+            exit 1
+          fi
+          if ! echo '${{ secrets.AZURE_CREDENTIALS }}' | grep -q '"clientId"'; then
+            echo "::error::AZURE_CREDENTIALS is malformed. It must include clientId, clientSecret, subscriptionId, tenantId."
+            exit 1
+          fi
 
       - name: Azure Login
         uses: azure/login@v2
