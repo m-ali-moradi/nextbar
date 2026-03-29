@@ -9,7 +9,7 @@ Thank you for your interest in contributing to NextBar! This document provides g
 1. **Fork** the repository on GitHub
 2. **Clone** your fork locally:
    ```bash
-   git clone https://github.com/<your-username>/nextBar.git
+   git clone https://github.com/m-ali-moradi/nextBar.git
    cd nextBar
    ```
 3. **Set up** the development environment — see [QUICK-START.md](QUICK-START.md)
