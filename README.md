@@ -538,6 +538,3 @@ I would like to express my gratitude to my teammates for their contributions and
 
 ---
 
-<p align="center">
-  <strong>Made with ❤️ by coditech team</strong>
-</p>
